@@ -4,6 +4,7 @@ export { pickRecorderMimeType, createAudioRecorder, recorderExtension };
 import { isChromeBrowser } from "./meetingTabAudio";
 import { acquirePreferredMic } from "./micCapture";
 import { isDesktopShell } from "../capture/desktopMiniWindow";
+import { checkScreenRecordingPermission, requestScreenRecordingPermission } from "./desktopPermissions";
 
 export type ChannelMode = "mono" | "stereo" | "mix";
 
@@ -102,6 +103,21 @@ async function acquireDesktopSystemAudio(): Promise<MeetingSide | null> {
       warning:
         "System audio capture is unavailable in this desktop build. Update Notewise or use mic-only mode.",
     };
+  }
+
+  // Check Screen Recording permission before attempting getDisplayMedia
+  const hasScreenPermission = await checkScreenRecordingPermission();
+  if (!hasScreenPermission) {
+    // Attempt to request permission
+    const granted = await requestScreenRecordingPermission();
+    if (!granted) {
+      return {
+        stream: new MediaStream(),
+        backend: "screencapturekit",
+        warning:
+          "Screen Recording permission required. Open System Settings → Privacy & Security → Screen Recording and enable Notewise.",
+      };
+    }
   }
 
   let display: MediaStream;

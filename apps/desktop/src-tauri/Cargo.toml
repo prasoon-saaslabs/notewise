@@ -13,6 +13,14 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+cpal = "0.15"
+
+# macOS-only: native permission (microphone + screen recording) checks.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-av-foundation = { version = "0.3", features = ["AVCaptureDevice", "AVMediaFormat"] }
+objc2-core-graphics = { version = "0.3", features = ["CGWindow"] }
+block2 = "0.6"
 
 [lib]
 name = "notewise_desktop_lib"
