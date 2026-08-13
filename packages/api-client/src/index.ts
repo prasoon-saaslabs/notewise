@@ -222,7 +222,10 @@ export type EventPrepDetail = {
 };
 
 export class NotewiseApiClient {
-  constructor(private readonly baseUrl: string) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly fetchImpl: typeof fetch = fetch,
+  ) {}
 
   private authToken: string | null = null;
 
@@ -241,7 +244,7 @@ export class NotewiseApiClient {
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await this.fetchImpl(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
         Accept: "application/json",
@@ -320,11 +323,15 @@ export class NotewiseApiClient {
     const ext = blob.type.includes("mp4") ? "m4a" : "webm";
     form.append("file", blob, `chunk-${sequence}.${ext}`);
     form.append("sequence", String(sequence));
-    return fetch(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/chunks`, {
+    return this.fetchImpl(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/chunks`, {
       method: "POST",
+      headers: this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {},
       body: form,
     }).then(async (res) => {
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`Upload failed: ${res.status}${body ? ` — ${body}` : ""}`);
+      }
       return res.json() as Promise<{ ok: boolean }>;
     });
   }
@@ -333,8 +340,9 @@ export class NotewiseApiClient {
     const form = new FormData();
     const ext = blob.type.includes("mp4") ? "m4a" : "webm";
     form.append("file", blob, `live.${ext}`);
-    return fetch(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/live`, {
+    return this.fetchImpl(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/live`, {
       method: "POST",
+      headers: this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {},
       body: form,
     }).then(async (res) => {
       if (!res.ok) throw new Error(`Live STT failed: ${res.status}`);
@@ -379,11 +387,15 @@ export class NotewiseApiClient {
   uploadPcm(sessionId: string, pcm: Blob) {
     const form = new FormData();
     form.append("file", pcm, "live.pcm");
-    return fetch(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/pcm`, {
+    return this.fetchImpl(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}/pcm`, {
       method: "POST",
+      headers: this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {},
       body: form,
     }).then(async (res) => {
-      if (!res.ok) throw new Error(`PCM upload failed: ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`PCM upload failed: ${res.status}${body ? ` — ${body}` : ""}`);
+      }
       return res.json() as Promise<{ ok: boolean; bytes: number }>;
     });
   }
@@ -416,7 +428,7 @@ export class NotewiseApiClient {
   enrollSample(blob: Blob) {
     const form = new FormData();
     form.append("file", blob, "enroll.webm");
-    return fetch(`${this.baseUrl}/enrollment/samples`, {
+    return this.fetchImpl(`${this.baseUrl}/enrollment/samples`, {
       method: "POST",
       body: form,
     }).then(async (res) => {
@@ -554,13 +566,13 @@ export class NotewiseApiClient {
   }
 
   async exportMeetingMd(id: string) {
-    const res = await fetch(`${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.md`);
+    const res = await this.fetchImpl(`${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.md`);
     if (!res.ok) throw new Error(`Export failed: ${res.status}`);
     return res.text();
   }
 
   async exportMeetingHtml(id: string) {
-    const res = await fetch(`${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.html`, {
+    const res = await this.fetchImpl(`${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.html`, {
       headers: this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {},
     });
     if (!res.ok) throw new Error(`Export failed: ${res.status}`);
@@ -582,8 +594,12 @@ export class NotewiseApiClient {
     });
   }
 
-  googleAuthUrl() {
-    return this.request<{ url: string }>("/auth/google/url");
+  googleAuthUrl(opts?: { client?: "web" | "desktop" }) {
+    const q =
+      opts?.client === "desktop"
+        ? "?client=desktop"
+        : "";
+    return this.request<{ url: string }>(`/auth/google/url${q}`);
   }
 
   listCalendarEvents() {
@@ -618,11 +634,11 @@ export class NotewiseApiClient {
   }
 }
 
-export function createApiClient(baseUrl?: string) {
+export function createApiClient(baseUrl?: string, fetchImpl?: typeof fetch) {
   const envUrl =
     typeof import.meta !== "undefined"
       ? (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_URL
       : undefined;
   const url = (baseUrl || envUrl || "http://localhost:3001").replace(/\/$/, "");
-  return new NotewiseApiClient(url);
+  return new NotewiseApiClient(url, fetchImpl);
 }

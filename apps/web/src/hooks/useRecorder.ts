@@ -11,6 +11,7 @@ import {
   type HearStreamClient,
 } from "../lib/hearCapture";
 import type { NotesPayload, TranscriptTurn } from "@notewise/api-client";
+import { ensureReadyToRecord, micBlockedMessage } from "../lib/desktopPermissions";
 import { useQueryClient } from "@tanstack/react-query";
 
 type Turn = {
@@ -499,6 +500,10 @@ export function useRecorder() {
         throw new Error("Confirm recording consent before the first capture.");
       }
 
+      if (isTauriShell) {
+        await ensureReadyToRecord();
+      }
+
       const usePyai = pyaiRef.current;
       const modeId = window.localStorage.getItem("og-mode-id") || undefined;
       const mixedSpeakers = isTauriShell ? false : isMixedSpeakersEnabled();
@@ -670,7 +675,9 @@ export function useRecorder() {
       const message =
         err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")
           ? isTauriShell
-            ? "Microphone blocked. Open System Settings → Privacy & Security → Microphone and allow Notewise, then try again."
+            ? err.message && err.message !== "Microphone access denied"
+              ? err.message
+              : micBlockedMessage()
             : "Microphone blocked. Allow mic access for this site, then try again."
           : err instanceof Error
             ? err.message
@@ -899,7 +906,11 @@ export function useRecorder() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not finish recording");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Could not finish recording";
+      setError(message);
       setPhase("failed");
       setStatusLine("Ready to capture");
     } finally {

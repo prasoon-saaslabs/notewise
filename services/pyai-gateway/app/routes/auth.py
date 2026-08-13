@@ -18,12 +18,11 @@ from app.calendar.google import (
     sync_user_calendar,
 )
 from app.config import settings
+from app.oauth_state import pop_oauth_state, put_oauth_state
 from app.store.file_store import store
 from app.store.models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-_oauth_states: dict[str, str] = {}
 
 
 class GuestBody(BaseModel):
@@ -66,11 +65,18 @@ def auth_guest(body: GuestBody):
 
 
 @router.get("/google/url")
-def google_url(user: User | None = Depends(get_optional_user)):
+def google_url(
+    user: User | None = Depends(get_optional_user),
+    client: str = Query(default="web"),
+):
     if not google_configured():
         raise HTTPException(503, "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.")
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = user.id if user else ""
+    put_oauth_state(
+        state,
+        user_id=user.id if user else "",
+        client="desktop" if client.strip().lower() == "desktop" else "web",
+    )
     return {"url": google_auth_url(state=state)}
 
 
@@ -78,9 +84,11 @@ def google_url(user: User | None = Depends(get_optional_user)):
 async def google_callback(code: str = Query(...), state: str = Query(...)):
     if not google_configured():
         raise HTTPException(503, "Google OAuth not configured")
-    expected = _oauth_states.pop(state, None)
+    expected = pop_oauth_state(state)
     if expected is None:
-        raise HTTPException(400, "Invalid OAuth state")
+        raise HTTPException(400, "Invalid or expired OAuth state")
+    expected_user_id = expected.get("user_id") or ""
+    use_desktop_callback = expected.get("client") == "desktop"
     try:
         tokens = await exchange_code(code)
         access = tokens.get("access_token")
@@ -92,8 +100,8 @@ async def google_callback(code: str = Query(...), state: str = Query(...)):
         name = str(profile.get("name") or email.split("@")[0] or "Google user")
         picture = profile.get("picture")
         user = store.get_user_by_email(email) if email else None
-        if not user and expected:
-            user = store.get_user(expected)
+        if not user and expected_user_id:
+            user = store.get_user(expected_user_id)
         if not user:
             from uuid import uuid4
 
@@ -124,7 +132,7 @@ async def google_callback(code: str = Query(...), state: str = Query(...)):
         except Exception:
             pass
         token = create_access_token(user.id, extra={"provider": "google"})
-        return RedirectResponse(f"{settings.web_app_url}/auth/callback?token={token}")
+        return RedirectResponse(settings.auth_callback_redirect(token, desktop=use_desktop_callback))
     except HTTPException:
         raise
     except Exception as e:

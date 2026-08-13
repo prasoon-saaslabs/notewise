@@ -39,13 +39,23 @@ logging.basicConfig(
 
 app = FastAPI(title="Notewise PyAI Gateway", version="0.2.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins or ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Bearer-token auth only — never use credentialed CORS (breaks wildcard / tauri origins).
+if settings.is_desktop_gateway:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https?://.*|tauri://.*",
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins or ["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -67,6 +77,15 @@ async def startup() -> None:
     settings.uploads_dir.mkdir(parents=True, exist_ok=True)
     settings.margin_dir.mkdir(parents=True, exist_ok=True)
     (settings.data_dir / "playback").mkdir(parents=True, exist_ok=True)
+
+    log = logging.getLogger("pyai")
+    if settings.is_desktop_gateway and settings.auth_jwt_secret == "dev-change-me-local-only":
+        log.warning(
+            "AUTH_JWT_SECRET is unset — set a strong value in gateway.env for production desktop installs"
+        )
+    if settings.is_desktop_gateway and not settings.google_client_id:
+        log.info("Google OAuth not configured — add GOOGLE_CLIENT_ID/SECRET to gateway.env for sign-in")
+
     purged = 0
     for m in store.list_meetings():
         if is_test_meeting(m):

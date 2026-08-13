@@ -15,8 +15,25 @@ class Settings:
             os.getenv("PYAI_BASE_URL") or "https://api.pyai.com/v1"
         ).rstrip("/")
         self.port: int = int(os.getenv("PYAI_GATEWAY_PORT", "3002"))
+        self.is_desktop_gateway: bool = (os.getenv("NOTEWISE_DESKTOP_GATEWAY") or "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
         cors = os.getenv("CORS_ORIGIN", "http://localhost:5173,http://127.0.0.1:5173")
-        self.cors_origins: list[str] = [o.strip() for o in cors.split(",") if o.strip()]
+        if self.is_desktop_gateway:
+            # Tauri webview origins (asset/tauri.localhost, etc.)
+            self.cors_origins: list[str] = [
+                "tauri://localhost",
+                "https://tauri.localhost",
+                "http://tauri.localhost",
+                "https://asset.localhost",
+                "http://asset.localhost",
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ]
+        else:
+            self.cors_origins: list[str] = [o.strip() for o in cors.split(",") if o.strip()]
 
         data = os.getenv("NOTEWISE_PYAI_DATA_DIR") or str(
             Path(__file__).resolve().parents[1] / ".data"
@@ -46,7 +63,12 @@ class Settings:
         self.google_redirect_uri: str = (
             os.getenv("GOOGLE_REDIRECT_URI") or "http://127.0.0.1:3002/auth/google/callback"
         ).strip()
-        self.web_app_url: str = (os.getenv("WEB_APP_URL") or "http://127.0.0.1:5173").rstrip("/")
+        default_web = (
+            "https://tauri.localhost"
+            if self.is_desktop_gateway
+            else "http://127.0.0.1:5173"
+        )
+        self.web_app_url: str = (os.getenv("WEB_APP_URL") or default_web).rstrip("/")
         self.google_scopes: str = (
             os.getenv("GOOGLE_SCOPES")
             or "openid email profile https://www.googleapis.com/auth/calendar.readonly"
@@ -55,6 +77,16 @@ class Settings:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.uploads_dir.mkdir(parents=True, exist_ok=True)
         self.margin_dir.mkdir(parents=True, exist_ok=True)
+
+    def auth_callback_redirect(self, token: str, *, desktop: bool | None = None) -> str:
+        """Where to send the user after Google OAuth (web page or desktop loopback)."""
+        use_desktop = self.is_desktop_gateway if desktop is None else desktop
+        if use_desktop:
+            from urllib.parse import quote
+
+            port = os.getenv("NOTEWISE_OAUTH_PORT", "17654")
+            return f"http://127.0.0.1:{port}/auth/callback?token={quote(token, safe='')}"
+        return f"{self.web_app_url}/auth/callback?token={token}"
 
 
 settings = Settings()

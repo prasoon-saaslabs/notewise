@@ -1,0 +1,5 @@
+# Local GitHub PAT for this repo only — never commit a real token.
+# Option 1: run ./scripts/setup-github-auth.sh (saves to .git/gh-pat)
+# Option 2: export NOTEWISE_GITHUB_PAT=ghp_... before git push
+#
+NOTEWISE_GITHUB_PAT=

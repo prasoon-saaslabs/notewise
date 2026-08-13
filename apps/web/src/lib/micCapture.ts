@@ -1,5 +1,8 @@
 /** Headset / earphone-friendly microphone selection. */
 
+import { isDesktopShell } from "../capture/desktopMiniWindow";
+import { ensureDesktopMicrophoneAccess } from "./desktopPermissions";
+
 const HEADSET_LABEL_RE =
   /headset|headphone|earphone|earbud|airpod|buds|bluetooth|usb audio|external|hands[- ]?free|jabra|plantronics|poly|logitech|beats|sony wh|bose|sennheiser/i;
 
@@ -21,6 +24,13 @@ export async function acquirePreferredMic(
     throw new Error("This browser does not support microphone capture.");
   }
 
+  if (isDesktopShell()) {
+    const access = await ensureDesktopMicrophoneAccess({ skipProbe: true });
+    if (!access.ok) {
+      throw new DOMException(access.message ?? "Microphone access denied", "NotAllowedError");
+    }
+  }
+
   const separate = Boolean(opts?.separateMeetingTrack) && !opts?.mixedCapture;
   const mixed = Boolean(opts?.mixedCapture);
   const base: MediaTrackConstraints = mixed
@@ -40,7 +50,14 @@ export async function acquirePreferredMic(
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: base });
-  } catch {
+  } catch (firstErr) {
+    if (
+      isDesktopShell() &&
+      firstErr instanceof DOMException &&
+      (firstErr.name === "NotAllowedError" || firstErr.name === "PermissionDeniedError")
+    ) {
+      throw firstErr;
+    }
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   }
 
@@ -56,10 +73,18 @@ export async function acquirePreferredMic(
     if (!preferred?.deviceId || preferred.deviceId === currentId) return stream;
 
     stream.getTracks().forEach((t) => t.stop());
-    return await navigator.mediaDevices.getUserMedia({
-      audio: { ...base, deviceId: { exact: preferred.deviceId } },
-    });
-  } catch {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: { ...base, deviceId: { exact: preferred.deviceId } },
+      });
+    } catch (switchErr) {
+      if (switchErr instanceof DOMException && switchErr.name === "NotAllowedError") {
+        throw switchErr;
+      }
+      return await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+  } catch (err) {
+    if (err instanceof DOMException) throw err;
     return stream;
   }
 }

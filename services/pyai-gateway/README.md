@@ -4,15 +4,14 @@ Parallel FastAPI backend that mirrors the Nest Notewise API contract using **PyA
 
 ## Run
 
+From the **notewise repo root**:
+
 ```bash
-cd services/pyai-gateway
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# set PYAI_API_KEY=
-uvicorn app.main:app --host 127.0.0.1 --port 3002
+make setup    # once
+make run      # gateway on :3002
 ```
+
+Or use the shared script: `bash scripts/gateway.sh`
 
 ## Frontend switch
 

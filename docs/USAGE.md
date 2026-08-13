@@ -38,7 +38,7 @@ This guide covers everything: installation, sign-in, every screen in the app, de
 | **macOS** (recommended) | Full system-audio capture + menu bar app |
 | **Web browser** | Chrome or Safari — works on any OS for mic-only capture |
 | **Node.js 20+** | For the web UI |
-| **Python 3.11+** | For the local AI gateway |
+| **Python 3.9+** | For the local AI gateway |
 | **pnpm** | Package manager (`npm install -g pnpm`) |
 | **PyAI API key** | [Get one at api.pyai.com](https://api.pyai.com) — or let the gateway mint a sandbox key on first run |
 
@@ -48,12 +48,18 @@ This guide covers everything: installation, sign-in, every screen in the app, de
 
 ## Quick start (5 minutes)
 
-From the repository root (`granola/`):
+From the repository root (`notewise/`):
 
 ```bash
-make setup          # Install Python + Node dependencies
-make run            # Terminal A — starts AI gateway on port 3002
-make web            # Terminal B — starts web app on port 5173
+make setup          # once — Python venv + pnpm install
+make dev            # one terminal — gateway + web UI
+```
+
+Or two terminals:
+
+```bash
+make run            # Terminal A — AI gateway on port 3002
+make web            # Terminal B — web app on port 5173
 ```
 
 Then:
@@ -71,25 +77,39 @@ Then:
 
 ## Running the app
 
-Notewise has three surfaces you can run independently:
+Notewise has one AI backend (`services/pyai-gateway` on port **3002**). Web and desktop dev both talk to it.
 
-| Surface | Command | URL |
-|---------|---------|-----|
-| **Web app** (main product) | `make web` or `pnpm dev:web` | http://127.0.0.1:5173 |
-| **AI gateway** (required) | `make run` or `pnpm dev:pyai-gateway` | http://127.0.0.1:3002 |
-| **Marketing website** | `pnpm dev:website` | http://localhost:5174 |
-| **Desktop app** (dev) | `cd apps/desktop && pnpm tauri:dev` | Native window |
-| **Desktop DMG** (build) | `pnpm build:desktop:dmg` | Installer in `apps/desktop/src-tauri/target/release/bundle/dmg/` |
+| Goal | Command | URL / result |
+|------|---------|--------------|
+| **Web (easiest)** | `make dev` | http://127.0.0.1:5173 |
+| **Web (split)** | `make run` + `make web` | gateway :3002 · UI :5173 |
+| **Desktop dev** | `make desktop` | Native window (starts gateway if needed) |
+| **Marketing site** | `pnpm dev:website` | http://localhost:5174 |
+| **DMG installer** | `make build-dmg` | `apps/desktop/.../bundle/dmg/` |
 
 ### Typical daily workflow
 
-```bash
-# Terminal 1 — always start the gateway first
-make run
+**Web only:**
 
-# Terminal 2 — web UI
-make web
+```bash
+make dev
 ```
+
+**Desktop development:**
+
+```bash
+make desktop
+```
+
+Uses the same `services/pyai-gateway/.env` as web. No need to stage or bundle the gateway for daily dev.
+
+### Release vs dev
+
+| | Dev (web + desktop) | DMG (end users) |
+|--|---------------------|-----------------|
+| Gateway | Repo venv (`make run`) | Bundled sidecar in `.app` |
+| API key | `services/pyai-gateway/.env` | Onboarding UI → Application Support |
+| Python setup | `make setup` once | Not required |
 
 ### Environment files
 
@@ -352,28 +372,32 @@ Suggestions appear in the capture pane **without interrupting** your flow.
 
 ## macOS desktop app
 
-The native app bundles the gateway, menu bar tray, and floating capture overlay.
+Native shell: menu bar tray, floating capture overlay, close-to-tray.
 
-### Build the DMG
+### Dev mode (same gateway as web)
 
 ```bash
 make setup
-pnpm build:desktop:dmg
+make desktop        # one command — gateway + Tauri window
+```
+
+Put your PyAI key in `services/pyai-gateway/.env` (shared with web dev).
+
+### Build the DMG (end users)
+
+```bash
+make setup
+make build-dmg
 ```
 
 Output: `apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64.dmg`
 
-### Dev mode
+The DMG bundles a portable gateway sidecar — users do not install Python.
 
-```bash
-pnpm dev:pyai-gateway    # Terminal A (optional — app can auto-start gateway)
-cd apps/desktop && pnpm tauri:dev   # Terminal B
-```
-
-### First launch checklist
+### First launch checklist (DMG)
 
 1. Grant **Microphone**
-2. Enter your **PyAI API key** (stored in `~/Library/Application Support/Notewise/`)
+2. Enter your **PyAI API key** (stored in `~/Library/Application Support/com.notewise.app/data/gateway.env`)
 3. On first capture, grant **Screen Recording** for system audio (optional)
 
 ### Menu bar
@@ -463,6 +487,8 @@ AUTH_JWT_SECRET=generate-a-random-string
 
 7. Restart the gateway and sign in with Google.
 
+> **Desktop app (Mac):** Google sign-in opens the system browser, then returns to Notewise via `http://127.0.0.1:17654/auth/callback`. Copy the same `GOOGLE_*` and `AUTH_JWT_SECRET` values into `~/Library/Application Support/com.notewise.app/data/gateway.env` for installed builds.
+
 > **Use `127.0.0.1` consistently** — not `localhost` — to avoid OAuth redirect mismatches.
 
 ### Common OAuth errors
@@ -505,22 +531,34 @@ See also [PRIVACY.md](../../PRIVACY.md) in the repo root.
 
 ## Troubleshooting
 
+Run **`make doctor`** first — it checks Python, venv, API key, gateway reachability, and DMG staging.
+
 ### Gateway won’t start
 
 ```bash
-cd services/pyai-gateway
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --host 127.0.0.1 --port 3002
+make setup
+make run
+# or: bash scripts/gateway.sh
 ```
 
-Check `PYAI_API_KEY` in `.env`. Run `make doctor`.
+Check `PYAI_API_KEY` in `services/pyai-gateway/.env`.
 
 ### Web app shows errors / can’t connect
 
-- Ensure gateway is running on port **3002**.
-- Check `apps/web/.env`: `VITE_PROXY_TARGET=http://127.0.0.1:3002`
-- Restart Vite after changing `.env`.
+- Run `make dev` (starts gateway + UI together), or ensure `make run` is active on port **3002**.
+- Vite proxy defaults to `:3002`; override with `VITE_PROXY_TARGET` if needed.
+
+### Desktop: “Gateway not responding on 127.0.0.1:3002”
+
+**Dev:** run `make setup` then `make desktop` from `notewise/`.
+
+**DMG:** reinstall from a fresh `make build-dmg`. Check logs:
+
+```bash
+cat ~/Library/Application\ Support/com.notewise.app/data/gateway.log
+```
+
+Quit other processes on port 3002 before testing the DMG (including `make run` in another terminal).
 
 ### No transcript after recording
 

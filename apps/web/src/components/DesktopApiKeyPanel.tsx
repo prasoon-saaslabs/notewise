@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@notewise/ui";
 import { KeyRound } from "lucide-react";
 import { isDesktopShell } from "../capture/desktopMiniWindow";
+import { configureDesktopGateway, diagnosticsErrorMessage, diagnosticsReady } from "../lib/desktopGateway";
 
 export function DesktopApiKeyPanel() {
   const [key, setKey] = useState("");
@@ -16,9 +17,11 @@ export function DesktopApiKeyPanel() {
     setErr(null);
     setMsg(null);
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      await invoke("save_pyai_api_key", { apiKey: key.trim() });
-      setMsg("API key saved. Gateway restarted.");
+      const diag = await configureDesktopGateway(key.trim());
+      if (!diagnosticsReady(diag)) {
+        throw new Error(diagnosticsErrorMessage(diag));
+      }
+      setMsg("API key saved. Gateway is running.");
       setKey("");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not save API key");

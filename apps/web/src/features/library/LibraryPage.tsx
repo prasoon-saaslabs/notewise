@@ -26,6 +26,8 @@ import {
 } from "../../lib/meetingsCatalog";
 import { ClaimLine, RunStatusCard } from "../../components/Receipts";
 import { api } from "../../lib/api";
+import { isDesktopPyaiOnly } from "../../lib/desktopMode";
+import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
 
@@ -296,7 +298,17 @@ export function LibraryPage() {
 
   const list = useQuery({
     queryKey: ["meetings", "catalog"],
-    queryFn: () => listAllMeetings(),
+    queryFn: async () => {
+      if (isDesktopPyaiOnly()) {
+        const diag = await ensureDesktopGateway();
+        if (!diag.reachable) {
+          throw new Error(
+            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support.",
+          );
+        }
+      }
+      return listAllMeetings();
+    },
     refetchInterval: 4000,
   });
   const fts = useQuery({
@@ -476,14 +488,22 @@ export function LibraryPage() {
           <p className="nw-muted m-0 mt-2">
             {list.isError
               ? "Could not load meetings"
-              : `${meetings.length} across Nest & PyAI`}
+              : isDesktopPyaiOnly()
+                ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
+                : `${meetings.length} across Nest & PyAI`}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
           {list.isError ? (
             <EmptyState
-              title="Stores unreachable"
-              description="Start Nest (:3001) and/or PyAI (:3002), then refresh."
+              title="Library unavailable"
+              description={
+                list.error instanceof Error
+                  ? list.error.message
+                  : isDesktopPyaiOnly()
+                    ? "Start the local PyAI gateway (port 3002), then refresh."
+                    : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
+              }
               compact
             />
           ) : meetings.length === 0 ? (

@@ -1,35 +1,41 @@
 # Notewise Desktop (Tauri)
 
-PyAI-only macOS app with bundled local gateway, menu bar tray, and capture overlay.
+PyAI-only macOS app with local gateway, menu bar tray, and capture overlay.
 
-## Build DMG (macOS)
+## Dev (recommended)
 
-Prerequisites: Node 20+, pnpm, Rust, Python 3.11+
+Uses the **same repo gateway** as web dev — one Python venv, one `.env`.
 
 ```bash
 cd notewise
-make setup                    # gateway venv + deps
-pnpm build:desktop:dmg        # stages gateway + builds DMG
+make setup          # once
+make desktop        # starts gateway if needed + Tauri dev window
+```
+
+Or manually:
+
+```bash
+make run            # terminal 1
+make desktop        # terminal 2 (skips gateway start if already up)
+```
+
+Put your PyAI key in `services/pyai-gateway/.env` — desktop dev reads it automatically.
+
+## Build DMG (release)
+
+End users get a bundled gateway (system Python + vendored deps). No venv required on their Mac.
+
+```bash
+make setup
+make build-dmg
 ```
 
 Output: `apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64.dmg`
 
-## Dev mode
-
-```bash
-# Terminal A — optional if not using bundled sidecar
-pnpm dev:pyai-gateway
-
-# Terminal B
-cd apps/desktop && pnpm tauri:dev
-```
-
-In dev, the app auto-starts the gateway from `services/pyai-gateway` if the bundled sidecar is not staged.
-
-## First launch
+## First launch (DMG)
 
 1. Grant **Microphone** when prompted
-2. Enter your **PyAI API key** (stored in `~/Library/Application Support/Notewise/data/gateway.env`)
+2. Enter your **PyAI API key** (stored in `~/Library/Application Support/com.notewise.app/data/gateway.env`)
 3. On first capture, grant **Screen Recording** for system audio (optional — mic-only fallback works)
 
 ## Menu bar
@@ -41,13 +47,14 @@ In dev, the app auto-starts the gateway from `services/pyai-gateway` if the bund
 
 Closing the main window hides to the menu bar (does not quit).
 
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Gateway not responding | `make doctor` · check `~/Library/Application Support/com.notewise.app/data/gateway.log` |
+| Dev desktop can't find gateway | Run `make setup` from `notewise/` root |
+| Port 3002 in use | Quit other Notewise instances or `make run` in another terminal |
+
 ## Enterprise distribution
 
-For production rollout, sign and notarize the `.app` with your Apple Developer ID:
-
-```bash
-export APPLE_SIGNING_IDENTITY="Developer ID Application: Your Org (TEAMID)"
-# Configure notarization in CI — see Apple notarytool docs
-```
-
-MDM: pre-approve Microphone and Screen Recording via PPPC payloads for `com.notewise.app`.
+For production rollout, sign and notarize the `.app` with your Apple Developer ID. MDM: pre-approve Microphone and Screen Recording for `com.notewise.app`.

@@ -5,10 +5,13 @@ import {
   type MeetingSummary,
   type NotesPayload,
 } from "@notewise/api-client";
+import { isDesktopShell } from "../capture/desktopMiniWindow";
+import { getAuthToken } from "./authSession";
 import { resolveApiBase } from "./backend";
-import { isDesktopPyaiOnly } from "./desktopMode";
+import { desktopGatewayFetch } from "./desktopGatewayFetch";
+import { DESKTOP_API_BASE, isDesktopPyaiOnly } from "./desktopMode";
 
-const PYAI_URL = "http://127.0.0.1:3002";
+const PYAI_URL = DESKTOP_API_BASE;
 
 const PLACEHOLDER_TITLE =
   /^(recording…?|recording\.\.\.|untitled( meeting)?|meeting notes|new meeting|setup smoke|test|capture · .+|quick sync|[a-z]{3} sync)$/i;
@@ -34,7 +37,10 @@ export type CatalogMeeting = MeetingSummary & {
 };
 
 function client(url: string) {
-  return createApiClient(url);
+  const c = createApiClient(url, isDesktopShell() ? desktopGatewayFetch : undefined);
+  const token = getAuthToken();
+  if (token) c.setAuthToken(token);
+  return c;
 }
 
 export function apiBaseForBackend(backend: MeetingBackend): string {
@@ -190,7 +196,6 @@ export async function getCatalogMeeting(
     return { ...meeting, backend: "pyai" };
   }
 
-  const NEST_URL = "http://127.0.0.1:3001";
   const order: MeetingBackend[] = backendHint
     ? [backendHint, backendHint === "pyai" ? "nest" : "pyai"]
     : ["pyai", "nest"];

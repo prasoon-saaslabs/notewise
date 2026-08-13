@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@notewise/ui";
 import { Mic, Sparkles, X } from "lucide-react";
 import type { CalendarEventPrep } from "@notewise/api-client";

@@ -2,16 +2,21 @@
 
 mod audio;
 mod gateway;
+mod oauth_loopback;
 
 use audio::{
     capture_meters, is_capturing, list_capture_devices, set_capturing, start_system_audio_capture,
     stop_system_audio_capture,
 };
-use gateway::{gateway_status, has_pyai_api_key, save_pyai_api_key, start_gateway, stop_gateway};
+use gateway::{
+    configure_gateway, gateway_diagnostics, gateway_ensure_running, gateway_fetch, gateway_status,
+    gateway_upload_append, gateway_upload_begin, gateway_upload_finish, has_pyai_api_key,
+    save_pyai_api_key, start_gateway, stop_gateway,
+};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, RunEvent, WindowEvent,
+    AppHandle, Emitter, Manager, RunEvent, WindowEvent,
 };
 
 fn set_tray_tooltip(app: &tauri::AppHandle, recording: bool) {
@@ -33,10 +38,17 @@ fn show_main(app: &tauri::AppHandle) {
     }
 }
 
+#[tauri::command]
+fn start_oauth_loopback(app: AppHandle) -> Result<String, String> {
+    oauth_loopback::start(app)?;
+    Ok(oauth_loopback::callback_url())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_macos_permissions::init())
         .invoke_handler(tauri::generate_handler![
             list_capture_devices,
             start_system_audio_capture,
@@ -44,12 +56,22 @@ pub fn run() {
             capture_meters,
             is_capturing,
             gateway_status,
+            gateway_diagnostics,
+            gateway_ensure_running,
+            gateway_fetch,
+            gateway_upload_begin,
+            gateway_upload_append,
+            gateway_upload_finish,
+            configure_gateway,
             save_pyai_api_key,
             has_pyai_api_key,
+            start_oauth_loopback,
         ])
         .setup(|app| {
-            if let Err(err) = start_gateway(&app.handle()) {
-                eprintln!("Gateway start warning: {err}");
+            if has_pyai_api_key(app.handle().clone()) {
+                if let Err(err) = start_gateway(&app.handle()) {
+                    eprintln!("Gateway start warning: {err}");
+                }
             }
 
             let open_i = MenuItem::with_id(app, "open", "Open Notewise", true, None::<&str>)?;
@@ -125,6 +147,7 @@ pub fn run() {
                         show_main(app);
                     }
                     "quit" => {
+                        oauth_loopback::stop();
                         stop_gateway();
                         app.exit(0);
                     }
@@ -156,6 +179,7 @@ pub fn run() {
         .expect("error while running Notewise desktop")
         .run(|_app, event| {
             if let RunEvent::Exit = event {
+                oauth_loopback::stop();
                 stop_gateway();
             }
         });

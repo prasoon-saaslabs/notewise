@@ -5,15 +5,20 @@
   "description": "Notewise — AI meeting notes (web, desktop, mobile)",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
+    "setup": "make setup",
+    "doctor": "make doctor",
+    "dev": "bash scripts/dev-web.sh",
     "dev:web": "pnpm --filter @notewise/web dev",
     "dev:website": "pnpm --filter @notewise/website dev",
     "dev:api": "pnpm --filter @notewise/api start:dev",
-    "dev:desktop": "pnpm --filter @notewise/desktop tauri:dev",
-    "dev:pyai-gateway": "cd services/pyai-gateway && . .venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 3002",
+    "dev:desktop": "bash scripts/dev-desktop.sh",
+    "dev:gateway": "bash scripts/gateway.sh",
+    "dev:pyai-gateway": "bash scripts/gateway.sh",
     "build:website": "pnpm --filter @notewise/website build",
-    "build:desktop:dmg": "bash apps/desktop/scripts/stage-pyai-gateway.sh && source \"$HOME/.cargo/env\" 2>/dev/null; pnpm --filter @notewise/desktop tauri:build:dmg",
+    "build:desktop:dmg": "source \"$HOME/.cargo/env\" 2>/dev/null; pnpm --filter @notewise/desktop tauri:build:dmg",
     "build": "pnpm -r run build",
-    "lint": "pnpm -r run lint --if-present"
+    "lint": "pnpm -r run lint --if-present",
+    "qa:gateway": "bash scripts/qa-gateway.sh"
   },
   "engines": {
     "node": ">=20"

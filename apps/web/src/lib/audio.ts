@@ -114,6 +114,14 @@ async function acquireDesktopSystemAudio(): Promise<MeetingSide | null> {
     if (err instanceof DOMException && err.name === "NotAllowedError") {
       return { stream: new MediaStream(), backend: "screencapturekit", warning: "cancelled" };
     }
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/user gesture/i.test(msg)) {
+      return {
+        stream: new MediaStream(),
+        backend: "screencapturekit",
+        warning: "system_audio_skipped",
+      };
+    }
     return {
       stream: new MediaStream(),
       backend: "screencapturekit",
@@ -159,7 +167,7 @@ async function acquireMeetingSideAudio(): Promise<MeetingSide | null> {
 
 function meetingWarningText(side: MeetingSide | null): string | undefined {
   if (!side?.warning) return undefined;
-  if (side.warning === "cancelled") {
+  if (side.warning === "cancelled" || side.warning === "system_audio_skipped") {
     if (isDesktopShell()) {
       return "Meeting audio skipped — mic only. To capture others, share a window/screen with audio when prompted and enable Screen Recording for Notewise.";
     }
@@ -193,9 +201,9 @@ export async function acquireTwoChannelCapture(
     };
   }
 
+  // getDisplayMedia must be invoked during the click gesture — start it before any mic awaits.
   const meetingPromise = preferSystem ? acquireMeetingSideAudio() : Promise.resolve(null);
   const micPromise = acquireMic(preferSystem, false);
-
   const [micStream, meeting] = await Promise.all([micPromise, meetingPromise]);
   const warning = meetingWarningText(meeting);
 

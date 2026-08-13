@@ -19,15 +19,23 @@ MIT licensed · [Privacy policy](../PRIVACY.md)
 
 ## Quick start
 
-**Prerequisites:** macOS (recommended), Node 20+, Python 3.11+, pnpm, [PyAI API key](https://api.pyai.com)
+**Prerequisites:** macOS (recommended), Node 20+, Python 3.9+, pnpm, [PyAI API key](https://api.pyai.com)
 
-From the repo root (`granola/`):
+From the repo root (`notewise/`):
 
 ```bash
-make setup          # Install dependencies + copy .env templates
+make setup          # once — Python venv + pnpm install
+make dev            # one terminal — gateway + web UI
+```
+
+Or two terminals:
+
+```bash
 make run            # Terminal A — AI gateway on http://127.0.0.1:3002
 make web            # Terminal B — web app on http://127.0.0.1:5173
 ```
+
+Equivalent pnpm commands: `pnpm setup`, `pnpm dev`, `pnpm dev:gateway`, `pnpm dev:web`.
 
 1. Open **http://127.0.0.1:5173** and sign in (Google or Guest).
 2. Accept recording consent → pick a **mode** → click the **mic**.
@@ -61,8 +69,9 @@ make doctor         # Check Python, Node, API key, permissions
 
 | Surface | Port | Command |
 |---------|------|---------|
-| Web app | 5173 | `make web` |
-| AI gateway | 3002 | `make run` |
+| Web app | 5173 | `make web` or `make dev` |
+| AI gateway | 3002 | `make run` (included in `make dev`) |
+| Desktop (dev) | native | `make desktop` |
 | Marketing site | 5174 | `pnpm dev:website` |
 
 ---
@@ -71,13 +80,12 @@ make doctor         # Check Python, Node, API key, permissions
 
 ```bash
 make setup
-pnpm build:desktop:dmg
+make desktop        # dev — same repo gateway as web
+make build-dmg      # release installer
 # → apps/desktop/src-tauri/target/release/bundle/dmg/
 ```
 
-Dev: `cd apps/desktop && pnpm tauri:dev`
-
-Menu bar tray · bundled gateway · capture overlay · close-to-tray.
+**Dev vs DMG:** Desktop dev uses `services/pyai-gateway/.venv` (identical to web). The DMG bundles a portable gateway sidecar for end users — no Python setup required.
 
 See [apps/desktop/README.md](apps/desktop/README.md) and [docs/USAGE.md](docs/USAGE.md#macos-desktop-app).
 
@@ -114,3 +122,46 @@ Notes with receipts — timestamp chips jump to the transcript; run-status shows
 ## License
 
 MIT — audit the code, fork it, ship it.
+
+---
+
+## GitHub auth (this repo only — PAT)
+
+Use a **Personal Access Token** for `prasoon-aihub/notewise` without changing your global `gh` login.
+
+**1. Create a PAT** at [github.com/settings/tokens](https://github.com/settings/tokens)
+
+| Type | Settings |
+|------|----------|
+| **Fine-grained** (recommended) | Resource owner: `prasoon-aihub` · Repository: `notewise` · Contents: Read and write |
+| **Classic** | Scope: `repo` (on the `prasoon-aihub` account) |
+
+**2. Configure this repo:**
+
+```bash
+cd notewise
+./scripts/setup-github-auth.sh
+# paste PAT when prompted
+```
+
+Or one-shot without saving:
+
+```bash
+NOTEWISE_GITHUB_PAT=ghp_xxxx ./scripts/setup-github-auth.sh
+```
+
+Credentials are stored only in `.git/gh-credentials` (and optionally `.git/gh-pat`) — never committed.
+
+**3. Push:**
+
+```bash
+git push -u origin main
+```
+
+**gh CLI for this repo:**
+
+```bash
+./scripts/gh-repo.sh pr view
+```
+
+See `.github-pat.example` for env var reference.

@@ -5,6 +5,7 @@ import { Brain, Calendar, FileText, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { AppBrand } from "../../components/AppBrand";
 import { consumeAuthReturnPath, setAuthReturnPath } from "../../lib/authFlow";
+import { isDesktopShell } from "../../capture/desktopMiniWindow";
 
 const AI_FEATURES = [
   { icon: Calendar, text: "Calendar-driven prep briefs before every call" },
@@ -13,7 +14,7 @@ const AI_FEATURES = [
 ] as const;
 
 export function LoginPage() {
-  const { providers, signInGuest, signInGoogle } = useAuth();
+  const { providers, signInGuest, signInGoogle, browserAuthPending } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [guestName, setGuestName] = useState("");
@@ -48,6 +49,8 @@ export function LoginPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Google sign-in unavailable");
       setBusy(false);
+    } finally {
+      if (!isDesktopShell()) setBusy(false);
     }
   }
 
@@ -86,13 +89,19 @@ export function LoginPage() {
             <Button
               variant="primary"
               size="lg"
-              disabled={busy || !googleEnabled}
+              disabled={busy || browserAuthPending || !googleEnabled}
               onClick={() => void continueGoogle()}
               className="justify-center"
             >
               <Calendar className="h-4 w-4" />
-              Continue with Google
+              {browserAuthPending ? "Waiting for browser…" : "Continue with Google"}
             </Button>
+            {browserAuthPending ? (
+              <p className="m-0 text-xs text-[var(--nw-accent-dark)]">
+                Finish sign-in in your default browser, then return here — Notewise will log you in
+                automatically.
+              </p>
+            ) : null}
             {!googleEnabled ? (
               <p className="m-0 text-xs text-[var(--nw-ink-3)]">
                 Add Google OAuth credentials to the gateway <code className="text-[0.7rem]">.env</code> to

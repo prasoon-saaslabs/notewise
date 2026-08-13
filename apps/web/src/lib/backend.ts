@@ -55,6 +55,9 @@ export function viteProxyTarget(): string {
 
 /** Resolve effective API base (no trailing slash). */
 export function resolveApiBase(): string {
+  if (typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)) {
+    return "http://127.0.0.1:3002";
+  }
   const stored = getStoredApiBase();
   if (stored) return stored.replace(/\/$/, "");
   const env = import.meta.env.VITE_API_URL;
