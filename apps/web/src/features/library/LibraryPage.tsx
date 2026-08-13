@@ -460,7 +460,7 @@ export function LibraryPage() {
   }
 
   return (
-    <PageMotion className="nw-panel grid h-full min-h-0 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
+    <PageMotion className="nw-card grid h-full min-h-0 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
       <aside className="nw-library-rail flex min-h-0 flex-col border-b border-[var(--nw-border)] md:border-b-0 md:border-r">
         <div className="border-b border-[var(--nw-border)] px-4 py-3.5">
           <h3 className="nw-section-title flex items-center gap-1.5">

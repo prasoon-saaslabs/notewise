@@ -65,10 +65,10 @@ export function RecordIntelligencePanel({
                         setModeId(m.id);
                         localStorage.setItem("og-mode-id", m.id);
                       }}
-                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition backdrop-blur-sm ${
                         active
-                          ? "bg-[var(--nw-accent-dark)] text-white shadow-sm"
-                          : "bg-white text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[var(--nw-accent-soft)]"
+                          ? "border border-[rgb(13_148_136_/_0.32)] bg-[rgb(13_148_136_/_0.16)] text-[var(--nw-accent-dark)] shadow-[0_4px_16px_rgb(13_148_136_/_0.1)]"
+                          : "bg-[rgb(255_255_255_/_0.48)] text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[rgb(13_148_136_/_0.08)]"
                       }`}
                     >
                       {m.name}
@@ -97,10 +97,10 @@ export function RecordIntelligencePanel({
                       setEntityId("");
                       localStorage.removeItem("og-entity-id");
                     }}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition backdrop-blur-sm ${
                       !entityId
-                        ? "bg-[var(--nw-ink)] text-white"
-                        : "bg-white text-[var(--nw-ink-3)] ring-1 ring-[var(--nw-border)]"
+                        ? "border border-[rgb(13_148_136_/_0.32)] bg-[rgb(13_148_136_/_0.16)] text-[var(--nw-accent-dark)] shadow-[0_4px_16px_rgb(13_148_136_/_0.1)]"
+                        : "bg-[rgb(255_255_255_/_0.48)] text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[rgb(13_148_136_/_0.08)]"
                     }`}
                   >
                     Anyone
@@ -115,10 +115,10 @@ export function RecordIntelligencePanel({
                           setEntityId(e.id);
                           localStorage.setItem("og-entity-id", e.id);
                         }}
-                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition backdrop-blur-sm ${
                           active
-                            ? "bg-[rgb(79_70_229)] text-white shadow-sm"
-                            : "bg-white text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[rgb(79_70_229_/_0.08)]"
+                            ? "border border-[rgb(13_148_136_/_0.32)] bg-[rgb(13_148_136_/_0.16)] text-[var(--nw-accent-dark)] shadow-[0_4px_16px_rgb(13_148_136_/_0.1)]"
+                            : "bg-[rgb(255_255_255_/_0.48)] text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[rgb(13_148_136_/_0.08)]"
                         }`}
                       >
                         {e.name}

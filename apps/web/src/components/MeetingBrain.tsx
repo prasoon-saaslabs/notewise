@@ -97,7 +97,7 @@ export function MeetingBrainProvider({ children }: { children: ReactNode }) {
           onClick={closeBrain}
         >
           <div
-            className="flex max-h-[min(88vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-white shadow-[0_24px_64px_rgb(15_23_42_/_0.2)]"
+            className="flex max-h-[min(88vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-[28px] border border-[rgb(255_255_255_/_0.52)] bg-[rgb(255_255_255_/_0.58)] shadow-[0_8px_32px_rgb(15_23_42_/_0.12)] backdrop-blur-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="meeting-brain-title"
@@ -146,7 +146,7 @@ export function MeetingBrainHeaderTrigger() {
   return (
     <button
       type="button"
-      className="flex w-full max-w-xl min-w-0 items-center gap-2 rounded-xl bg-[rgb(248_250_252)] px-3 py-2 text-left text-sm text-[var(--nw-ink-4)] ring-1 ring-[var(--nw-border)] transition hover:bg-white hover:text-[var(--nw-ink-3)]"
+      className="flex w-full max-w-xl min-w-0 items-center gap-2.5 rounded-full border border-[rgb(255_255_255_/_0.62)] bg-[rgb(255_255_255_/_0.48)] px-4 py-2.5 text-left text-sm text-[var(--nw-ink-3)] shadow-[0_4px_20px_rgb(15_23_42_/_0.06)] backdrop-blur-md transition hover:border-[rgb(255_255_255_/_0.78)] hover:bg-[rgb(255_255_255_/_0.65)] hover:text-[var(--nw-ink-2)]"
       onClick={() => openBrain()}
     >
       <Sparkles className="h-4 w-4 shrink-0 text-[var(--nw-accent-dark)]" />
