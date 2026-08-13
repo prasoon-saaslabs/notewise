@@ -1,0 +1,28 @@
+{
+  "title": "Acme pricing follow-up",
+  "modeId": "sales-discovery",
+  "createdAt": "2026-07-28T16:00:00+00:00",
+  "durationSec": 1320,
+  "transcript": [
+    {"id": "L1", "speaker": "Priya Chen", "kind": "other", "text": "We're still stuck on price. Twenty thousand is too high for the pilot.", "startMs": 8000, "endMs": 14000},
+    {"id": "L2", "speaker": "You", "kind": "you", "text": "The usage-tier we discussed lands around twelve for the first fifty seats, then it scales. That is how we answered this last time and it held.", "startMs": 15000, "endMs": 24000},
+    {"id": "L3", "speaker": "Priya Chen", "kind": "other", "text": "SSO is still open. Legal asked again whether audio ever sits on your servers.", "startMs": 30000, "endMs": 38000},
+    {"id": "L4", "speaker": "You", "kind": "you", "text": "No audio at rest. Frames go to Hear and are discarded. I'll resend the data-flow page.", "startMs": 39000, "endMs": 46000}
+  ],
+  "notes": {
+    "title": "Acme Pricing",
+    "executiveSummary": "Priya repeated the price objection. Usage-tier framing landed. Legal still asking whether audio is stored.",
+    "takeaways": ["Usage-tier ~$12 for first 50 seats", "Legal wants proof audio is not stored"],
+    "actions": [{"text": "Resend data-flow / privacy page", "owner": "You", "lineIds": ["L4"], "startMs": 39000}],
+    "objections": [
+      {"id": "c1", "type": "objection", "text": "Twenty thousand is too high for the pilot", "lineIds": ["L1"], "startMs": 8000}
+    ],
+    "decisions": [],
+    "followUpEmail": "Priya — confirming the usage-tier for the pilot and attaching the data-flow page for legal.",
+    "droppedCount": 0
+  },
+  "entities": [
+    {"kind": "company", "name": "Acme"},
+    {"kind": "person", "name": "Priya Chen", "company": "Acme"}
+  ]
+}

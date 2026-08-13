@@ -1,0 +1,40 @@
+{
+  "title": "Acme discovery — SSO and security",
+  "modeId": "sales-discovery",
+  "createdAt": "2026-07-08T15:00:00+00:00",
+  "durationSec": 1840,
+  "transcript": [
+    {"id": "L1", "speaker": "You", "kind": "you", "text": "Thanks for joining Priya. I wanted to walk through how we handle SSO and the security review.", "startMs": 12000, "endMs": 18000},
+    {"id": "L2", "speaker": "Priya Chen", "kind": "other", "text": "We like the product, but security is going to be the gate. Our bank client will not allow a cloud notetaker bot in the call.", "startMs": 19000, "endMs": 28000},
+    {"id": "L3", "speaker": "You", "kind": "you", "text": "Understood. Capture stays on the laptop. Audio only goes to the STT endpoint you configure.", "startMs": 29000, "endMs": 36000},
+    {"id": "L4", "speaker": "Priya Chen", "kind": "other", "text": "Implementation time is also a concern. Dana asked about this five weeks ago — we need first value in two weeks, not a six-month rollout.", "startMs": 40000, "endMs": 50000},
+    {"id": "L5", "speaker": "You", "kind": "you", "text": "Phased rollout. Two weeks to first value, then SSO in phase two. I'll send the SOC 2 report this week.", "startMs": 51000, "endMs": 60000},
+    {"id": "L6", "speaker": "Priya Chen", "kind": "other", "text": "Price is higher than the spreadsheet tool we use today. If you could do a usage-tier, that would help.", "startMs": 72000, "endMs": 80000}
+  ],
+  "notes": {
+    "title": "Acme SSO Discovery",
+    "executiveSummary": "Acme is interested but blocked on security (no cloud bots) and wants first value in two weeks. Pricing pushback; usage-tier suggested.",
+    "takeaways": ["No cloud notetaker bots allowed", "Two-week first value required", "Usage-tier pricing requested"],
+    "actions": [{"text": "Send SOC 2 report this week", "owner": "You", "due": "2026-07-11", "lineIds": ["L5"], "startMs": 51000}],
+    "objections": [
+      {"id": "c1", "type": "objection", "text": "Security gate: no cloud notetaker bots", "lineIds": ["L2"], "startMs": 19000},
+      {"id": "c2", "type": "objection", "text": "Implementation time — need first value in two weeks", "lineIds": ["L4"], "startMs": 40000},
+      {"id": "c3", "type": "objection", "text": "Price is higher than current spreadsheet tool", "lineIds": ["L6"], "startMs": 72000}
+    ],
+    "decisions": [{"id": "d1", "type": "decision", "text": "Phased rollout: two weeks to first value, SSO in phase two", "lineIds": ["L5"], "startMs": 51000}],
+    "followUpEmail": "Hi Priya — recapping: we'll send the SOC 2 pack this week and stick to a two-week first-value rollout. Happy to walk through a usage-tier if helpful.",
+    "droppedCount": 0,
+    "runStatus": {
+      "exit": "shipped",
+      "claimsCited": 5,
+      "claimsBlocked": 0,
+      "tokens": 1200,
+      "costUsd": 0.0024,
+      "elapsedMs": 840
+    }
+  },
+  "entities": [
+    {"kind": "company", "name": "Acme"},
+    {"kind": "person", "name": "Priya Chen", "company": "Acme"}
+  ]
+}

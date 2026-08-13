@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Dev stub — release builds replace this via stage-pyai-gateway.sh
+echo "Notewise gateway launcher not staged. Run: bash apps/desktop/scripts/stage-pyai-gateway.sh" >&2
+exit 1

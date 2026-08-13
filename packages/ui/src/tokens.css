@@ -1,0 +1,39 @@
+:root {
+  /* ERP — cool neutral enterprise palette */
+  --nw-ink: #111827;
+  --nw-ink-2: #1f2937;
+  --nw-ink-3: #6b7280;
+  --nw-ink-4: #9ca3af;
+  --nw-paper: #f3f4f6;
+  --nw-surface: #ffffff;
+  --nw-surface-solid: #ffffff;
+  --nw-surface-2: #f9fafb;
+  --nw-surface-3: #e5e7eb;
+  --nw-border: #e5e7eb;
+  --nw-border-strong: #d1d5db;
+  --nw-accent: #0e7490;
+  --nw-accent-dark: #155e75;
+  --nw-accent-soft: #ecfeff;
+  --nw-accent-2: #0891b2;
+  --nw-mint: #14b8a6;
+  --nw-danger: #dc2626;
+  --nw-danger-soft: #fef2f2;
+  --nw-success: #059669;
+  --nw-success-soft: #ecfdf5;
+  --nw-you: #0e7490;
+  --nw-other: #4f46e5;
+  --nw-font-display: "IBM Plex Sans Variable", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --nw-font-sans: "IBM Plex Sans Variable", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --nw-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --nw-radius-md: 6px;
+  --nw-radius-lg: 10px;
+  --nw-radius-xl: 12px;
+  --nw-shadow-md: 0 1px 2px rgb(17 24 39 / 0.04);
+  --nw-shadow-lg: 0 8px 24px rgb(17 24 39 / 0.06);
+  --nw-glass: none;
+  --nw-motion-fast: 120ms;
+  --nw-motion-base: 180ms;
+  --nw-motion-slow: 240ms;
+  --nw-ease: ease;
+  --nw-rail: 64px;
+}

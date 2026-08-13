@@ -1,0 +1,27 @@
+{
+  "title": "Engineering standup — capture spike",
+  "modeId": "standup",
+  "createdAt": "2026-08-12T04:00:00+00:00",
+  "durationSec": 720,
+  "transcript": [
+    {"id": "L1", "speaker": "You", "kind": "you", "text": "Yesterday I wired Hear streaming. Today is ScreenCaptureKit. Blocker is TCC screen-recording prompts on the demo Mac.", "startMs": 2000, "endMs": 10000},
+    {"id": "L2", "speaker": "Sana Kapoor", "kind": "other", "text": "I'll finish the citation gate and the dropped-claim count on the notes page.", "startMs": 11000, "endMs": 17000},
+    {"id": "L3", "speaker": "Arjun Mehta", "kind": "other", "text": "Blocked on sample calls. I can write the five JSON fixtures this morning.", "startMs": 18000, "endMs": 24000}
+  ],
+  "notes": {
+    "title": "Standup Capture",
+    "executiveSummary": "Hear streaming is in. ScreenCaptureKit is today's risk. Citation gate and sample fixtures are unblocked work.",
+    "takeaways": ["TCC screen-recording is the demo risk", "Citation gate ships today"],
+    "actions": [
+      {"text": "Spike ScreenCaptureKit; fall back to mic-only at hour 1", "owner": "You", "lineIds": ["L1"], "startMs": 2000},
+      {"text": "Write five sample call fixtures", "owner": "Arjun Mehta", "lineIds": ["L3"], "startMs": 18000}
+    ],
+    "objections": [],
+    "decisions": [],
+    "followUpEmail": "Standup recap: capture spike, citation UI, five samples.",
+    "droppedCount": 0
+  },
+  "entities": [
+    {"kind": "person", "name": "Sana Kapoor"}
+  ]
+}

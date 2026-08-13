@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notewise — Design Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mockups.css" />
+</head>
+<body>
+  <aside class="gallery-nav">
+    <div class="brand">
+      <span class="logo"></span>
+      <div>
+        <strong>Notewise</strong>
+        <small>Design pack v0.1</small>
+      </div>
+    </div>
+    <p class="nav-label">Screens</p>
+    <a href="#onboarding" class="nav-link is-active">1. Onboarding / Enroll</a>
+    <a href="#record" class="nav-link">2. Record (idle)</a>
+    <a href="#record-live" class="nav-link">3. Record (live)</a>
+    <a href="#join" class="nav-link">4. Join meeting</a>
+    <a href="#library" class="nav-link">5. Library</a>
+    <a href="#settings" class="nav-link">6. Settings</a>
+    <p class="nav-label">Frames</p>
+    <div class="frame-toggles">
+      <button type="button" data-frame="desktop" class="is-on">Desktop</button>
+      <button type="button" data-frame="tablet">Tablet</button>
+      <button type="button" data-frame="phone">Phone</button>
+    </div>
+    <p class="hint">Approve this pack before monorepo implementation.</p>
+  </aside>
+
+  <main class="gallery">
+    <!-- ONBOARDING -->
+    <section class="shot" id="onboarding">
+      <header class="shot-meta">
+        <h2>Onboarding — Voice enrollment</h2>
+        <p>First-run: enroll “You” so local mic capture can separate speakers without tab share.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell enroll-shell">
+          <div class="enroll-card">
+            <p class="eyebrow">Step 1 of 2</p>
+            <h1>Train Notewise on your voice</h1>
+            <p class="lede">Fifteen seconds. We’ll recognize you in every meeting — on this phone, your laptop, or when a bot joins for you.</p>
+            <div class="enroll-visual">
+              <div class="pulse-ring"></div>
+              <div class="mic-orb">◉</div>
+            </div>
+            <blockquote class="phrase">“My name is Alex, and I’m testing Notewise for clearer meeting notes.”</blockquote>
+            <button class="btn btn-primary btn-lg">Start enrollment</button>
+            <button class="btn btn-ghost">Skip for now</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECORD IDLE -->
+    <section class="shot" id="record">
+      <header class="shot-meta">
+        <h2>Record — Idle</h2>
+        <p>Same-device local capture. Honest: mic only. Join meeting is the cross-device path.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell">
+          <header class="topbar">
+            <div class="brand-inline"><span class="logo sm"></span> Notewise</div>
+            <nav class="tabs-nav">
+              <a class="is-active">Record</a>
+              <a>Library</a>
+              <a>Join</a>
+            </nav>
+            <span class="health ok">whisper · llama3.1</span>
+          </header>
+          <div class="record-layout">
+            <aside class="recorder-card">
+              <span class="eyebrow">Local capture</span>
+              <p class="timer">00:00</p>
+              <div class="wave idle"></div>
+              <p class="status">Ready when you are</p>
+              <p class="micro">Uses your microphone. Enrolled voice labels <em>You</em>.</p>
+              <button class="btn btn-record">Start recording</button>
+              <a class="text-link">Prefer Join meeting for Zoom/Meet?</a>
+            </aside>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Live transcript</h3>
+                <span class="badge">STT</span>
+              </div>
+              <div class="empty">
+                <div class="empty-icon">◎</div>
+                <p>Speaker-labeled turns stream here</p>
+              </div>
+            </section>
+            <section class="panel notes-panel">
+              <div class="panel-head">
+                <h3>Current meeting</h3>
+                <span class="badge soft">AI Notes</span>
+                <div class="pill-tabs"><span class="is-on">Summary</span><span>Transcript</span></div>
+              </div>
+              <div class="empty compact">
+                <p>Notes appear when you stop</p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECORD LIVE -->
+    <section class="shot" id="record-live">
+      <header class="shot-meta">
+        <h2>Record — Live</h2>
+        <p>Live turns + speaker chips. Click chip = Mark as me. Dense but calm.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell">
+          <header class="topbar">
+            <div class="brand-inline"><span class="logo sm"></span> Notewise</div>
+            <nav class="tabs-nav">
+              <a class="is-active">Record</a>
+              <a>Library</a>
+              <a>Join</a>
+            </nav>
+            <span class="health ok">live · 2 speakers</span>
+          </header>
+          <div class="record-layout">
+            <aside class="recorder-card recording">
+              <span class="eyebrow live">Live · Local</span>
+              <p class="timer accent">04:12</p>
+              <div class="wave active"></div>
+              <p class="status">Listening…</p>
+              <p class="micro">3 chunks · 1 in flight</p>
+              <button class="btn btn-record stop">Stop recording</button>
+            </aside>
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Live transcript</h3>
+                <span class="badge live-badge">Live</span>
+                <div class="chips">
+                  <button class="chip you">You</button>
+                  <button class="chip other">Other</button>
+                </div>
+              </div>
+              <div class="turns">
+                <article class="turn you"><b>You</b><p>Let’s lock Q3 scope to the billing refactor and the mobile shell.</p></article>
+                <article class="turn other"><b>Other</b><p>Agreed — I’ll own the API contract by Friday.</p></article>
+                <article class="turn you live-turn"><b>You</b><p>Perfect. Notes will capture owners and dates.</p></article>
+              </div>
+            </section>
+            <section class="panel notes-panel">
+              <div class="panel-head">
+                <h3>Current meeting</h3>
+                <div class="pill-tabs"><span class="is-on">Summary</span><span>Transcript</span></div>
+              </div>
+              <div class="empty compact"><p>Writing after stop…</p></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOIN -->
+    <section class="shot" id="join">
+      <header class="shot-meta">
+        <h2>Join meeting — Bot</h2>
+        <p>Cross-device hero path. Call on laptop; Notewise bot joins; review notes on phone.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell">
+          <header class="topbar">
+            <div class="brand-inline"><span class="logo sm"></span> Notewise</div>
+            <nav class="tabs-nav">
+              <a>Record</a>
+              <a>Library</a>
+              <a class="is-active">Join</a>
+            </nav>
+            <span class="health ok">bot ready</span>
+          </header>
+          <div class="join-layout">
+            <div class="join-card">
+              <span class="badge soft">Recommended for Zoom · Meet · Teams</span>
+              <h1>Send Notewise to your call</h1>
+              <p class="lede">A notetaker joins as a participant. You can stay on another device — we’ll still capture clean audio and label speakers.</p>
+              <label class="field">
+                <span>Meeting link</span>
+                <input type="url" placeholder="https://meet.google.com/…" value="https://zoom.us/j/123456789" />
+              </label>
+              <div class="row">
+                <button class="btn btn-primary btn-lg">Join &amp; take notes</button>
+                <button class="btn btn-secondary">Preview bot name</button>
+              </div>
+              <ul class="checklist">
+                <li>Works when you’re on mobile and the call is on desktop</li>
+                <li>No tab audio sharing</li>
+                <li>Consent: announce the notetaker in-call</li>
+              </ul>
+            </div>
+            <aside class="join-side">
+              <h3>How it works</h3>
+              <ol>
+                <li>Paste the invite link</li>
+                <li>Bot joins and records</li>
+                <li>Notes land in Library</li>
+              </ol>
+              <div class="source-card">
+                <span class="badge">Bot</span>
+                <p>Display name: <strong>Notewise Notetaker</strong></p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="shot" id="library">
+      <header class="shot-meta">
+        <h2>Library — List + detail</h2>
+        <p>Fireflies clarity + Granola calm. One Summary panel; More menu for secondary actions.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell">
+          <header class="topbar">
+            <div class="brand-inline"><span class="logo sm"></span> Notewise</div>
+            <nav class="tabs-nav">
+              <a>Record</a>
+              <a class="is-active">Library</a>
+              <a>Join</a>
+            </nav>
+            <span class="health ok">12 meetings</span>
+          </header>
+          <div class="library-layout">
+            <aside class="lib-side">
+              <div class="lib-head">
+                <div>
+                  <h3>Past meetings</h3>
+                  <p>Search, replay, export</p>
+                </div>
+              </div>
+              <input class="search" placeholder="Search meetings…" />
+              <div class="meeting-row is-active">
+                <div class="row-top"><strong>Q3 billing sync</strong><span class="badge soft">Bot</span></div>
+                <span class="meta">Today · 28:14</span>
+                <p class="snip">Locked API contract; Alex owns Friday delivery…</p>
+              </div>
+              <div class="meeting-row">
+                <div class="row-top"><strong>Design critique</strong><span class="badge soft">Local</span></div>
+                <span class="meta">Mon · 41:02</span>
+                <p class="snip">Hero should not use inset cards…</p>
+              </div>
+              <div class="meeting-row">
+                <div class="row-top"><strong>Customer call — Acme</strong><span class="badge soft">Desktop</span></div>
+                <span class="meta">Sun · 52:40</span>
+                <p class="snip">Renewal risk if SSO slips…</p>
+              </div>
+            </aside>
+            <section class="lib-detail">
+              <header class="detail-head">
+                <div>
+                  <h1>Q3 billing sync</h1>
+                  <div class="meta-chips">
+                    <span>Today 9:41</span><span>28:14</span><span>24 turns</span><span>3 speakers</span>
+                  </div>
+                </div>
+                <div class="detail-actions">
+                  <button class="btn btn-secondary sm">Regenerate</button>
+                  <button class="btn btn-ghost icon" title="More">⋯</button>
+                </div>
+              </header>
+              <div class="player">
+                <button class="play">▶</button>
+                <div class="track"><i style="width:34%"></i></div>
+                <span>9:42</span><span>28:14</span>
+              </div>
+              <div class="pill-tabs bar"><span class="is-on">Summary</span><span>Transcript</span><span>Actions</span></div>
+              <article class="notes">
+                <p class="lede">Aligned Q3 scope to billing refactor and mobile shell; API contract due Friday.</p>
+                <h4>Key takeaways</h4>
+                <ul>
+                  <li>Billing refactor is P0; SSO can slip one sprint</li>
+                  <li>Alex owns API contract by Friday</li>
+                  <li>Notewise bot path replaces tab-capture messaging</li>
+                </ul>
+                <h4>Action items</h4>
+                <div class="action"><span class="owner">Alex</span><span>Ship OpenAPI draft</span><span class="pri high">high</span></div>
+                <div class="action"><span class="owner">Sam</span><span>Schedule design review</span><span class="pri med">medium</span></div>
+              </article>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="shot" id="settings">
+      <header class="shot-meta">
+        <h2>Settings</h2>
+        <p>Enrollment, providers (extensible), integrations. No secrets in UI — env-backed.</p>
+      </header>
+      <div class="device desktop">
+        <div class="app-shell">
+          <header class="topbar">
+            <div class="brand-inline"><span class="logo sm"></span> Notewise</div>
+            <nav class="tabs-nav">
+              <a>Record</a>
+              <a>Library</a>
+              <a>Join</a>
+            </nav>
+            <span class="health ok">settings</span>
+          </header>
+          <div class="settings-layout">
+            <aside class="settings-nav">
+              <a class="is-active">Voice</a>
+              <a>Providers</a>
+              <a>Bot</a>
+              <a>Integrations</a>
+            </aside>
+            <section class="settings-panel">
+              <h1>Voice enrollment</h1>
+              <p class="lede">Your voice profile labels <em>You</em> on local and desktop captures.</p>
+              <div class="enroll-status">
+                <div>
+                  <strong>Enrolled</strong>
+                  <p>Updated 2 days ago · WeSpeaker ECAPA</p>
+                </div>
+                <button class="btn btn-secondary sm">Re-enroll</button>
+              </div>
+              <h2>Active providers</h2>
+              <div class="provider-grid">
+                <div class="provider"><span>STT</span><strong>faster-whisper</strong><em>swappable</em></div>
+                <div class="provider"><span>LLM</span><strong>ollama / llama3.1</strong><em>swappable</em></div>
+                <div class="provider"><span>Diarization</span><strong>pyannote + embeddings</strong><em>swappable</em></div>
+                <div class="provider"><span>Meeting bot</span><strong>Recall-compatible</strong><em>swappable</em></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.querySelectorAll(".frame-toggles button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".frame-toggles button").forEach((b) => b.classList.remove("is-on"));
+        btn.classList.add("is-on");
+        const frame = btn.dataset.frame;
+        document.querySelectorAll(".device").forEach((d) => {
+          d.classList.remove("desktop", "tablet", "phone");
+          d.classList.add(frame);
+        });
+      });
+    });
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        document.querySelectorAll(".nav-link").forEach((l) => l.classList.remove("is-active"));
+        link.classList.add("is-active");
+      });
+    });
+  </script>
+</body>
+</html>

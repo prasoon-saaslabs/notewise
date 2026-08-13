@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Notewise Tab Audio",
+  "version": "0.1.0",
+  "description": "Captures Google Meet / Teams tab audio for Notewise — no screen sharing.",
+  "permissions": ["tabCapture", "offscreen", "tabs"],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "*://meet.google.com/*",
+    "*://teams.microsoft.com/*",
+    "*://teams.live.com/*",
+    "*://*.zoom.us/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["page-bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "externally_connectable": {
+    "matches": ["http://localhost/*", "http://127.0.0.1/*"]
+  }
+}

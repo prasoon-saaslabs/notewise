@@ -1,0 +1,25 @@
+{
+  "title": "1:1 with Arjun — quota week",
+  "modeId": "1-1",
+  "createdAt": "2026-08-04T09:30:00+00:00",
+  "durationSec": 1500,
+  "transcript": [
+    {"id": "L1", "speaker": "You", "kind": "you", "text": "How are the thirty open deals feeling this week?", "startMs": 5000, "endMs": 9000},
+    {"id": "L2", "speaker": "Arjun Mehta", "kind": "other", "text": "I'm dropping balls on follow-ups. Gong is too expensive. I need the objection history in the menu bar.", "startMs": 10000, "endMs": 18000},
+    {"id": "L3", "speaker": "You", "kind": "you", "text": "Let's use live copilot for repeated objections and keep a commitment ledger. I'll pair with you on the Acme thread Thursday.", "startMs": 19000, "endMs": 28000}
+  ],
+  "notes": {
+    "title": "Arjun 1:1",
+    "executiveSummary": "Arjun is overloaded across 30 deals and cannot afford Gong. Agreed to pair on Acme and use live objection hints.",
+    "takeaways": ["Need objection history during the call", "Pair on Acme Thursday"],
+    "actions": [{"text": "Pair with Arjun on Acme thread Thursday", "owner": "You", "due": "2026-08-07", "lineIds": ["L3"], "startMs": 19000}],
+    "objections": [],
+    "decisions": [{"id": "d1", "type": "decision", "text": "Use live copilot for repeated objections", "lineIds": ["L3"], "startMs": 19000}],
+    "followUpEmail": "Arjun — locking Thursday to walk the Acme objection history together.",
+    "droppedCount": 0
+  },
+  "entities": [
+    {"kind": "person", "name": "Arjun Mehta"},
+    {"kind": "company", "name": "Acme"}
+  ]
+}

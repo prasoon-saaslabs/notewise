@@ -1,0 +1,7 @@
+packages:
+  - "apps/web"
+  - "apps/website"
+  - "apps/desktop"
+  - "packages/*"
+  - "services/api"
+  # apps/mobile uses Expo — install separately: cd apps/mobile && pnpm install

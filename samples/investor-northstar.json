@@ -1,0 +1,26 @@
+{
+  "title": "Northstar Capital — seed conversation",
+  "modeId": "investor-call",
+  "createdAt": "2026-04-12T11:00:00+00:00",
+  "durationSec": 2100,
+  "transcript": [
+    {"id": "L1", "speaker": "You", "kind": "you", "text": "We're raising a two million seed to finish local-first capture and ship the relationship memory.", "startMs": 20000, "endMs": 28000},
+    {"id": "L2", "speaker": "Aisha Rahman", "kind": "other", "text": "What did that fund ask in April about retention? We care about day-seven habit, not just demo wow.", "startMs": 40000, "endMs": 48000},
+    {"id": "L3", "speaker": "You", "kind": "you", "text": "Target is forty percent day-seven repeat among activated users. Cross-meeting queries should be over three per week.", "startMs": 49000, "endMs": 58000},
+    {"id": "L4", "speaker": "Aisha Rahman", "kind": "other", "text": "We'll need a clearer path to minutes burned. If the app is free, how do we not starve the API?", "startMs": 70000, "endMs": 78000}
+  ],
+  "notes": {
+    "title": "Northstar Seed",
+    "executiveSummary": "Northstar is interested in habit metrics. They asked about April retention framing and how a free app still burns API minutes.",
+    "takeaways": ["Day-7 repeat target 40%", "Cross-meeting queries >3/week", "Minutes are the business model"],
+    "actions": [{"text": "Send cohort dashboard mock and minutes model", "owner": "You", "lineIds": ["L3"], "startMs": 49000}],
+    "objections": [{"id": "c1", "type": "objection", "text": "How does a free app not starve the API?", "lineIds": ["L4"], "startMs": 70000}],
+    "decisions": [],
+    "followUpEmail": "Aisha — attaching the day-7 metric definition and the minutes model we walked through.",
+    "droppedCount": 0
+  },
+  "entities": [
+    {"kind": "company", "name": "Northstar"},
+    {"kind": "person", "name": "Aisha Rahman", "company": "Northstar Capital"}
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Notewise",
+    "slug": "notewise",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.notewise.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Notewise records meeting audio for notes."
+      }
+    },
+    "android": {
+      "package": "com.notewise.app",
+      "permissions": ["RECORD_AUDIO"]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+# Capability registry (models as config — not hardcoded in extractors)
+stt:
+  id: pyai-hear
+  path: /audio/transcriptions
+  stream: /audio/transcriptions/stream
+llm:
+  id: pyai-recap
+  path: /recap/calls
+tts:
+  id: pyai-cast
+  path: /audio/speech
+clone:
+  id: pyai-clone
+  path: /audio/voices
+trace:
+  id: pyai-trace
+  path: /trace/calls
+embed:
+  id: local-hashing
+  dim: 128
+  note: Offline default so /ask works without a cloud embed endpoint
+modes_dir: ../modes
+harness:
+  gates: [schema, line_ids, verifier]
+  exits: [shipped, partial, failed, deadline]
+  max_retries: 3
