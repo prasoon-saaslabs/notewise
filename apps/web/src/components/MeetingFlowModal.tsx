@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@notewise/ui";
 import { Mic, Sparkles, X } from "lucide-react";
 import type { CalendarEventPrep } from "@notewise/api-client";
@@ -21,7 +20,8 @@ export function MeetingFlowModal({
 
   useEffect(() => {
     if (!modal) return;
-    const prepNotes = modal.event.prep?.manualNotes || modal.event.manualNotes || "";
+    const prepNotes =
+      modal.event.prep?.manualNotes || modal.event.manualNotes || "";
     setNotes(prepNotes);
   }, [modal]);
 
@@ -79,8 +79,8 @@ export function MeetingFlowModal({
 
         {isReminder ? (
           <p className="m-0 mb-3 text-xs text-[var(--nw-ink-3)]">
-            Open the full prep brief to review people context, past notes, and add your own before the
-            call starts.
+            Open the full prep brief to review people context, past notes, and
+            add your own before the call starts.
           </p>
         ) : (
           <label className="block">
@@ -104,7 +104,9 @@ export function MeetingFlowModal({
           {ev.meetUrl ? (
             <Button
               variant="ghost"
-              onClick={() => window.open(ev.meetUrl!, "_blank", "noopener,noreferrer")}
+              onClick={() =>
+                window.open(ev.meetUrl!, "_blank", "noopener,noreferrer")
+              }
             >
               Join call
             </Button>

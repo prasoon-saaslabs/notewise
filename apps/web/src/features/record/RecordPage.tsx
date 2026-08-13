@@ -80,7 +80,6 @@ export function RecordPage() {
     setUserNotesDraft,
     applyMeetingTranscript,
     openMiniSurface,
-    start,
   } = useCaptureSession();
 
   const enrollment = useQuery({

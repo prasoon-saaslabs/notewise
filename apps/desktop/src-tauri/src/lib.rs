@@ -2,12 +2,17 @@
 
 mod audio;
 mod gateway;
+mod permissions;
 
 use audio::{
     capture_meters, is_capturing, list_capture_devices, set_capturing, start_system_audio_capture,
     stop_system_audio_capture,
 };
 use gateway::{gateway_status, has_pyai_api_key, save_pyai_api_key, start_gateway, stop_gateway};
+use permissions::{
+    check_microphone_permission, check_screen_recording_permission, open_system_settings,
+    request_microphone_permission, request_screen_recording_permission,
+};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -46,6 +51,11 @@ pub fn run() {
             gateway_status,
             save_pyai_api_key,
             has_pyai_api_key,
+            check_microphone_permission,
+            request_microphone_permission,
+            check_screen_recording_permission,
+            request_screen_recording_permission,
+            open_system_settings,
         ])
         .setup(|app| {
             if let Err(err) = start_gateway(&app.handle()) {

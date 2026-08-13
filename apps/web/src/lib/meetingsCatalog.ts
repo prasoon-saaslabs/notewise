@@ -39,8 +39,7 @@ function client(url: string) {
 
 export function apiBaseForBackend(backend: MeetingBackend): string {
   if (isDesktopPyaiOnly()) return PYAI_URL;
-  const NEST_URL = "http://127.0.0.1:3001";
-  return backend === "pyai" ? PYAI_URL : NEST_URL;
+  return backend === "pyai" ? PYAI_URL : "http://127.0.0.1:3001";
 }
 
 export function clientForBackend(backend: MeetingBackend) {
@@ -190,7 +189,6 @@ export async function getCatalogMeeting(
     return { ...meeting, backend: "pyai" };
   }
 
-  const NEST_URL = "http://127.0.0.1:3001";
   const order: MeetingBackend[] = backendHint
     ? [backendHint, backendHint === "pyai" ? "nest" : "pyai"]
     : ["pyai", "nest"];
