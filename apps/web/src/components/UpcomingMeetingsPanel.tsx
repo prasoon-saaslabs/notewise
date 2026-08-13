@@ -23,7 +23,7 @@ export function UpcomingMeetingsPanel() {
 
   if (!user) {
     return (
-      <aside className="rounded-2xl border border-dashed border-[var(--nw-border)] bg-[rgb(248_250_252)] px-4 py-3 text-sm text-[var(--nw-ink-3)]">
+      <aside className="rounded-2xl border border-dashed border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-4 py-3 text-sm text-[var(--nw-ink-3)]">
         <Link to="/login" className="font-semibold text-[var(--nw-accent-dark)] underline">
           Sign in
         </Link>{" "}
@@ -34,7 +34,7 @@ export function UpcomingMeetingsPanel() {
 
   if (!user.calendarConnected) {
     return (
-      <aside className="rounded-2xl border border-[var(--nw-border)] bg-white px-4 py-3 text-sm text-[var(--nw-ink-3)]">
+      <aside className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3 text-sm text-[var(--nw-ink-3)]">
         Guest mode — connect Google for upcoming-call prep and brain context.
       </aside>
     );
@@ -44,7 +44,7 @@ export function UpcomingMeetingsPanel() {
 
   if (!next) {
     return (
-      <aside className="rounded-2xl border border-[var(--nw-border)] bg-white px-4 py-3 text-xs text-[var(--nw-ink-4)]">
+      <aside className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3 text-xs text-[var(--nw-ink-4)]">
         No upcoming meetings.{" "}
         <Link to="/upcoming" className="font-semibold text-[var(--nw-accent-dark)] underline">
           View calendar
@@ -54,7 +54,7 @@ export function UpcomingMeetingsPanel() {
   }
 
   return (
-    <aside className="rounded-2xl border border-[var(--nw-border)] bg-white p-3">
+    <aside className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-3">
       <div className="mb-2 flex items-center gap-2">
         <Sparkles className="h-3.5 w-3.5 text-[var(--nw-accent-dark)]" />
         <h3 className="m-0 flex-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
@@ -76,7 +76,7 @@ function NextMeetingCard({ event }: { event: CalendarEventSummary }) {
   const mins = minsUntil(event.startAt);
 
   return (
-    <div className="rounded-xl border border-[var(--nw-border)] bg-[rgb(248_250_252)] px-3 py-2.5">
+    <div className="rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-3 py-2.5">
       <p className="m-0 text-sm font-semibold text-[var(--nw-ink)]">{event.title}</p>
       <p className="m-0 mt-0.5 flex items-center gap-1 text-xs text-[var(--nw-ink-3)]">
         <Calendar className="h-3 w-3" />

@@ -19,8 +19,8 @@ export function ConsentModal() {
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[rgb(15_23_42_/_0.45)] p-4">
-      <div className="max-w-md rounded-2xl bg-white p-5 ring-1 ring-[var(--nw-border)]">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[var(--nw-modal-backdrop)] p-4">
+      <div className="max-w-md rounded-2xl bg-[var(--nw-surface-solid)] p-5 ring-1 ring-[var(--nw-border)]">
         <h2 className="m-0 text-lg font-bold text-[var(--nw-ink)]">Recording consent</h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--nw-ink-2)]">
           Notewise records microphone and (on desktop) system audio. Laws differ: some places

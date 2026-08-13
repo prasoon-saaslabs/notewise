@@ -173,7 +173,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
   if (phase === "permissions") {
     return (
       <div className="grid h-full place-items-center bg-[var(--nw-paper)] p-6">
-        <div className="w-full max-w-md rounded-3xl border border-[var(--nw-border)] bg-white p-6 shadow-xl">
+        <div className="w-full max-w-md rounded-3xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-6 shadow-xl">
           <div className="mb-4 flex items-center gap-2 text-[var(--nw-accent-dark)]">
             <Mic className="h-5 w-5" />
             <h1 className="m-0 text-lg font-bold text-[var(--nw-ink)]">Allow microphone access</h1>
@@ -276,7 +276,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="grid h-full place-items-center bg-[var(--nw-paper)] p-6">
-      <div className="w-full max-w-md rounded-3xl border border-[var(--nw-border)] bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-3xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-6 shadow-xl">
         <div className="mb-4 flex items-center gap-2 text-[var(--nw-accent-dark)]">
           <Sparkles className="h-5 w-5" />
           <h1 className="m-0 text-lg font-bold text-[var(--nw-ink)]">Welcome to Notewise</h1>

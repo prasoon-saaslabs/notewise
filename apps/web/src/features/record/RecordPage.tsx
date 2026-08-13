@@ -116,7 +116,7 @@ export function RecordPage() {
       <div className="nw-capture-glow pointer-events-none absolute inset-0" aria-hidden />
 
       {/* Control strip: status left, actions flush right (stacks only on narrow phones) */}
-      <header className="nw-capture-toolbar relative z-10 border-b border-[rgb(255_255_255_/_0.45)] bg-[rgb(255_255_255_/_0.42)] px-3 py-2.5 backdrop-blur-md sm:px-4 md:px-5 md:py-3">
+      <header className="nw-capture-toolbar relative z-10 border-b border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] px-3 py-2.5 backdrop-blur-md sm:px-4 md:px-5 md:py-3">
         <div className="nw-capture-status flex min-w-0 items-center gap-2.5 sm:gap-3">
           <button
             type="button"
@@ -139,27 +139,27 @@ export function RecordPage() {
                 {formatTimer(elapsed)}
               </p>
               {recording ? (
-                <span className="nw-live-pill inline-flex items-center gap-1.5 rounded-full bg-[rgb(220_38_38_/_0.1)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[rgb(185_28_28)]">
+                <span className="nw-live-pill inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] bg-[rgb(220_38_38_/_0.1)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[rgb(185_28_28)]">
                   <span className="nw-pulse-dot !bg-[rgb(220_38_38)]" />
                   Live
                 </span>
               ) : paused ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--nw-accent-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-accent-dark)]">
+                <span className="inline-flex items-center gap-1 rounded-[var(--nw-radius-pill)] bg-[var(--nw-accent-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-accent-dark)]">
                   <Pause className="h-3 w-3" />
                   Paused
                 </span>
               ) : phase === "ready" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--nw-success-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-success)]">
+                <span className="inline-flex items-center gap-1 rounded-[var(--nw-radius-pill)] bg-[var(--nw-success-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-success)]">
                   <Sparkles className="h-3 w-3" />
                   Ready
                 </span>
               ) : processing ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--nw-accent-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-accent-dark)]">
+                <span className="inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] bg-[var(--nw-accent-soft)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-accent-dark)]">
                   <span className="nw-pulse-dot" />
                   Processing
                 </span>
               ) : null}
-              <span className="hidden rounded-full bg-[var(--nw-surface-2)] px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-[var(--nw-ink-3)] sm:inline">
+              <span className="hidden rounded-[var(--nw-radius-pill)] bg-[var(--nw-surface-2)] px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-[var(--nw-ink-3)] sm:inline">
                 {pyai ? "PyAI" : "Whisper"}
               </span>
             </div>
@@ -215,7 +215,7 @@ export function RecordPage() {
           >
             {busy && !sessionLive ? (
               <>
-                <span className="nw-pulse-dot !bg-white" />
+                <span className="nw-pulse-dot !bg-[var(--nw-surface-solid)]" />
                 <span>Working…</span>
               </>
             ) : sessionLive ? (
@@ -269,15 +269,15 @@ export function RecordPage() {
             return (
               <div
                 key={step.id}
-                className={`nw-capture-phase inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold ${
+                className={`nw-capture-phase inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] px-2.5 py-1 text-[0.68rem] font-semibold ${
                   active
                     ? "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
                     : done
                       ? "bg-[var(--nw-success-soft)] text-[var(--nw-success)]"
-                      : "bg-white text-[var(--nw-ink-4)]"
+                      : "bg-[var(--nw-surface-solid)] text-[var(--nw-ink-4)]"
                 }`}
               >
-                <span className="grid h-4 w-4 place-items-center rounded-full bg-white/80 text-[0.55rem] font-bold">
+                <span className="grid h-4 w-4 place-items-center rounded-full bg-[var(--nw-glass-bg-strong)] text-[0.55rem] font-bold">
                   {done && !active ? "✓" : i + 1}
                 </span>
                 {step.label}
@@ -293,7 +293,7 @@ export function RecordPage() {
           className="nw-empty-transcript relative z-10 mx-4 mt-3 md:mx-5"
           role="status"
         >
-          <div className="flex items-start gap-3 rounded-2xl border border-[rgb(14_116_144_/_0.18)] bg-[linear-gradient(135deg,#f0fdfa_0%,#fff_55%,#f8fafc_100%)] px-4 py-4 shadow-[0_8px_24px_rgb(15_23_42_/_0.04)]">
+          <div className="flex items-start gap-3 rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.18)] nw-cta-gradient px-4 py-4 shadow-[0_8px_24px_rgb(15_23_42_/_0.04)]">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]">
               <Headphones className="h-5 w-5" />
             </span>
@@ -448,12 +448,9 @@ export function RecordPage() {
                 })}
                 {interim ? (
                   <article className="nw-caption-interim pt-3">
-                    <div className="mb-1 flex items-center gap-2">
-                      <SpeakerChip label="You" kind="you" />
-                      <span className="nw-pulse-dot" />
-                    </div>
-                    <p className="m-0 text-[0.95rem] italic leading-[1.55] text-[var(--nw-ink-3)]">
-                      {interim}
+                    <p className="m-0 flex items-start gap-2 text-[0.95rem] italic leading-[1.55] text-[var(--nw-ink-3)]">
+                      <span className="nw-pulse-dot mt-2 shrink-0" aria-hidden />
+                      <span>{interim}</span>
                     </p>
                   </article>
                 ) : null}
@@ -463,7 +460,7 @@ export function RecordPage() {
         </section>
 
         {/* Notes — Margin-style notepad */}
-        <section className="nw-capture-notes flex min-h-0 flex-col bg-[linear-gradient(180deg,#fbfdff_0%,#f8fafc_100%)]">
+        <section className="nw-capture-notes flex min-h-0 flex-col nw-surface-gradient">
           <div className="px-4 pt-3 md:px-5">
             <UpcomingMeetingsPanel />
           </div>
@@ -501,7 +498,7 @@ export function RecordPage() {
                       Your scratchpad
                     </span>
                     <textarea
-                      className="nw-capture-pad w-full resize-none rounded-2xl border border-[rgb(217_119_6_/_0.2)] bg-[rgb(255_251_235_/_0.65)] px-3.5 py-3 text-sm leading-relaxed text-[var(--nw-ink)] outline-none transition"
+                      className="nw-capture-pad w-full resize-none rounded-2xl border px-3.5 py-3 text-sm leading-relaxed text-[var(--nw-ink)] outline-none transition"
                       rows={sessionLive ? 8 : 5}
                       placeholder="pricing pushback?? · follow up Tuesday · send proposal…"
                       value={userNotes}
@@ -514,7 +511,7 @@ export function RecordPage() {
                 {notes ? (
                   <div className="nw-capture-intel flex flex-col gap-3">
                     {userNotes.trim() ? (
-                      <div className="rounded-2xl border border-[rgb(217_119_6_/_0.18)] bg-[rgb(255_251_235_/_0.5)] p-3.5">
+                      <div className="nw-scratch-box rounded-2xl border p-3.5">
                         <p className="mb-1.5 mt-0 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[rgb(180_83_9)]">
                           Your notes
                         </p>
@@ -524,7 +521,7 @@ export function RecordPage() {
                       </div>
                     ) : null}
 
-                    <div className="rounded-2xl border border-[rgb(14_116_144_/_0.16)] bg-gradient-to-br from-[rgb(14_116_144_/_0.08)] via-white to-white p-3.5 shadow-[0_1px_0_rgb(15_23_42_/_0.03)]">
+                    <div className="rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.16)] bg-gradient-to-br from-[rgb(var(--nw-accent-rgb)_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] p-3.5 shadow-[0_1px_0_var(--nw-glass-shadow)]">
                       <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-accent-dark)]">
                         <Sparkles className="h-3.5 w-3.5" />
                         Summary
@@ -544,7 +541,7 @@ export function RecordPage() {
                       )}
                     </div>
 
-                    <div className="rounded-2xl border border-[rgb(225_29_72_/_0.14)] bg-gradient-to-br from-[rgb(225_29_72_/_0.06)] via-white to-white p-3.5">
+                    <div className="rounded-2xl border border-[rgb(225_29_72_/_0.14)] bg-gradient-to-br from-[rgb(225_29_72_/_0.06)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] p-3.5">
                       <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[rgb(190_18_60)]">
                         <CheckSquare className="h-3.5 w-3.5" />
                         Action items
@@ -571,7 +568,7 @@ export function RecordPage() {
                     </div>
 
                     {(notes.objections ?? []).length > 0 ? (
-                      <div className="rounded-2xl border border-[rgb(225_29_72_/_0.14)] bg-white/80 p-3.5">
+                      <div className="rounded-2xl border border-[rgb(225_29_72_/_0.14)] bg-[var(--nw-glass-bg-strong)] p-3.5">
                         <p className="mb-2 mt-0 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[rgb(190_18_60)]">
                           Objections
                         </p>
@@ -594,7 +591,7 @@ export function RecordPage() {
                     ) : null}
 
                     {(notes.takeaways ?? []).length > 0 ? (
-                      <div className="rounded-2xl border border-[var(--nw-border)] bg-white/80 p-3.5">
+                      <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-glass-bg-strong)] p-3.5">
                         <p className="mb-2 mt-0 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-3)]">
                           Takeaways
                         </p>
@@ -614,10 +611,10 @@ export function RecordPage() {
                     {meetingId ? (
                       <Link
                         to={`/library/${meetingId}`}
-                        className="nw-library-cta group relative mt-1 flex overflow-hidden rounded-2xl border border-[rgb(13_148_136_/_0.28)] bg-[rgb(13_148_136_/_0.1)] px-4 py-3.5 backdrop-blur-md shadow-[0_4px_20px_rgb(13_148_136_/_0.08)] transition hover:border-[rgb(13_148_136_/_0.4)] hover:bg-[rgb(13_148_136_/_0.16)]"
+                        className="nw-library-cta group relative mt-1 flex overflow-hidden rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.28)] bg-[rgb(var(--nw-accent-rgb)_/_0.1)] px-4 py-3.5 backdrop-blur-md shadow-[0_4px_20px_rgb(var(--nw-accent-rgb)_/_0.08)] transition hover:border-[rgb(var(--nw-accent-rgb)_/_0.4)] hover:bg-[rgb(var(--nw-accent-rgb)_/_0.16)]"
                       >
                         <div className="flex w-full items-center gap-3">
-                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgb(13_148_136_/_0.2)] bg-[rgb(255_255_255_/_0.55)] text-[var(--nw-accent-dark)] backdrop-blur-sm">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgb(var(--nw-accent-rgb)_/_0.2)] bg-[var(--nw-glass-bg-strong)] text-[var(--nw-accent-dark)] backdrop-blur-sm">
                             <Sparkles className="h-5 w-5" />
                           </span>
                           <div className="min-w-0 flex-1 text-left">

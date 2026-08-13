@@ -10,10 +10,10 @@ export type SpeakerChipProps = {
 export function SpeakerChip({ label, kind = "other", className, live }: SpeakerChipProps) {
   const tone =
     kind === "you"
-      ? "bg-[rgb(13_148_136_/_0.12)] text-[var(--nw-accent-dark)] border-[rgb(13_148_136_/_0.22)] backdrop-blur-sm"
+      ? "bg-[rgb(var(--nw-accent-rgb)_/_0.12)] text-[var(--nw-accent-dark)] border-[rgb(var(--nw-accent-rgb)_/_0.22)] backdrop-blur-sm"
       : kind === "guest"
-        ? "bg-[rgb(255_247_237_/_0.7)] text-[#c2410c] border-[#fed7aa] backdrop-blur-sm"
-        : "bg-[rgb(255_255_255_/_0.45)] text-[var(--nw-ink-2)] border-[rgb(255_255_255_/_0.62)] backdrop-blur-sm";
+        ? "bg-[var(--nw-guest-bg)] text-[var(--nw-guest-text)] border-[var(--nw-guest-border)] backdrop-blur-sm"
+        : "bg-[var(--nw-glass-bg)] text-[var(--nw-ink-2)] border-[var(--nw-glass-border)] backdrop-blur-sm";
 
   return (
     <span

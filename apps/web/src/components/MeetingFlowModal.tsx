@@ -34,9 +34,9 @@ export function MeetingFlowModal({
     : `Meeting starting · ${ev.title}`;
 
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-center bg-[rgb(15_23_42_/_0.45)] p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[80] grid place-items-center bg-[var(--nw-modal-backdrop)] p-4 backdrop-blur-sm">
       <div
-        className="relative w-full max-w-lg rounded-3xl border border-[var(--nw-border)] bg-white p-5 shadow-2xl"
+        className="relative w-full max-w-lg rounded-3xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-5 shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="meeting-flow-title"

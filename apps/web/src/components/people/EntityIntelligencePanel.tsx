@@ -168,7 +168,7 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
                 type="button"
                 disabled={quickBusy}
                 onClick={() => void runQuickAsk(q)}
-                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] transition hover:bg-[var(--nw-accent-soft)] hover:text-[var(--nw-accent-dark)] disabled:opacity-60"
+                className="rounded-full bg-[var(--nw-surface-solid)] px-3 py-1.5 text-xs font-semibold text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] transition hover:bg-[var(--nw-accent-soft)] hover:text-[var(--nw-accent-dark)] disabled:opacity-60"
               >
                 <MessageCircleQuestion className="mr-1 inline h-3 w-3" />
                 {q}
@@ -198,7 +198,7 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
               <li key={m.id}>
                 <Link
                   to={`/library/${m.id}`}
-                  className="nw-intel-card block rounded-2xl border border-[var(--nw-border)] bg-white px-4 py-3 transition hover:border-[var(--nw-accent)]"
+                  className="nw-intel-card block rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3 transition hover:border-[var(--nw-accent)]"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

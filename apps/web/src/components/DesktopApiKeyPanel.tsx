@@ -36,7 +36,7 @@ export function DesktopApiKeyPanel() {
         <KeyRound className="h-3.5 w-3.5" />
         PyAI API key
       </h3>
-      <div className="rounded-2xl border border-[var(--nw-border)] bg-white p-4">
+      <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4">
         <p className="m-0 text-xs text-[var(--nw-ink-3)]">
           Stored in Application Support on this Mac. Required for transcription and AI notes.
         </p>

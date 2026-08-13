@@ -35,7 +35,7 @@ export function EntityListRail({
   );
 
   return (
-    <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-white md:w-72 lg:w-80">
+    <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] md:w-72 lg:w-80">
       <div className="border-b border-[var(--nw-border)] p-3">
         <h2 className="m-0 text-sm font-bold text-[var(--nw-ink)]">Relationships</h2>
         <p className="m-0 mt-0.5 text-[0.65rem] text-[var(--nw-ink-4)]">
@@ -44,7 +44,7 @@ export function EntityListRail({
         <label className="relative mt-2 block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--nw-ink-4)]" />
           <input
-            className="w-full rounded-xl border border-[var(--nw-border)] bg-[rgb(248_250_252)] py-2 pl-8 pr-3 text-xs outline-none focus:border-[var(--nw-accent)]"
+            className="w-full rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] py-2 pl-8 pr-3 text-xs outline-none focus:border-[var(--nw-accent)]"
             placeholder="Search people & companies"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -65,7 +65,7 @@ export function EntityListRail({
                 to={`/people/${e.id}`}
                 className={`mb-1 block rounded-xl px-2.5 py-2 transition ${
                   active
-                    ? "bg-[linear-gradient(135deg,rgb(14_116_144_/_0.12)_0%,rgb(14_165_233_/_0.08)_100%)] ring-1 ring-[rgb(14_116_144_/_0.2)]"
+                    ? "bg-[linear-gradient(135deg,rgb(var(--nw-accent-rgb)_/_0.12)_0%,rgb(14_165_233_/_0.08)_100%)] ring-1 ring-[rgb(var(--nw-accent-rgb)_/_0.2)]"
                     : "hover:bg-[var(--nw-surface-2)]"
                 }`}
               >
@@ -88,7 +88,7 @@ export function EntityListRail({
                         {e.kind}
                       </span>
                       {meetings > 0 ? (
-                        <span className="rounded-full bg-white px-1.5 py-px text-[0.58rem] font-semibold text-[var(--nw-ink-3)] ring-1 ring-[var(--nw-border)]">
+                        <span className="rounded-full bg-[var(--nw-surface-solid)] px-1.5 py-px text-[0.58rem] font-semibold text-[var(--nw-ink-3)] ring-1 ring-[var(--nw-border)]">
                           {meetings} mtg{meetings === 1 ? "" : "s"}
                         </span>
                       ) : null}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
@@ -45,7 +46,7 @@ function BackendTag({ backend }: { backend?: MeetingBackend | string | null }) {
     <span
       className={`nw-chip-pop shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide ${
         pyai
-          ? "bg-[rgb(14_116_144_/_0.14)] text-[var(--nw-accent-dark)] ring-1 ring-[rgb(14_116_144_/_0.2)]"
+          ? "bg-[rgb(var(--nw-accent-rgb)_/_0.14)] text-[var(--nw-accent-dark)] ring-1 ring-[rgb(var(--nw-accent-rgb)_/_0.2)]"
           : "bg-[rgb(100_116_139_/_0.1)] text-[var(--nw-ink-3)] ring-1 ring-[rgb(100_116_139_/_0.15)]"
       }`}
       title={pyai ? "Captured via PyAI gateway" : "Captured via Nest + ai-worker"}
@@ -93,14 +94,14 @@ function SectionCard({
   empty?: boolean;
 }) {
   const accents: Record<string, string> = {
-    teal: "from-[rgb(14_116_144_/_0.12)] via-white to-white border-[rgb(14_116_144_/_0.18)]",
-    amber: "from-[rgb(217_119_6_/_0.1)] via-white to-white border-[rgb(217_119_6_/_0.2)]",
-    rose: "from-[rgb(225_29_72_/_0.08)] via-white to-white border-[rgb(225_29_72_/_0.16)]",
-    slate: "from-[rgb(100_116_139_/_0.08)] via-white to-white border-[var(--nw-border)]",
-    violet: "from-[rgb(79_70_229_/_0.08)] via-white to-white border-[rgb(79_70_229_/_0.16)]",
+    teal: "from-[rgb(var(--nw-accent-rgb)_/_0.12)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(var(--nw-accent-rgb)_/_0.18)]",
+    amber: "from-[rgb(217_119_6_/_0.1)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(217_119_6_/_0.2)]",
+    rose: "from-[rgb(225_29_72_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(225_29_72_/_0.16)]",
+    slate: "from-[rgb(100_116_139_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[var(--nw-border)]",
+    violet: "from-[rgb(79_70_229_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(79_70_229_/_0.16)]",
   };
   const iconBg: Record<string, string> = {
-    teal: "bg-[rgb(14_116_144_/_0.12)] text-[var(--nw-accent-dark)]",
+    teal: "bg-[rgb(var(--nw-accent-rgb)_/_0.12)] text-[var(--nw-accent-dark)]",
     amber: "bg-[rgb(217_119_6_/_0.12)] text-[rgb(180_83_9)]",
     rose: "bg-[rgb(225_29_72_/_0.1)] text-[rgb(190_18_60)]",
     slate: "bg-[var(--nw-surface-2)] text-[var(--nw-ink-3)]",
@@ -211,7 +212,7 @@ function NotesIntelligence({
             {actions.map((a, i) => (
               <li
                 key={`${a.text}-${i}`}
-                className="nw-action-row flex items-start gap-3 rounded-xl border border-[rgb(225_29_72_/_0.12)] bg-white/80 px-3 py-2.5"
+                className="nw-action-row flex items-start gap-3 rounded-xl border border-[rgb(225_29_72_/_0.12)] bg-[var(--nw-glass-bg-strong)] px-3 py-2.5"
               >
                 <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md bg-[rgb(225_29_72_/_0.1)] text-[0.65rem] font-bold text-[rgb(190_18_60)]">
                   {i + 1}
@@ -220,13 +221,13 @@ function NotesIntelligence({
                   <p className="m-0 text-sm font-medium leading-snug text-[var(--nw-ink)]">{a.text}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {a.owner ? (
-                      <span className="rounded-full bg-[rgb(14_116_144_/_0.1)] px-2 py-0.5 text-[0.6rem] font-bold uppercase text-[var(--nw-accent-dark)]">
+                      <span className="rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.1)] px-2 py-0.5 text-[0.6rem] font-bold uppercase text-[var(--nw-accent-dark)]">
                         {a.owner}
                       </span>
                     ) : null}
                     <button
                       type="button"
-                      className="rounded-full bg-[rgb(14_116_144_/_0.12)] px-1.5 py-0.5 text-[0.6rem] font-bold text-[var(--nw-accent-dark)]"
+                      className="rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.12)] px-1.5 py-0.5 text-[0.6rem] font-bold text-[var(--nw-accent-dark)]"
                       onClick={() => onJump?.(a.lineIds?.[0], a.startMs)}
                     >
                       receipt
@@ -264,7 +265,7 @@ function NotesIntelligence({
         <SectionCard icon={<FileText className="h-4 w-4" />} title="Open questions" accent="slate" delay={200}>
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
             {questions.map((q) => (
-              <li key={q} className="rounded-lg bg-white/70 px-3 py-2 text-sm text-[var(--nw-ink-2)]">
+              <li key={q} className="rounded-lg bg-[var(--nw-glass-bg)] px-3 py-2 text-sm text-[var(--nw-ink-2)]">
                 {q}
               </li>
             ))}
@@ -290,6 +291,7 @@ export function LibraryPage() {
   const [titleDraft, setTitleDraft] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [q, setQ] = useState("");
@@ -338,6 +340,7 @@ export function LibraryPage() {
   const remove = useMutation({
     mutationFn: (mid: string) => clientForBackend(meetingBackend).deleteMeeting(mid),
     onSuccess: () => {
+      setDeleteOpen(false);
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
       navigate("/library");
     },
@@ -504,8 +507,8 @@ export function LibraryPage() {
                 to={`/library/${m.id}`}
                 className={`nw-meeting-row mb-1.5 block rounded-xl border px-3 py-2.5 transition ${
                   m.id === selectedId
-                    ? "border-[rgb(14_116_144_/_0.3)] bg-white shadow-[0_8px_24px_rgb(14_116_144_/_0.08)]"
-                    : "border-transparent bg-white/40 hover:border-[var(--nw-border)] hover:bg-white"
+                    ? "border-[rgb(var(--nw-accent-rgb)_/_0.3)] bg-[var(--nw-surface-solid)] shadow-[0_8px_24px_rgb(var(--nw-accent-rgb)_/_0.08)]"
+                    : "border-transparent bg-[var(--nw-glass-bg)] hover:border-[var(--nw-border)] hover:bg-[var(--nw-surface-solid)]"
                 }`}
                 style={{ animationDelay: `${i * 35}ms` }}
               >
@@ -527,7 +530,7 @@ export function LibraryPage() {
         </div>
       </aside>
 
-      <section className="flex min-h-0 flex-col bg-[linear-gradient(180deg,#fff_0%,#f8fafc_100%)]">
+      <section className="flex min-h-0 flex-col nw-surface-gradient">
         {!meeting ? (
           <EmptyState title="Select a meeting" description="Pick one from the list." />
         ) : (
@@ -555,7 +558,7 @@ export function LibraryPage() {
                       onKeyDown={(e) => {
                         if (e.key === "Escape") setEditingTitle(false);
                       }}
-                      className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-white px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
+                      className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
                       aria-label="Meeting title"
                     />
                     <Button size="sm" type="submit" disabled={rename.isPending || !titleDraft.trim()}>
@@ -586,7 +589,7 @@ export function LibraryPage() {
                     .map((chip) => (
                       <span
                         key={String(chip)}
-                        className="rounded-full border border-[var(--nw-border)] bg-white px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--nw-ink-3)]"
+                        className="rounded-full border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--nw-ink-3)]"
                       >
                         {chip}
                       </span>
@@ -606,7 +609,7 @@ export function LibraryPage() {
                   <p className="m-0 mt-1 max-w-prose text-xs text-[var(--nw-ink-3)]">{meeting.botMessage}</p>
                 ) : null}
               </div>
-              <div className="nw-library-toolbar relative flex shrink-0 items-center gap-0.5 rounded-2xl border border-[var(--nw-border)] bg-white p-1 shadow-sm">
+              <div className="nw-library-toolbar relative flex shrink-0 items-center gap-0.5 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-1 shadow-sm">
                 {meeting.source === "bot" &&
                 (meeting.status === "bot_joining" || meeting.status === "bot_live") ? (
                   <button
@@ -651,10 +654,10 @@ export function LibraryPage() {
                         aria-label="Close download menu"
                         onClick={() => setDownloadOpen(false)}
                       />
-                      <div className="absolute right-0 z-20 mt-1 min-w-[148px] overflow-hidden rounded-xl border border-[var(--nw-border)] bg-white py-1 shadow-lg">
+                      <div className="absolute right-0 z-20 mt-1 min-w-[148px] overflow-hidden rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] py-1 shadow-lg">
                         <button
                           type="button"
-                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[rgb(248_250_252)]"
+                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
                             void api.exportMeetingMd(meeting.id).then((md) => {
                               const blob = new Blob([md], { type: "text/markdown" });
@@ -670,7 +673,7 @@ export function LibraryPage() {
                         </button>
                         <button
                           type="button"
-                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[rgb(248_250_252)]"
+                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
                             void api.exportMeetingJson(meeting.id).then((data) => {
                               const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -688,7 +691,7 @@ export function LibraryPage() {
                         </button>
                         <button
                           type="button"
-                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[rgb(248_250_252)]"
+                          className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
                             void api.exportMeetingHtml(meeting.id).then((html) => {
                               const blob = new Blob([html], { type: "text/html" });
@@ -720,11 +723,7 @@ export function LibraryPage() {
                   type="button"
                   className="nw-library-tool danger inline-flex h-9 w-9 items-center justify-center rounded-xl"
                   title="Delete meeting"
-                  onClick={() => {
-                    if (window.confirm("Delete this meeting permanently?")) {
-                      remove.mutate(meeting.id);
-                    }
-                  }}
+                  onClick={() => setDeleteOpen(true)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -757,20 +756,27 @@ export function LibraryPage() {
               ) : null}
             </div>
 
-            {editOpen ? (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgb(15_23_42_/_0.45)] p-4">
-                <div
-                  className="w-full max-w-lg rounded-2xl border border-[var(--nw-border)] bg-white p-5 shadow-xl"
-                  role="dialog"
-                  aria-labelledby="edit-meeting-title"
-                >
+            {editOpen
+              ? createPortal(
+                  <div
+                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
+                    role="presentation"
+                    onClick={() => setEditOpen(false)}
+                  >
+                    <div
+                      className="nw-modal-dialog w-full max-w-lg rounded-2xl p-5"
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="edit-meeting-title"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                   <div className="mb-4 flex items-center justify-between gap-2">
                     <h3 id="edit-meeting-title" className="m-0 text-base font-semibold text-[var(--nw-ink)]">
                       Edit meeting
                     </h3>
                     <button
                       type="button"
-                      className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[rgb(248_250_252)]"
+                      className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
                       onClick={() => setEditOpen(false)}
                       aria-label="Close"
                     >
@@ -820,12 +826,94 @@ export function LibraryPage() {
                       </Button>
                     </div>
                   </form>
-                </div>
-              </div>
-            ) : null}
+                    </div>
+                  </div>,
+                  document.body,
+                )
+              : null}
+
+            {deleteOpen
+              ? createPortal(
+                  <div
+                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
+                    role="presentation"
+                    onClick={() => !remove.isPending && setDeleteOpen(false)}
+                  >
+                    <div
+                      className="nw-modal-dialog w-full max-w-md rounded-2xl p-5"
+                      role="alertdialog"
+                      aria-modal="true"
+                      aria-labelledby="delete-meeting-title"
+                      aria-describedby="delete-meeting-desc"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--nw-danger-soft)] text-[var(--nw-danger)]">
+                            <Trash2 className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0">
+                            <h3
+                              id="delete-meeting-title"
+                              className="m-0 text-base font-semibold text-[var(--nw-ink)]"
+                            >
+                              Delete meeting?
+                            </h3>
+                            <p
+                              id="delete-meeting-desc"
+                              className="m-0 mt-1 text-sm leading-relaxed text-[var(--nw-ink-3)]"
+                            >
+                              This permanently removes{" "}
+                              <span className="font-medium text-[var(--nw-ink-2)]">
+                                {meeting.title || displayMeetingTitle(meeting)}
+                              </span>
+                              , including its transcript, notes, and audio. This cannot be undone.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
+                          onClick={() => setDeleteOpen(false)}
+                          disabled={remove.isPending}
+                          aria-label="Close"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {remove.isError ? (
+                        <p className="nw-alert mb-3 w-full max-w-none" role="alert">
+                          {(remove.error as Error)?.message || "Could not delete meeting"}
+                        </p>
+                      ) : null}
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={remove.isPending}
+                          onClick={() => setDeleteOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={remove.isPending}
+                          onClick={() => remove.mutate(meeting.id)}
+                        >
+                          {remove.isPending ? "Deleting…" : "Delete permanently"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>,
+                  document.body,
+                )
+              : null}
 
             {botActive || meeting.source === "bot" ? (
-              <div className="mx-5 mt-3 rounded-xl border border-[var(--nw-border)] bg-white/80 px-3 py-2.5">
+              <div className="mx-5 mt-3 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-glass-bg-strong)] px-3 py-2.5">
                 <div className="flex flex-wrap gap-3">
                   {BOT_STEPS.map((step, i) => {
                     const done = meeting.status === "ready" || i < stepIdx;
@@ -853,7 +941,7 @@ export function LibraryPage() {
               </div>
             ) : null}
 
-            <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-white px-3 py-2.5 shadow-[0_1px_0_rgb(15_23_42_/_0.04)]">
+            <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 shadow-[0_1px_0_rgb(15_23_42_/_0.04)]">
               <button
                 type="button"
                 className="nw-play-orb grid h-9 w-9 place-items-center rounded-full bg-[var(--nw-accent)] text-white disabled:opacity-40"
@@ -946,10 +1034,10 @@ export function LibraryPage() {
               </div>
 
               {/* Transcript — clearly separated secondary pane */}
-              <div className="nw-transcript-shell mt-2 overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-white/90">
+              <div className="nw-transcript-shell mt-2 overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-glass-bg-strong)]">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-2 border-b border-[var(--nw-border)] bg-[rgb(248_250_252)] px-4 py-3 text-left"
+                  className="flex w-full items-center justify-between gap-2 border-b border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-4 py-3 text-left"
                   onClick={() => setShowTranscript((v) => !v)}
                 >
                   <span className="flex items-center gap-2 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
@@ -957,7 +1045,7 @@ export function LibraryPage() {
                     {meeting.status === "bot_live" || meeting.status === "bot_joining"
                       ? "Live transcript"
                       : "Full transcript"}
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[0.6rem] font-semibold normal-case tracking-normal text-[var(--nw-ink-4)]">
+                    <span className="rounded-full bg-[var(--nw-surface-solid)] px-2 py-0.5 text-[0.6rem] font-semibold normal-case tracking-normal text-[var(--nw-ink-4)]">
                       {meeting.transcript.length} turns
                     </span>
                   </span>
@@ -976,7 +1064,7 @@ export function LibraryPage() {
                           key={t.id}
                           className={`nw-turn-enter rounded-xl border px-3 py-2.5 ${
                             t.kind === "you"
-                              ? "border-[rgb(14_116_144_/_0.2)] bg-[rgb(14_116_144_/_0.06)]"
+                              ? "border-[rgb(var(--nw-accent-rgb)_/_0.2)] bg-[rgb(var(--nw-accent-rgb)_/_0.06)]"
                               : "border-[var(--nw-border)] bg-[var(--nw-surface-2)]"
                           }`}
                           style={{ animationDelay: `${i * 20}ms` }}

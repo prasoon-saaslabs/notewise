@@ -34,7 +34,7 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--nw-border)] bg-white py-1 pl-1 pr-2.5 text-left transition hover:border-[rgb(14_116_144_/_0.25)] hover:shadow-sm"
+        className="flex items-center gap-2 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] py-1 pl-1 pr-2.5 text-left transition hover:border-[rgb(var(--nw-accent-rgb)_/_0.25)] hover:shadow-sm"
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -57,7 +57,7 @@ export function UserMenu() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+6px)] z-[100] w-56 overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-white shadow-[0_16px_40px_rgb(15_23_42_/_0.12)]"
+          className="absolute right-0 top-[calc(100%+6px)] z-[100] w-56 overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] shadow-[var(--nw-shadow-lg)]"
         >
           <div className="border-b border-[var(--nw-border)] px-3 py-2.5">
             <p className="m-0 truncate text-sm font-semibold text-[var(--nw-ink)]">{user.name}</p>

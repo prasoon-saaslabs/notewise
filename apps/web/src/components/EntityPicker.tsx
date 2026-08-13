@@ -17,7 +17,7 @@ export function EntityPicker() {
       <label className="flex items-center gap-2 text-xs text-[var(--nw-ink-3)]">
         Meeting with
         <select
-          className="min-w-0 flex-1 rounded-lg border border-[var(--nw-border)] bg-white px-2 py-1 text-xs text-[var(--nw-ink)]"
+          className="min-w-0 flex-1 rounded-lg border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-1 text-xs text-[var(--nw-ink)]"
           value={id}
           onChange={(e) => {
             setId(e.target.value);

@@ -4,6 +4,7 @@ import { Button } from "@notewise/ui";
 import { Brain, Calendar, FileText, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { AppBrand } from "../../components/AppBrand";
+import { ThemePicker } from "../../components/ThemePicker";
 import { consumeAuthReturnPath, setAuthReturnPath } from "../../lib/authFlow";
 import { isDesktopShell } from "../../capture/desktopMiniWindow";
 
@@ -56,6 +57,9 @@ export function LoginPage() {
 
   return (
     <div className="relative flex min-h-full flex-col items-center justify-center overflow-hidden p-4 sm:p-6">
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <ThemePicker />
+      </div>
       <div className="nw-editorial-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden />
       <div className="nw-paper-grain pointer-events-none absolute inset-0 opacity-40" aria-hidden />
       <div
@@ -123,7 +127,7 @@ export function LoginPage() {
             <label className="block text-sm font-medium text-[var(--nw-ink-2)]">
               Continue as guest
               <input
-                className="nw-page-input mt-1.5 w-full rounded-full border border-[rgb(255_255_255_/_0.62)] bg-[rgb(255_255_255_/_0.48)] px-4 py-2.5 text-sm outline-none backdrop-blur-md"
+                className="nw-page-input mt-1.5 w-full rounded-full border border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] px-4 py-2.5 text-sm outline-none backdrop-blur-md"
                 placeholder="Your name"
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}

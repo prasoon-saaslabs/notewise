@@ -52,7 +52,7 @@ export function CopilotPanel({ meetingId }: { meetingId: string | null }) {
 
   if (hidden || !hint) return null;
   return (
-    <div className="pointer-events-auto rounded-2xl border border-[var(--nw-border)] bg-white/95 p-3 text-sm shadow-none">
+    <div className="pointer-events-auto rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-glass-bg-strong)] p-3 text-sm shadow-none">
       <div className="flex items-start justify-between gap-2">
         <p className="m-0 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-accent-dark)]">
           Live copilot · {hint.kind}

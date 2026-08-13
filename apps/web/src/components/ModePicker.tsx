@@ -14,7 +14,7 @@ export function ModePicker() {
     <label className="flex items-center gap-2 text-xs text-[var(--nw-ink-3)]">
       Mode
       <select
-        className="rounded-lg border border-[var(--nw-border)] bg-white px-2 py-1 text-xs text-[var(--nw-ink)]"
+        className="rounded-lg border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-1 text-xs text-[var(--nw-ink)]"
         value={id}
         onChange={(e) => {
           setId(e.target.value);

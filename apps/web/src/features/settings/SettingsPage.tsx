@@ -31,8 +31,14 @@ const PRESETS = [
     kind: "nest" as const,
     note: "Whisper + Ollama + bots — not the hackathon ship path",
     icon: Server,
+    uiHidden: true,
   },
 ] as const;
+
+const VISIBLE_PRESETS = PRESETS.filter((p) => !("uiHidden" in p && p.uiHidden));
+
+/** Voice imprint enrollment UI — keep code, hide until PyAI supports voiceprint. */
+const SHOW_VOICE_IMPRINT_UI = false;
 
 export function SettingsPage() {
   const [draftBase, setDraftBase] = useState(() => getStoredApiBase() ?? resolveApiBase());
@@ -42,6 +48,7 @@ export function SettingsPage() {
   const enrollment = useQuery({
     queryKey: ["enrollment", current],
     queryFn: () => api.getEnrollment(),
+    enabled: SHOW_VOICE_IMPRINT_UI,
   });
   const providers = useQuery({
     queryKey: ["providers", current],
@@ -77,15 +84,15 @@ export function SettingsPage() {
           Preferences
         </div>
         <h2 className="m-0 mt-2 text-2xl font-bold tracking-tight text-[var(--nw-ink)]">
-          Stack & voice
+          Stack
         </h2>
         <p className="mt-1.5 text-sm text-[var(--nw-ink-3)]">
           {isDesktopPyaiOnly()
             ? "Notewise desktop uses the bundled PyAI gateway on this Mac."
             : (
               <>
-                Choose Nest or PyAI. The app stays at <strong>{window.location.origin}</strong> —
-                only the API host changes.
+                PyAI is the active stack. The app stays at{" "}
+                <strong>{window.location.origin}</strong> — only the API host changes.
               </>
             )}
         </p>
@@ -101,7 +108,7 @@ export function SettingsPage() {
           <strong className="text-[var(--nw-ink-2)]">{liveKind}</strong>
         </p>
         <div className="flex flex-col gap-2.5">
-          {PRESETS.map((p) => {
+          {VISIBLE_PRESETS.map((p) => {
             const Icon = p.icon;
             const selected = selectedId === p.id || current === p.value;
             return (
@@ -110,15 +117,15 @@ export function SettingsPage() {
                 type="button"
                 className={`nw-settings-preset flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
                   selected
-                    ? "border-[rgb(14_116_144_/_0.35)] bg-[var(--nw-accent-soft)] shadow-[0_8px_24px_rgb(14_116_144_/_0.08)]"
-                    : "border-[var(--nw-border)] bg-white hover:border-[rgb(14_116_144_/_0.2)] hover:shadow-[var(--nw-shadow-md)]"
+                    ? "border-[rgb(var(--nw-accent-rgb)_/_0.35)] bg-[var(--nw-accent-soft)] shadow-[0_8px_24px_rgb(var(--nw-accent-rgb)_/_0.08)]"
+                    : "border-[var(--nw-border)] bg-[var(--nw-surface-solid)] hover:border-[rgb(var(--nw-accent-rgb)_/_0.2)] hover:shadow-[var(--nw-shadow-md)]"
                 }`}
                 onClick={() => applyBackend(p.value, p.kind)}
               >
                 <span
                   className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
                     selected
-                      ? "bg-white text-[var(--nw-accent-dark)]"
+                      ? "bg-[var(--nw-surface-solid)] text-[var(--nw-accent-dark)]"
                       : "bg-[var(--nw-surface-2)] text-[var(--nw-ink-3)]"
                   }`}
                 >
@@ -138,7 +145,7 @@ export function SettingsPage() {
           <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-xs font-semibold text-[var(--nw-ink-3)]">
             Custom base URL
             <input
-              className="nw-page-input rounded-xl border border-[var(--nw-border)] bg-white px-3 py-2.5 text-sm font-normal text-[var(--nw-ink)] outline-none"
+              className="nw-page-input rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-sm font-normal text-[var(--nw-ink)] outline-none"
               value={draftBase}
               onChange={(e) => setDraftBase(e.target.value)}
               placeholder="http://127.0.0.1:3002"
@@ -170,11 +177,13 @@ export function SettingsPage() {
           <DesktopApiKeyPanel />
         )}
 
+        {SHOW_VOICE_IMPRINT_UI ? (
+          <>
         <h3 className="mb-2 mt-8 flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
           <UserRound className="h-3.5 w-3.5" />
           Voice imprint
         </h3>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--nw-border)] bg-[linear-gradient(135deg,#fff_0%,#f0fdfa_100%)] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--nw-border)] nw-cta-gradient p-4">
           <div className="flex items-start gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]">
               <Mic className="h-4 w-4" />
@@ -202,6 +211,8 @@ export function SettingsPage() {
             </Button>
           </Link>
         </div>
+          </>
+        ) : null}
 
         <h3 className="mb-2 mt-8 flex items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
           <Sparkles className="h-3.5 w-3.5" />
@@ -214,7 +225,7 @@ export function SettingsPage() {
           {entries.map(([key, value], i) => (
             <div
               key={key}
-              className="nw-settings-provider rounded-2xl border border-[var(--nw-border)] bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgb(15_23_42_/_0.06)]"
+              className="nw-settings-provider rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgb(15_23_42_/_0.06)]"
               style={{ animationDelay: `${i * 45}ms` }}
             >
               <span className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">

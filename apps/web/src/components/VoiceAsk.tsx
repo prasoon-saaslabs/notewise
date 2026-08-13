@@ -57,16 +57,18 @@ export function VoiceAsk({
     }
   };
 
-  const source = result?.source ? SOURCE_LABEL[result.source] || result.source : null;
+  const source = result?.source
+    ? SOURCE_LABEL[result.source] || result.source
+    : null;
 
   return (
-    <div className="rounded-xl bg-[rgb(248_250_252_/_0.6)] p-3 ring-1 ring-[var(--nw-border)]">
+    <div className="rounded-xl bg-[var(--nw-surface-2)] p-3 ring-1 ring-[var(--nw-border)]">
       <div className="flex gap-2">
         <div className="relative min-w-0 flex-1">
           <Sparkles className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--nw-accent-dark)]" />
           <input
             ref={inputRef}
-            className="w-full rounded-xl border border-[var(--nw-border)] bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-[var(--nw-accent)]"
+            className="w-full rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-[var(--nw-accent)]"
             placeholder={
               entityId
                 ? "What did they say about pricing or security?"
@@ -81,21 +83,16 @@ export function VoiceAsk({
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--nw-accent-dark)] px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--nw-accent-dark)] px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-50 cursor-pointer"
           disabled={busy || !q.trim()}
           onClick={() => void run(false)}
         >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" />
+          )}
           Ask
-        </button>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-xl bg-white px-3 py-2 text-xs font-semibold ring-1 ring-[var(--nw-border)] disabled:opacity-50"
-          disabled={busy || !q.trim()}
-          onClick={() => void run(true)}
-          title="Speak answer (Hear → retrieve → Cast)"
-        >
-          <Mic className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -129,14 +126,14 @@ export function VoiceAsk({
                 return (
                   <li
                     key={i}
-                    className="rounded-lg bg-white px-3 py-2 text-sm leading-relaxed text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)]"
+                    className="rounded-lg bg-[var(--nw-surface-solid)] px-3 py-2 text-sm leading-relaxed text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)]"
                   >
                     {b.text}
                     {cite ? (
                       onCitationClick ? (
                         <button
                           type="button"
-                          className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg bg-[var(--nw-accent-soft)] px-2.5 py-1.5 text-left text-[0.65rem] font-semibold text-[var(--nw-accent-dark)] transition hover:bg-[rgb(14_116_144_/_0.18)]"
+                          className="mt-2 flex w-full items-center justify-between gap-2 rounded-lg bg-[var(--nw-accent-soft)] px-2.5 py-1.5 text-left text-[0.65rem] font-semibold text-[var(--nw-accent-dark)] transition hover:bg-[rgb(var(--nw-accent-rgb)_/_0.18)]"
                           onClick={() =>
                             onCitationClick({
                               meetingId: cite.meetingId,
@@ -156,7 +153,8 @@ export function VoiceAsk({
                         </button>
                       ) : (
                         <span className="mt-1 block text-[0.65rem] font-medium text-[var(--nw-accent-dark)]">
-                          {cite.meetingTitle} · {Math.floor((cite.startMs || 0) / 1000)}s
+                          {cite.meetingTitle} ·{" "}
+                          {Math.floor((cite.startMs || 0) / 1000)}s
                         </span>
                       )
                     ) : null}
@@ -172,7 +170,8 @@ export function VoiceAsk({
         </div>
       ) : (
         <p className="mt-2 m-0 text-[0.72rem] text-[var(--nw-ink-4)]">
-          Searches your library, then synthesizes with PyAI Recap (requires recap:read on your key).
+          Searches your library, then synthesizes with PyAI Recap (requires
+          recap:read on your key).
         </p>
       )}
     </div>

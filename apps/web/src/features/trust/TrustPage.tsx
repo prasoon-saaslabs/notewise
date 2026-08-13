@@ -16,7 +16,7 @@ export function TrustPage() {
         Named exits, citation gates, and what actually leaves this machine.
       </p>
       {p ? (
-        <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-white p-4 text-sm">
+        <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 text-sm">
           <h2 className="m-0 text-base font-semibold">{p.title}</h2>
           <p className="mt-2">{p.audio}</p>
           <p>{p.text}</p>
@@ -24,7 +24,7 @@ export function TrustPage() {
           <p className="text-[var(--nw-ink-4)]">{p.consent}</p>
         </section>
       ) : null}
-      <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-white p-4 text-sm">
+      <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 text-sm">
         <h2 className="m-0 text-base font-semibold">Data flow</h2>
         <dl className="mt-2 grid gap-1">
           {Object.entries(flow).map(([k, v]) => (
@@ -36,7 +36,7 @@ export function TrustPage() {
         </dl>
         <p className="mt-2 text-xs text-[var(--nw-ink-4)]">SQLite: {trust.data?.dbPath}</p>
       </section>
-      <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-white p-4">
+      <section className="mt-4 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4">
         <h2 className="m-0 text-base font-semibold">Recent runs</h2>
         <ul className="mt-2 m-0 list-none p-0 text-sm">
           {runs.map((r) => (

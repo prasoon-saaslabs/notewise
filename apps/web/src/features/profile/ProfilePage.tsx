@@ -125,7 +125,7 @@ export function ProfilePage() {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <Link
             to="/upcoming"
-            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-white p-4 transition hover:border-[var(--nw-accent)]"
+            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 transition hover:border-[var(--nw-accent)]"
           >
             <Calendar className="h-5 w-5 text-[var(--nw-accent-dark)]" />
             <span>
@@ -135,7 +135,7 @@ export function ProfilePage() {
           </Link>
           <Link
             to="/people"
-            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-white p-4 transition hover:border-[var(--nw-accent)]"
+            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 transition hover:border-[var(--nw-accent)]"
           >
             <Users className="h-5 w-5 text-[var(--nw-accent-dark)]" />
             <span>
@@ -145,7 +145,7 @@ export function ProfilePage() {
           </Link>
           <Link
             to="/library"
-            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-white p-4 transition hover:border-[var(--nw-accent)]"
+            className="flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 transition hover:border-[var(--nw-accent)]"
           >
             <Brain className="h-5 w-5 text-[var(--nw-accent-dark)]" />
             <span>
@@ -157,7 +157,7 @@ export function ProfilePage() {
             <button
               type="button"
               onClick={() => void connectGoogle()}
-              className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-[var(--nw-border)] bg-[rgb(248_250_252)] p-4 text-left transition hover:border-[var(--nw-accent)]"
+              className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-[var(--nw-border)] bg-[var(--nw-surface-2)] p-4 text-left transition hover:border-[var(--nw-accent)]"
             >
               <RefreshCw className="h-5 w-5 text-[var(--nw-accent-dark)]" />
               <span>

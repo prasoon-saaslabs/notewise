@@ -1,6 +1,9 @@
+import { useCallback, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Library,
   Mic,
   Settings2,
@@ -10,6 +13,7 @@ import {
 } from "lucide-react";
 import { LogoMark } from "@notewise/ui";
 import { MeetingBrainHeaderTrigger } from "./MeetingBrain";
+import { ThemePicker } from "./ThemePicker";
 import { UserMenu } from "./UserMenu";
 
 const links = [
@@ -58,28 +62,98 @@ const links = [
   },
 ] as const;
 
+function readRailCollapsed() {
+  try {
+    return localStorage.getItem("nw-rail-collapsed") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function AppShell() {
+  const [railCollapsed, setRailCollapsed] = useState(readRailCollapsed);
+
+  const toggleRail = useCallback(() => {
+    setRailCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("nw-rail-collapsed", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <div className="nw-shell flex h-full">
-      <aside className="nw-shell-rail hidden w-[72px] shrink-0 flex-col items-center py-3 md:flex lg:w-[200px] lg:items-stretch lg:px-2.5 lg:py-4 xl:w-[228px] xl:px-3">
-        <div className="mb-4 flex flex-col items-center lg:mb-6 lg:flex-row lg:gap-2.5 lg:px-2">
-          <LogoMark
-            className="nw-shell-brand"
-            size={36}
-            title="Notewise"
-          />
-          <div className="nw-shell-brand-text hidden min-w-0 lg:block">
-            <p className="m-0 truncate text-sm font-bold tracking-tight text-[var(--nw-ink)]">
-              Notewise
-            </p>
-            <p className="m-0 truncate text-[0.65rem] text-[var(--nw-ink-4)]">
-              AI meeting intelligence
-            </p>
-          </div>
+      <aside
+        className={`nw-shell-rail hidden shrink-0 flex-col md:flex ${
+          railCollapsed ? "is-collapsed" : "is-expanded"
+        }`}
+      >
+        <div
+          className={`mb-4 flex w-full shrink-0 flex-col gap-2 px-1.5 lg:mb-6 lg:px-2 ${
+            railCollapsed
+              ? "items-center"
+              : "items-center lg:flex-row lg:gap-2.5"
+          }`}
+        >
+          {railCollapsed ? (
+            <div className="group relative mx-auto grid h-9 w-9 shrink-0 place-items-center">
+              <LogoMark
+                className="nw-shell-brand pointer-events-none transition-opacity duration-150 group-hover:opacity-0"
+                size={36}
+                title="Notewise"
+              />
+              <button
+                type="button"
+                className="nw-shell-rail-toggle pointer-events-none absolute inset-0 grid place-items-center rounded-lg border border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] text-[var(--nw-ink-3)] opacity-0 backdrop-blur-md transition hover:bg-[var(--nw-glass-bg-strong)] hover:text-[var(--nw-ink)] group-hover:pointer-events-auto group-hover:opacity-100"
+                onClick={toggleRail}
+                aria-label="Expand sidebar"
+                aria-expanded={false}
+                title="Expand sidebar"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col items-center gap-2.5 lg:min-w-0 lg:flex-1 lg:flex-row lg:items-center">
+                <LogoMark
+                  className="nw-shell-brand"
+                  size={36}
+                  title="Notewise"
+                />
+                <div className="nw-shell-brand-text hidden min-w-0 lg:block">
+                  <p className="m-0 truncate text-sm font-bold tracking-tight text-[var(--nw-ink)]">
+                    Notewise
+                  </p>
+                  <p className="m-0 truncate text-[0.65rem] text-[var(--nw-ink-4)]">
+                    AI Meeting Intelligence
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="nw-shell-rail-toggle mx-auto grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] text-[var(--nw-ink-3)] backdrop-blur-md transition hover:bg-[var(--nw-glass-bg-strong)] hover:text-[var(--nw-ink)] lg:ml-auto lg:mr-0"
+                onClick={toggleRail}
+                aria-label="Collapse sidebar"
+                aria-expanded
+                title="Collapse sidebar"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
 
         <nav
-          className="flex w-full flex-1 flex-col items-center gap-1 px-1.5 lg:items-stretch lg:px-0"
+          className={`flex w-full flex-1 flex-col gap-1 px-1.5 ${
+            railCollapsed
+              ? "items-center"
+              : "items-center lg:items-stretch lg:px-0"
+          }`}
           aria-label="Primary"
         >
           {links.map(({ to, label, hint, end, icon: Icon }, i) => (
@@ -90,10 +164,16 @@ export function AppShell() {
               title={`${label} — ${hint}`}
               aria-label={label}
               className={({ isActive }) =>
-                `nw-shell-nav group relative flex w-full flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[0.62rem] font-medium transition lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2.5 ${
+                `nw-shell-nav group relative flex flex-col items-center justify-center gap-1 text-[0.62rem] font-medium transition ${
+                  railCollapsed
+                    ? "w-auto px-0 py-1"
+                    : "w-full px-1 py-2 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2.5"
+                } ${
                   isActive
-                    ? "is-active nw-glass-nav-active text-[var(--nw-accent-dark)]"
-                    : "text-[var(--nw-ink-3)] hover:bg-white/40 hover:text-[var(--nw-ink)]"
+                    ? `is-active text-[var(--nw-accent-dark)]${railCollapsed ? "" : " nw-glass-nav-active"}`
+                    : railCollapsed
+                      ? "text-[var(--nw-ink-3)] hover:text-[var(--nw-ink)]"
+                      : "text-[var(--nw-ink-3)] hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
                 }`
               }
               style={{ animationDelay: `${i * 40}ms` }}
@@ -101,7 +181,9 @@ export function AppShell() {
               {({ isActive }) => (
                 <>
                   <span
-                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition lg:h-8 lg:w-8 ${
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-[var(--nw-radius-pill)] transition ${
+                      railCollapsed ? "" : "lg:h-8 lg:w-8"
+                    } ${
                       isActive
                         ? "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
                         : "bg-transparent text-current group-hover:bg-[var(--nw-surface-2)]"
@@ -109,14 +191,16 @@ export function AppShell() {
                   >
                     <Icon className="h-4 w-4" strokeWidth={2} />
                   </span>
-                  <span className="nw-shell-nav-label flex min-w-0 flex-col items-center lg:items-start">
-                    <span className="max-w-full truncate leading-none">
-                      {label}
+                  {!railCollapsed ? (
+                    <span className="nw-shell-nav-label flex min-w-0 flex-col items-center lg:items-start">
+                      <span className="max-w-full truncate leading-none">
+                        {label}
+                      </span>
+                      <span className="mt-0.5 hidden text-[0.6rem] font-normal normal-case tracking-normal text-[var(--nw-ink-4)] xl:block">
+                        {hint}
+                      </span>
                     </span>
-                    <span className="mt-0.5 hidden text-[0.6rem] font-normal normal-case tracking-normal text-[var(--nw-ink-4)] xl:block">
-                      {hint}
-                    </span>
-                  </span>
+                  ) : null}
                 </>
               )}
             </NavLink>
@@ -127,7 +211,10 @@ export function AppShell() {
       <div className="relative flex min-w-0 flex-1 flex-col">
         <header className="nw-shell-header flex w-full shrink-0 items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 md:px-5">
           <MeetingBrainHeaderTrigger />
-          <UserMenu />
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <ThemePicker />
+            <UserMenu />
+          </div>
         </header>
 
         <main className="nw-shell-main min-h-0 flex-1 overflow-hidden p-2.5 sm:p-3 md:p-4">
@@ -144,7 +231,7 @@ export function AppShell() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 text-[0.6rem] font-medium transition ${
+                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-[var(--nw-radius-pill)] px-1 py-2 text-[0.6rem] font-medium transition ${
                   isActive
                     ? "nw-glass-nav-active text-[var(--nw-accent-dark)]"
                     : "text-[var(--nw-ink-3)]"

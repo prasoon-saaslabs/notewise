@@ -16,7 +16,7 @@ import { formatWhen, minsUntil } from "../lib/calendarFormat";
 
 function EntityBriefSection({ brief }: { brief: PreCallBrief }) {
   return (
-    <article className="rounded-2xl border border-[var(--nw-border)] bg-white p-4">
+    <article className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="m-0 text-sm font-bold text-[var(--nw-ink)]">{brief.entity.name}</h3>
         <Link
@@ -189,7 +189,7 @@ export function MeetingPrepContent({
             {prep.retrievalHits.slice(0, 5).map((hit, i) => (
               <li
                 key={`${hit.meetingId ?? "hit"}-${i}`}
-                className="rounded-xl border border-[var(--nw-border)] bg-[rgb(248_250_252)] px-3 py-2 text-xs leading-relaxed text-[var(--nw-ink-2)]"
+                className="rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--nw-ink-2)]"
               >
                 {hit.text}
               </li>

@@ -9,49 +9,139 @@ export function isDocumentPipSupported(): boolean {
   return typeof window !== "undefined" && "documentPictureInPicture" in window;
 }
 
-/** Minimal styles so the mini panel is usable even if stylesheet copy fails. */
-const PIP_CRITICAL_CSS = `
-html, body { margin:0; height:100%; background:#f8fafc; }
-#nw-pip-root { height:100%; display:flex; flex-direction:column; min-height:0; }
-.nw-mini-panel {
-  height:100%; min-height:0; display:flex; flex-direction:column;
-  padding:12px; box-sizing:border-box;
-  background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);
-  font-family:var(--nw-font-sans),system-ui,sans-serif;
-  color:var(--nw-ink,#0f172a);
-}
-.nw-mini-icon-btn {
-  appearance:none; border:1px solid var(--nw-border,#e2e8f0); background:#fff;
-  border-radius:10px; width:32px; height:32px; display:grid; place-items:center;
-  color:var(--nw-ink-3,#64748b); cursor:pointer; flex-shrink:0;
-}
-.nw-mini-icon-btn:hover { color:var(--nw-accent-dark,#0f766e); background:var(--nw-accent-soft,#ccfbf1); }
-.nw-mini-transcript { max-height:140px; overflow:auto; }
-.nw-pulse-dot {
-  width:8px; height:8px; border-radius:999px; background:var(--nw-accent,#14b8a6);
-  display:inline-block; animation:nw-pulse 1.2s ease-in-out infinite;
-}
-@keyframes nw-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-`;
-
-const CSS_VARS = [
+/** Resolved theme tokens copied from the main app (matches packages/ui tokens.css). */
+const NW_THEME_VARS = [
   "--nw-ink",
   "--nw-ink-2",
   "--nw-ink-3",
   "--nw-ink-4",
   "--nw-paper",
+  "--nw-surface",
+  "--nw-surface-solid",
+  "--nw-surface-2",
+  "--nw-surface-3",
   "--nw-border",
+  "--nw-border-strong",
   "--nw-accent",
   "--nw-accent-dark",
   "--nw-accent-soft",
+  "--nw-accent-subtle",
+  "--nw-accent-2",
+  "--nw-accent-glow",
+  "--nw-accent-rgb",
+  "--nw-highlight",
+  "--nw-dark-room",
+  "--nw-mint",
   "--nw-danger",
+  "--nw-danger-soft",
   "--nw-success",
   "--nw-success-soft",
-  "--nw-surface-2",
+  "--nw-you",
+  "--nw-other",
+  "--nw-font-display",
   "--nw-font-sans",
+  "--nw-font-mono",
+  "--nw-radius-md",
+  "--nw-radius-lg",
+  "--nw-radius-xl",
+  "--nw-radius-pill",
+  "--nw-shadow-md",
+  "--nw-shadow-lg",
+  "--nw-glass",
+  "--nw-glass-bg",
+  "--nw-glass-bg-strong",
+  "--nw-glass-border",
+  "--nw-glass-highlight",
+  "--nw-glass-shadow",
+  "--nw-shell-glow-2",
+  "--nw-focus-ring",
+  "--nw-gradient-surface",
+  "--nw-gradient-panel",
+  "--nw-gradient-accent-panel",
+  "--nw-gradient-cta",
+  "--nw-gradient-shimmer",
+  "--nw-hover-bg",
+  "--nw-danger-hover-bg",
+  "--nw-scratch-bg",
+  "--nw-scratch-border",
+  "--nw-scratch-bg-box",
+  "--nw-modal-backdrop",
+  "--nw-guest-bg",
+  "--nw-guest-text",
+  "--nw-guest-border",
 ] as const;
 
+/** Minimal styles so the mini panel is usable even if stylesheet copy fails. */
+const PIP_CRITICAL_CSS = `
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--nw-paper);
+  color: var(--nw-ink);
+}
+#nw-pip-root { height:100%; display:flex; flex-direction:column; min-height:0; }
+.nw-mini-panel {
+  height:100%; min-height:0; display:flex; flex-direction:column;
+  padding:12px; box-sizing:border-box;
+  background: var(--nw-gradient-surface);
+  font-family: var(--nw-font-sans), system-ui, sans-serif;
+  color: var(--nw-ink);
+}
+.nw-mini-icon-btn {
+  appearance:none; border:1px solid var(--nw-glass-border); background:var(--nw-glass-bg);
+  border-radius:10px; width:32px; height:32px; display:grid; place-items:center;
+  color:var(--nw-ink-3); cursor:pointer; flex-shrink:0;
+}
+.nw-mini-icon-btn:hover {
+  color:var(--nw-accent-dark);
+  background:var(--nw-glass-bg-strong);
+  border-color:var(--nw-glass-border);
+}
+.nw-page-input {
+  background: var(--nw-surface-solid);
+  color: var(--nw-ink);
+}
+.nw-page-input::placeholder { color: var(--nw-ink-4); opacity: 1; }
+.nw-mini-transcript { max-height:140px; overflow:auto; }
+.nw-pulse-dot {
+  width:8px; height:8px; border-radius:999px; background:var(--nw-accent);
+  display:inline-block; animation:nw-pulse 1.2s ease-in-out infinite;
+}
+@keyframes nw-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+`;
+
+let activePipDocument: Document | null = null;
+
+/** Mirror active theme from the main app onto the PiP document root. */
+export function copyThemeToPipDocument(pipDoc: Document) {
+  const source = document.documentElement;
+  const target = pipDoc.documentElement;
+
+  const theme = source.getAttribute("data-theme");
+  if (theme) {
+    target.setAttribute("data-theme", theme);
+  } else {
+    target.removeAttribute("data-theme");
+  }
+
+  const computed = getComputedStyle(source);
+  const rootStyle = target.style;
+  for (const key of NW_THEME_VARS) {
+    const value = computed.getPropertyValue(key).trim();
+    if (value) rootStyle.setProperty(key, value);
+  }
+
+  pipDoc.body.style.colorScheme = computed.colorScheme || "light";
+}
+
+/** Re-apply theme to an open PiP window after the user switches themes. */
+export function syncActivePipTheme() {
+  if (activePipDocument) copyThemeToPipDocument(activePipDocument);
+}
+
 function copyStylesTo(pipDoc: Document) {
+  copyThemeToPipDocument(pipDoc);
+
   const critical = pipDoc.createElement("style");
   critical.setAttribute("data-nw-pip-critical", "1");
   critical.textContent = PIP_CRITICAL_CSS;
@@ -99,16 +189,7 @@ function copyStylesTo(pipDoc: Document) {
     /* ignore */
   }
 
-  try {
-    const vars = getComputedStyle(document.documentElement);
-    const rootStyle = pipDoc.documentElement.style;
-    for (const key of CSS_VARS) {
-      const v = vars.getPropertyValue(key);
-      if (v) rootStyle.setProperty(key, v);
-    }
-  } catch {
-    /* ignore */
-  }
+  copyThemeToPipDocument(pipDoc);
 }
 
 /**
@@ -150,9 +231,10 @@ export async function openDocumentPip(opts?: {
     });
 
     const pipDoc = pipWindow.document;
+    activePipDocument = pipDoc;
     pipDoc.documentElement.style.height = "100%";
     pipDoc.body.style.cssText =
-      "margin:0;height:100%;background:#f8fafc;font-family:var(--nw-font-sans),system-ui,sans-serif;overflow:hidden;";
+      "margin:0;height:100%;background:var(--nw-paper);color:var(--nw-ink);font-family:var(--nw-font-sans),system-ui,sans-serif;overflow:hidden;";
 
     try {
       copyStylesTo(pipDoc);
@@ -165,9 +247,14 @@ export async function openDocumentPip(opts?: {
     root.style.cssText = "height:100%;display:flex;flex-direction:column;min-height:0;";
     pipDoc.body.appendChild(root);
 
+    pipWindow.addEventListener("pagehide", () => {
+      if (activePipDocument === pipDoc) activePipDocument = null;
+    });
+
     return { window: pipWindow, root };
   } catch (err) {
     console.warn("Document PiP failed", err);
+    activePipDocument = null;
     if (pipWindow && !pipWindow.closed) {
       try {
         pipWindow.close();
