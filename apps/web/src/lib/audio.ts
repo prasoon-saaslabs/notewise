@@ -4,6 +4,7 @@ export { pickRecorderMimeType, createAudioRecorder, recorderExtension };
 import { isChromeBrowser } from "./meetingTabAudio";
 import { acquirePreferredMic } from "./micCapture";
 import { isDesktopShell } from "../capture/desktopMiniWindow";
+import { shouldUseMeetingAudio } from "./desktopPermissions";
 
 export type ChannelMode = "mono" | "stereo" | "mix";
 
@@ -13,6 +14,8 @@ export type TwoChannelCapture = {
   systemStream: MediaStream | null;
   channelMode: ChannelMode;
   backend: "screencapturekit" | "tab-capture" | "mic" | "mix";
+  /** Desktop: system audio via native ScreenCaptureKit (not getDisplayMedia). */
+  nativeSystemAudio?: boolean;
   release?: () => void;
   meetingTabTitle?: string;
   /** Shown when meeting audio failed but mic still works. */
@@ -20,7 +23,7 @@ export type TwoChannelCapture = {
 };
 
 export type CaptureOptions = {
-  /** Desktop: request system/window audio via ScreenCaptureKit. Ignored on web. */
+  /** Desktop: request native system audio when Screen Recording is granted. */
   preferSystem?: boolean;
   /** Web: mic hears laptop speakers — no share picker. */
   mixedSpeakers?: boolean;
@@ -29,6 +32,7 @@ export type CaptureOptions = {
 type MeetingSide = {
   stream: MediaStream;
   backend: "screencapturekit" | "tab-capture";
+  native?: boolean;
   release?: () => void;
   meetingTabTitle?: string;
   warning?: string;
@@ -84,80 +88,28 @@ async function acquireDisplayMediaTabAudio(): Promise<MeetingSide | null> {
   const label = audioTracks[0]?.label || "Meeting tab";
   return {
     stream: systemStream,
-    backend: isDesktopShell() ? "screencapturekit" : "tab-capture",
+    backend: "tab-capture",
     meetingTabTitle: label,
     release: () => display.getTracks().forEach((t) => t.stop()),
   };
 }
 
 /**
- * macOS desktop (WKWebView / ScreenCaptureKit): minimal getDisplayMedia constraints.
- * Chrome-only options like systemAudio / monitorTypeSurfaces break in the Tauri webview.
+ * macOS desktop: native ScreenCaptureKit via Tauri — only when TCC already granted.
  */
-async function acquireDesktopSystemAudio(): Promise<MeetingSide | null> {
-  if (!navigator.mediaDevices?.getDisplayMedia) {
-    return {
-      stream: new MediaStream(),
-      backend: "screencapturekit",
-      warning:
-        "System audio capture is unavailable in this desktop build. Update Notewise or use mic-only mode.",
-    };
-  }
-
-  let display: MediaStream;
-  try {
-    display = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: true,
-    });
-  } catch (err) {
-    if (err instanceof DOMException && err.name === "NotAllowedError") {
-      return { stream: new MediaStream(), backend: "screencapturekit", warning: "cancelled" };
-    }
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/user gesture/i.test(msg)) {
-      return {
-        stream: new MediaStream(),
-        backend: "screencapturekit",
-        warning: "system_audio_skipped",
-      };
-    }
-    return {
-      stream: new MediaStream(),
-      backend: "screencapturekit",
-      warning:
-        err instanceof Error
-          ? err.message
-          : "Could not open system audio. Grant Screen Recording for Notewise in System Settings.",
-    };
-  }
-
-  display.getVideoTracks().forEach((t) => t.stop());
-
-  const audioTracks = display.getAudioTracks().filter((t) => t.readyState === "live");
-  if (!audioTracks.length) {
-    display.getTracks().forEach((t) => t.stop());
-    return {
-      stream: new MediaStream(),
-      backend: "screencapturekit",
-      warning:
-        "No system audio detected. Pick the meeting window or screen, enable audio sharing, and allow Screen Recording for Notewise in System Settings → Privacy.",
-    };
-  }
-
-  const systemStream = new MediaStream(audioTracks);
-  const label = audioTracks[0]?.label || "System audio";
+async function acquireDesktopNativeSystemAudio(): Promise<MeetingSide | null> {
+  if (!(await shouldUseMeetingAudio())) return null;
   return {
-    stream: systemStream,
+    stream: new MediaStream(),
     backend: "screencapturekit",
-    meetingTabTitle: label,
-    release: () => display.getTracks().forEach((t) => t.stop()),
+    native: true,
+    meetingTabTitle: "System audio",
   };
 }
 
 async function acquireMeetingSideAudio(): Promise<MeetingSide | null> {
   if (isDesktopShell()) {
-    return acquireDesktopSystemAudio();
+    return acquireDesktopNativeSystemAudio();
   }
   if (isChromeBrowser()) {
     return acquireDisplayMediaTabAudio();
@@ -168,18 +120,15 @@ async function acquireMeetingSideAudio(): Promise<MeetingSide | null> {
 function meetingWarningText(side: MeetingSide | null): string | undefined {
   if (!side?.warning) return undefined;
   if (side.warning === "cancelled" || side.warning === "system_audio_skipped") {
-    if (isDesktopShell()) {
-      return "Meeting audio skipped — mic only. To capture others, share a window/screen with audio when prompted and enable Screen Recording for Notewise.";
-    }
+    if (isDesktopShell()) return undefined;
     return "Meeting audio skipped — mic only. To capture Meet, allow tab audio when Chrome asks.";
   }
   return side.warning;
 }
 
 /**
- * Mic = You (left). Meeting tab / system = Them (right).
- * Desktop: ScreenCaptureKit via getDisplayMedia.
- * Web (default): mixed capture — mic hears speakers, no share picker.
+ * Mic = You (left). Meeting / system = Them (right).
+ * Desktop: native ScreenCaptureKit (Tauri). Web: tab audio or mixed capture.
  */
 export async function acquireTwoChannelCapture(
   opts: CaptureOptions | boolean = {},
@@ -201,11 +150,23 @@ export async function acquireTwoChannelCapture(
     };
   }
 
-  // getDisplayMedia must be invoked during the click gesture — start it before any mic awaits.
   const meetingPromise = preferSystem ? acquireMeetingSideAudio() : Promise.resolve(null);
   const micPromise = acquireMic(preferSystem, false);
   const [micStream, meeting] = await Promise.all([micPromise, meetingPromise]);
   const warning = meetingWarningText(meeting);
+
+  if (meeting?.native) {
+    return {
+      recordStream: micStream,
+      micStream,
+      systemStream: null,
+      channelMode: "stereo",
+      backend: "screencapturekit",
+      nativeSystemAudio: true,
+      meetingTabTitle: meeting.meetingTabTitle,
+      warning,
+    };
+  }
 
   if (meeting?.stream.getAudioTracks().length) {
     return {

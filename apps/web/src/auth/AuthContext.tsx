@@ -109,6 +109,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyToken, navigate, refresh],
   );
 
+  const signInGuest = useCallback(
+    async (name = "Guest") => {
+      const res = await api.authGuest(name.trim() || "Guest");
+      setAuthSession(res.token, res.user);
+      applyToken(res.token);
+      setUser(res.user);
+    },
+    [applyToken],
+  );
+
   useEffect(() => {
     void (async () => {
       try {
@@ -122,9 +132,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
       await refresh();
+      if (isDesktopShell() && !getAuthToken()) {
+        try {
+          await signInGuest("Local");
+        } catch {
+          /* offline gateway may reject guest — user can sign in manually */
+        }
+      }
       setLoading(false);
     })();
-  }, [refresh]);
+  }, [refresh, signInGuest]);
 
   useEffect(() => {
     if (!isDesktopBrowserOAuthAvailable()) return;
@@ -161,15 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [browserAuthPending]);
 
-  const signInGuest = useCallback(
-    async (name = "Guest") => {
-      const res = await api.authGuest(name.trim() || "Guest");
-      setAuthSession(res.token, res.user);
-      applyToken(res.token);
-      setUser(res.user);
-    },
-    [applyToken],
-  );
 
   const signInGoogle = useCallback(async () => {
     const { url } = await api.googleAuthUrl(

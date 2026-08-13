@@ -169,7 +169,7 @@ export function MiniCaptureHost() {
     }
   }, [active, teardownPipRoot]);
 
-  // Auto mini surface only when leaving Capture page or hiding the browser tab — never on Start
+  // Desktop: overlay when leaving Capture or switching to another app — never on Start.
   useEffect(() => {
     if (!active || pipActive) return;
 
@@ -181,19 +181,42 @@ export function MiniCaptureHost() {
       setForceFloat(true);
     };
 
+    const hideOverlay = () => {
+      if (isDesktopShell()) {
+        void import("./desktopMiniWindow").then((m) => m.closeMiniCaptureWindow());
+        return;
+      }
+      setForceFloat(false);
+    };
+
     if (!onCapturePage) {
       presentAway();
-    } else if (!document.hidden) {
-      setForceFloat(false);
     }
 
     const onVis = () => {
       if (!isCaptureActive(sessionRef.current)) return;
       if (document.hidden) presentAway();
-      else if (location.pathname === "/") setForceFloat(false);
+      else if (location.pathname === "/") hideOverlay();
     };
+
+    const onBlur = () => {
+      if (!isDesktopShell() || !isCaptureActive(sessionRef.current)) return;
+      presentAway();
+    };
+
+    const onFocus = () => {
+      if (!isDesktopShell() || !isCaptureActive(sessionRef.current)) return;
+      if (location.pathname === "/") hideOverlay();
+    };
+
     document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [active, onCapturePage, pipActive, location.pathname]);
 
   if (isMiniRoute || !active) return null;

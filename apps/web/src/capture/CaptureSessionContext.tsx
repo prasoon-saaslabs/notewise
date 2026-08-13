@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRecorder, type ProcessPhase } from "../hooks/useRecorder";
 import type { NotesPayload } from "@notewise/api-client";
+import { debounce } from "../lib/throttle";
 import {
   clearCaptureSnapshot,
   createCaptureChannel,
@@ -22,6 +23,12 @@ import {
   type CaptureTurn,
 } from "./miniCaptureSync";
 import { closeMiniCaptureWindow, isDesktopShell, openMiniCaptureWindow } from "./desktopMiniWindow";
+import {
+  listenDesktopCaptureCommand,
+  listenDesktopCaptureState,
+  publishDesktopCaptureState,
+  sendDesktopCaptureCommand,
+} from "./desktopCaptureSync";
 import {
   isDocumentPipSupported,
   notifyForceFloat,
@@ -113,6 +120,23 @@ function OwnerCaptureProvider({ children }: { children: ReactNode }) {
     notifyForceFloat();
   }, []);
 
+  const handleRemoteCommand = useCallback((cmd: CaptureSyncCommand) => {
+    const s = sessionRef.current;
+    if (cmd.type === "pause") s.pause();
+    else if (cmd.type === "resume") s.resume();
+    else if (cmd.type === "stop") void s.stop();
+    else if (cmd.type === "start") void s.start();
+    else if (cmd.type === "notes") s.setUserNotesDraft(cmd.payload);
+    else if (cmd.type === "ping") {
+      const state = buildState(s);
+      publishCaptureSnapshot(state);
+      channelRef.current?.postMessage({ kind: "state", state } satisfies CaptureSyncMessage);
+      void publishDesktopCaptureState(state);
+    } else if (cmd.type === "focus-main") {
+      void import("./desktopMiniWindow").then((m) => m.focusMainWindow());
+    }
+  }, []);
+
   useEffect(() => {
     const channel = createCaptureChannel();
     channelRef.current = channel;
@@ -121,33 +145,39 @@ function OwnerCaptureProvider({ children }: { children: ReactNode }) {
     channel.onmessage = (ev: MessageEvent<CaptureSyncMessage>) => {
       const msg = ev.data;
       if (!msg || msg.kind !== "command") return;
-      const s = sessionRef.current;
-      const cmd = msg.command;
-      if (cmd.type === "pause") s.pause();
-      else if (cmd.type === "resume") s.resume();
-      else if (cmd.type === "stop") void s.stop();
-      else if (cmd.type === "start") void s.start();
-      else if (cmd.type === "notes") s.setUserNotesDraft(cmd.payload);
-      else if (cmd.type === "ping") {
-        channel.postMessage({ kind: "state", state: buildState(s) } satisfies CaptureSyncMessage);
-      } else if (cmd.type === "focus-main") {
-        void import("./desktopMiniWindow").then((m) => m.focusMainWindow());
-      }
+      handleRemoteCommand(msg.command);
     };
 
     return () => {
       channel.close();
       channelRef.current = null;
     };
-  }, []);
+  }, [handleRemoteCommand]);
+
+  useEffect(() => {
+    if (!isDesktopShell()) return;
+    let unlisten: (() => void) | undefined;
+    void listenDesktopCaptureCommand(handleRemoteCommand).then((fn) => {
+      unlisten = fn;
+    });
+    return () => unlisten?.();
+  }, [handleRemoteCommand]);
+
+  const publishDebounced = useMemo(
+    () =>
+      debounce((state: CaptureSyncState) => {
+        publishCaptureSnapshot(state);
+        channelRef.current?.postMessage({ kind: "state", state } satisfies CaptureSyncMessage);
+        void publishDesktopCaptureState(state);
+      }, 200),
+    [],
+  );
 
   useEffect(() => {
     const state = buildState(session);
-    publishCaptureSnapshot(state);
-    channelRef.current?.postMessage({ kind: "state", state } satisfies CaptureSyncMessage);
+    publishDebounced(state);
 
     const active = isCaptureActive(state);
-    // Do not auto-open mini window on Start — only when user leaves Capture (see MiniCaptureHost)
     if (!active && lastActiveRef.current) {
       void closeMiniCaptureWindow();
       if (state.phase === "idle" || state.phase === "ready" || state.phase === "failed") {
@@ -215,6 +245,7 @@ function RemoteCaptureProvider({ children }: { children: ReactNode }) {
   const sendCommand = useCallback((command: CaptureSyncCommand) => {
     const msg: CaptureSyncMessage = { kind: "command", command };
     channelRef.current?.postMessage(msg);
+    void sendDesktopCaptureCommand(command);
   }, []);
 
   useEffect(() => {
@@ -238,6 +269,16 @@ function RemoteCaptureProvider({ children }: { children: ReactNode }) {
       channel?.close();
       channelRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktopShell()) return;
+    let unlisten: (() => void) | undefined;
+    void listenDesktopCaptureState((next) => setState(next)).then((fn) => {
+      unlisten = fn;
+    });
+    void sendDesktopCaptureCommand({ type: "ping" });
+    return () => unlisten?.();
   }, []);
 
   const empty: CaptureSyncState = {

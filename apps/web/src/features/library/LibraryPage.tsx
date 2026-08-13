@@ -27,7 +27,6 @@ import {
 import { ClaimLine, RunStatusCard } from "../../components/Receipts";
 import { api } from "../../lib/api";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
-import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
 
@@ -298,18 +297,8 @@ export function LibraryPage() {
 
   const list = useQuery({
     queryKey: ["meetings", "catalog"],
-    queryFn: async () => {
-      if (isDesktopPyaiOnly()) {
-        const diag = await ensureDesktopGateway();
-        if (!diag.reachable) {
-          throw new Error(
-            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support.",
-          );
-        }
-      }
-      return listAllMeetings();
-    },
-    refetchInterval: 4000,
+    queryFn: () => listAllMeetings(),
+    refetchInterval: 30_000,
   });
   const fts = useQuery({
     queryKey: ["meetings", "search", q],

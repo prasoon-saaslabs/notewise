@@ -17,6 +17,9 @@ import {
   openMicrophoneSettings,
   openScreenRecordingSettings,
   requestNativeScreenRecordingAccess,
+  screenRecordingHelpMessage,
+  setMeetingAudioSkipped,
+  getNativeScreenRecordingStatus,
 } from "../lib/desktopPermissions";
 
 type Phase = "boot" | "onboard" | "permissions" | "ready";
@@ -97,31 +100,16 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
     setBusy(true);
     try {
       const granted = await requestNativeScreenRecordingAccess();
-      if (!granted) {
+      const ok = granted || (await getNativeScreenRecordingStatus());
+      setScreenOk(ok);
+      if (ok) setMeetingAudioSkipped(false);
+      if (!ok) {
         setError(
-          "Screen recording was denied. Enable Notewise under System Settings → Privacy & Security → Screen Recording.",
+          "Screen Recording was not enabled. Open System Settings → Privacy & Security → Screen Recording and allow Notewise.",
         );
-        setScreenOk(false);
-        return;
       }
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        setScreenOk(true);
-        return;
-      }
-      const display = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
-      display.getTracks().forEach((t) => t.stop());
-      setScreenOk(true);
     } catch (e) {
-      if (e instanceof DOMException && e.name === "NotAllowedError") {
-        setError(
-          "Screen recording was denied. Enable Notewise under System Settings → Privacy & Security → Screen Recording.",
-        );
-      } else {
-        setError(e instanceof Error ? e.message : "Could not enable screen recording.");
-      }
+      setError(e instanceof Error ? e.message : "Could not enable Screen Recording.");
       setScreenOk(false);
     } finally {
       setBusy(false);
@@ -226,10 +214,10 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
             <section className="rounded-2xl border border-[var(--nw-border)] p-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-[var(--nw-ink)]">
                 <Monitor className="h-4 w-4 text-[var(--nw-accent-dark)]" />
-                Screen recording (optional)
+                Meeting audio (recommended)
               </div>
               <p className="m-0 mt-1 text-xs text-[var(--nw-ink-3)]">
-                Needed to capture other participants in Meet, Zoom, or Teams.
+                {screenRecordingHelpMessage()}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
@@ -238,7 +226,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
                   disabled={busy}
                   onClick={() => void requestScreenRecording()}
                 >
-                  {screenOk ? "Screen recording enabled" : "Enable screen recording"}
+                  {screenOk ? "Meeting audio enabled" : "Enable meeting audio"}
                 </Button>
                 {!screenOk ? (
                   <>
@@ -250,7 +238,15 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
                     >
                       Open System Settings
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => setScreenOk(true)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setMeetingAudioSkipped(true);
+                        setScreenOk(true);
+                      }}
+                    >
                       Skip for now
                     </Button>
                   </>
@@ -320,8 +316,9 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
           <section className="rounded-2xl border border-[var(--nw-border)] p-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--nw-ink)]">
               <Monitor className="h-4 w-4 text-[var(--nw-accent-dark)]" />
-              Screen recording
+              Meeting audio (recommended)
             </div>
+            <p className="m-0 mt-1 text-xs text-[var(--nw-ink-3)]">{screenRecordingHelpMessage()}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button
                 size="sm"
@@ -329,7 +326,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
                 disabled={busy}
                 onClick={() => void requestScreenRecording()}
               >
-                {screenOk ? "Screen recording enabled" : "Enable screen recording"}
+                {screenOk ? "Meeting audio enabled" : "Enable meeting audio"}
               </Button>
               {!screenOk ? (
                 <>
@@ -341,7 +338,15 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
                   >
                     Open System Settings
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => setScreenOk(true)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      setMeetingAudioSkipped(true);
+                      setScreenOk(true);
+                    }}
+                  >
                     Skip for now
                   </Button>
                 </>

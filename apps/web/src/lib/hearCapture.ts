@@ -1,7 +1,4 @@
-/**
- * PCM16 @ 16 kHz capture for PyAI Hear streaming.
- * Mono: mic. Stereo: L = You (mic), R = Them (system audio).
- */
+import { isDesktopShell } from "../capture/desktopMiniWindow";
 
 const FRAME_SAMPLES = 320; // 20 ms @ 16 kHz per channel
 
@@ -50,9 +47,26 @@ function rms(buf: Float32Array): number {
 
 export type HearCaptureOpts = {
   systemStream?: MediaStream | null;
+  /** Desktop native ScreenCaptureKit PCM (no MediaStream). */
+  nativeSystemAudio?: boolean;
   stereo?: boolean;
   onMeters?: (levels: HearMeters) => void;
 };
+
+function resampleFloat32(input: Float32Array, inRate: number, outLen: number, outRate: number): Float32Array {
+  if (!input.length || outLen <= 0) return new Float32Array(outLen);
+  if (inRate === outRate && input.length === outLen) return input;
+  const ratio = inRate / outRate;
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const src = i * ratio;
+    const i0 = Math.floor(src);
+    const i1 = Math.min(i0 + 1, input.length - 1);
+    const frac = src - i0;
+    out[i] = input[i0]! * (1 - frac) + input[i1]! * frac;
+  }
+  return out;
+}
 
 /**
  * Start mic (+ optional system) → PCM16 frames via ScriptProcessor.
@@ -62,6 +76,13 @@ export async function startHearCapture(
   onFrame: HearFrameHandler,
   opts?: HearCaptureOpts,
 ): Promise<HearCaptureHandle> {
+  const nativeSystem = Boolean(opts?.nativeSystemAudio && isDesktopShell());
+  let nativeAudio: typeof import("./nativeSystemAudio") | null = null;
+  if (nativeSystem) {
+    nativeAudio = await import("./nativeSystemAudio");
+    nativeAudio.resetNativeSystemAudioBuffer();
+  }
+
   const AC =
     window.AudioContext ||
     (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -79,11 +100,13 @@ export async function startHearCapture(
     throw new Error("Microphone track is not live. Check browser mic permissions.");
   }
 
-  const stereo = Boolean(opts?.stereo && opts.systemStream?.getAudioTracks().length);
+  const stereo =
+    Boolean(opts?.stereo && (opts.systemStream?.getAudioTracks().length || nativeSystem));
   const micSource = context.createMediaStreamSource(stream);
-  const sysSource = stereo && opts?.systemStream
-    ? context.createMediaStreamSource(opts.systemStream)
-    : null;
+  const sysSource =
+    stereo && opts?.systemStream && !nativeSystem
+      ? context.createMediaStreamSource(opts.systemStream)
+      : null;
   const merger = context.createChannelMerger(2);
   micSource.connect(merger, 0, 0);
   if (sysSource) sysSource.connect(merger, 0, 1);
@@ -97,7 +120,15 @@ export async function startHearCapture(
   processor.onaudioprocess = (ev) => {
     if (paused) return;
     const left = ev.inputBuffer.getChannelData(0);
-    const right = stereo ? ev.inputBuffer.getChannelData(1) : left;
+    let right = stereo ? ev.inputBuffer.getChannelData(1) : left;
+    if (nativeSystem && nativeAudio) {
+      const sysRate = nativeAudio.getNativeSystemSampleRate();
+      const needSys = Math.max(1, Math.ceil(left.length * (sysRate / context.sampleRate)));
+      const sysRaw = nativeAudio.takeNativeSystemSamples(needSys);
+      right = new Float32Array(
+        resampleFloat32(sysRaw, sysRate, left.length, context.sampleRate),
+      );
+    }
     opts?.onMeters?.({ mic: rms(left), system: stereo ? rms(right) : 0 });
 
     const l16 = downsampleChannel(left, context.sampleRate);

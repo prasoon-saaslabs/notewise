@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCaptureSession } from "../capture/CaptureSessionContext";
-import { closeMiniCaptureWindow, isDesktopShell, openMiniCaptureWindow } from "../capture/desktopMiniWindow";
+import { closeMiniCaptureWindow, isDesktopShell } from "../capture/desktopMiniWindow";
+import { focusDesktopMainWindow } from "../lib/desktopTray";
 
 export function TrayBridge() {
   const { start, stop } = useCaptureSession();
@@ -14,29 +15,33 @@ export function TrayBridge() {
       const { listen } = await import("@tauri-apps/api/event");
       unsubs.push(
         await listen("og://tray-start", () => {
+          void focusDesktopMainWindow();
           localStorage.setItem("og-channel-mode", "stereo");
           void start();
         }),
       );
-      unsubs.push(await listen("og://tray-stop", () => stop()));
+      unsubs.push(
+        await listen("og://tray-stop", () => {
+          void focusDesktopMainWindow();
+          stop();
+        }),
+      );
       unsubs.push(
         await listen("og://open-library", () => {
+          void focusDesktopMainWindow();
           navigate("/library");
         }),
       );
       unsubs.push(
         await listen("og://open-capture", () => {
+          void focusDesktopMainWindow();
           navigate("/");
         }),
       );
       unsubs.push(
         await listen("og://open-settings", () => {
+          void focusDesktopMainWindow();
           navigate("/settings");
-        }),
-      );
-      unsubs.push(
-        await listen("og://show-overlay", () => {
-          void openMiniCaptureWindow();
         }),
       );
       unsubs.push(

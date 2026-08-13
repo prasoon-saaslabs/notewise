@@ -5,6 +5,6 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Notewise records your microphone so it can transcribe what you say in meetings.</string>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>Notewise captures meeting audio from your screen or a shared window so it can transcribe other participants.</string>
+	<string>Notewise captures system audio from your Mac so it can transcribe other meeting participants. No window or tab sharing is required.</string>
 </dict>
 </plist>

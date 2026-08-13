@@ -509,12 +509,25 @@ pub fn gateway_upload_begin(app: AppHandle, upload_id: String) -> Result<(), Str
 
 #[tauri::command]
 pub fn gateway_upload_append(upload_id: String, chunk: Vec<u8>) -> Result<(), String> {
+    append_upload_bytes(&upload_id, &chunk)
+}
+
+#[tauri::command]
+pub fn gateway_upload_append_b64(upload_id: String, chunk_b64: String) -> Result<(), String> {
+    use base64::Engine;
+    let chunk = base64::engine::general_purpose::STANDARD
+        .decode(chunk_b64.trim())
+        .map_err(|e| format!("upload chunk decode: {e}"))?;
+    append_upload_bytes(&upload_id, &chunk)
+}
+
+fn append_upload_bytes(upload_id: &str, chunk: &[u8]) -> Result<(), String> {
     let mut guard = uploads_map()?;
     let map = guard
         .as_mut()
         .ok_or_else(|| "upload not started".to_string())?;
     let path = map
-        .get(&upload_id)
+        .get(upload_id)
         .ok_or_else(|| format!("unknown upload id {upload_id}"))?;
     let mut file = fs::OpenOptions::new()
         .append(true)

@@ -10,10 +10,12 @@ HEALTH="http://127.0.0.1:${PORT}/health"
 pass=0
 warn=0
 fail=0
+info=0
 
 ok()   { echo "  ok   $1"; pass=$((pass + 1)); }
 warn() { echo "  warn $1"; warn=$((warn + 1)); }
 bad()  { echo "  fail $1"; fail=$((fail + 1)); }
+note() { echo "  note $1"; info=$((info + 1)); }
 
 echo "Notewise doctor"
 echo "==============="
@@ -72,10 +74,20 @@ else
 fi
 
 echo
-echo "Permissions (macOS)"
-warn "Microphone — System Settings → Privacy → Microphone"
-warn "Screen Recording — for system audio in calls (optional; mic-only works)"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  echo "Permissions (macOS)"
+  note "Microphone — grant when Notewise prompts (Settings → Privacy → Microphone)"
+  note "Screen Recording — optional; captures meeting audio without tab sharing"
+  note "doctor cannot read Notewise TCC state from the shell (permissions are per-app)"
+else
+  echo "Permissions"
+  note "macOS desktop permissions apply on Darwin only"
+fi
 
 echo
-echo "Summary: $pass ok, $warn warn, $fail fail"
+if [[ "$info" -gt 0 ]]; then
+  echo "Summary: $pass ok, $warn warn, $fail fail ($info note)"
+else
+  echo "Summary: $pass ok, $warn warn, $fail fail"
+fi
 [[ "$fail" -eq 0 ]]

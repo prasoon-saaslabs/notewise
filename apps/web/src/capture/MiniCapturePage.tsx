@@ -1,6 +1,7 @@
 import { MiniCapturePanel } from "./MiniCapturePanel";
 import { createCaptureChannel, type CaptureSyncMessage } from "./miniCaptureSync";
 import { focusMainWindow } from "./desktopMiniWindow";
+import { sendDesktopCaptureCommand } from "./desktopCaptureSync";
 
 export function MiniCapturePage() {
   return (
@@ -13,6 +14,7 @@ export function MiniCapturePage() {
             command: { type: "focus-main" },
           } satisfies CaptureSyncMessage);
           ch?.close();
+          void sendDesktopCaptureCommand({ type: "focus-main" });
           void focusMainWindow();
         }}
       />

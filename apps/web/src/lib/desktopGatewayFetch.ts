@@ -70,7 +70,10 @@ async function uploadViaGateway(
   try {
     for (let offset = 0; offset < fileBytes.length; offset += UPLOAD_CHUNK_BYTES) {
       const chunk = fileBytes.subarray(offset, offset + UPLOAD_CHUNK_BYTES);
-      await invoke("gateway_upload_append", { uploadId, chunk: Array.from(chunk) });
+      let binary = "";
+      for (let i = 0; i < chunk.length; i++) binary += String.fromCharCode(chunk[i]!);
+      const chunkB64 = btoa(binary);
+      await invoke("gateway_upload_append_b64", { uploadId, chunkB64 });
     }
 
     const result = await invoke<{ status: number; body: string }>("gateway_upload_finish", {

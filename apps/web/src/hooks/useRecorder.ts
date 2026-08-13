@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { acquireTwoChannelCapture, createAudioRecorder } from "../lib/audio";
 import { getPendingCalendarEventId } from "../lib/authSession";
 import { isMixedSpeakersEnabled } from "../lib/mixedCapture";
@@ -12,6 +12,18 @@ import {
 } from "../lib/hearCapture";
 import type { NotesPayload, TranscriptTurn } from "@notewise/api-client";
 import { ensureReadyToRecord, micBlockedMessage } from "../lib/desktopPermissions";
+import { notifyDesktop } from "../lib/desktopNotify";
+import { startNativeSystemAudioCapture, stopNativeSystemAudioCapture } from "../lib/nativeSystemAudio";
+import { syncDesktopTrayRecording } from "../lib/desktopTray";
+import {
+  appendRecoveryChunk,
+  clearAllRecovery,
+  readRecordingRecoveryMeta,
+  readRecoveryChunks,
+  writeRecordingRecoveryMeta,
+  type RecordingRecoveryMeta,
+} from "../lib/recordingRecovery";
+import { throttle } from "../lib/throttle";
 import { useQueryClient } from "@tanstack/react-query";
 
 type Turn = {
@@ -105,6 +117,26 @@ export function useRecorder() {
   const turnsRef = useRef<Turn[]>([]);
   const channelModeRef = useRef<"mono" | "stereo" | "mix">("mono");
   const stopRef = useRef<() => void>(() => undefined);
+  const recoverySeqRef = useRef(0);
+  const backupUploadRef = useRef<number | null>(null);
+  const lastBackupCountRef = useRef(0);
+  const recoveryAttemptedRef = useRef(false);
+
+  const pushInterim = useMemo(
+    () =>
+      throttle((text: string) => {
+        setInterim(text);
+      }, 120),
+    [],
+  );
+
+  const pushMeters = useMemo(
+    () =>
+      throttle((levels: { mic: number; system: number; backend: string }) => {
+        setMeters(levels);
+      }, 150),
+    [],
+  );
 
   const setUserNotesDraft = useCallback((text: string) => {
     userNotesRef.current = text;
@@ -123,6 +155,68 @@ export function useRecorder() {
   useEffect(() => {
     turnsRef.current = turns;
   }, [turns]);
+
+  const tryRecoverOrphanedRecording = useCallback(async () => {
+    if (recoveryAttemptedRef.current || recordingRef.current || busyRef.current) return;
+    const meta = readRecordingRecoveryMeta();
+    if (!meta?.sessionId) return;
+    recoveryAttemptedRef.current = true;
+    busyRef.current = true;
+    setBusy(true);
+    setPhase("uploading");
+    setStatusLine("Recovering interrupted recording…");
+    try {
+      const chunks = await readRecoveryChunks(meta.sessionId);
+      const blob = new Blob(chunks, { type: meta.mime || "audio/webm" });
+      if (blob.size > 0) {
+        await api.uploadAudioChunk(meta.sessionId, blob, meta.seq);
+      }
+      await api.finalizeSession(meta.sessionId, { userNotes: meta.userNotes });
+      await clearAllRecovery(meta.sessionId);
+      setStatusLine("Recovered previous recording — see Library");
+      void notifyDesktop("Notewise", "Recovered an interrupted recording — see Library.", "info");
+      void qc.invalidateQueries({ queryKey: ["meetings"] });
+    } catch (err) {
+      console.warn("Recording recovery failed", err);
+      setError("Could not recover a previous interrupted recording.");
+      void notifyDesktop(
+        "Notewise — recovery failed",
+        "Could not recover a previous interrupted recording.",
+        "error",
+      );
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+      setPhase("idle");
+    }
+  }, [qc]);
+
+  useEffect(() => {
+    void tryRecoverOrphanedRecording();
+  }, [tryRecoverOrphanedRecording]);
+
+  useEffect(() => {
+    const onBeforeUnload = (ev: BeforeUnloadEvent) => {
+      if (!recordingRef.current && !pausedRef.current) return;
+      const sid = sessionIdRef.current;
+      if (sid) {
+        const meta: RecordingRecoveryMeta = {
+          sessionId: sid,
+          meetingId: activeMeetingIdRef.current ?? "",
+          mime: mimeRef.current,
+          seq: seqRef.current,
+          startedAt: Date.now(),
+          userNotes: userNotesRef.current,
+          channelMode: channelModeRef.current,
+        };
+        writeRecordingRecoveryMeta(meta);
+      }
+      ev.preventDefault();
+      ev.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
 
   // Keep Hear AudioContext alive if the tab/PiP steals focus
   useEffect(() => {
@@ -227,9 +321,7 @@ export function useRecorder() {
     captureReleaseRef.current = null;
     setMeters({ mic: 0, system: 0, backend: "mic" });
     if (typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)) {
-      void import("@tauri-apps/api/core")
-        .then(({ invoke }) => invoke("stop_system_audio_capture", { sessionToken: "started:ui" }))
-        .catch(() => undefined);
+      void stopNativeSystemAudioCapture();
     }
   };
 
@@ -511,14 +603,18 @@ export function useRecorder() {
         preferSystem: isTauriShell,
         mixedSpeakers,
       });
-      const channelMode = cap.channelMode;
+      let channelMode = cap.channelMode;
+      let nativeSystemActive = Boolean(cap.nativeSystemAudio);
+      if (nativeSystemActive) {
+        nativeSystemActive = await startNativeSystemAudioCapture();
+        if (!nativeSystemActive) {
+          channelMode = "mono";
+        }
+      }
       channelModeRef.current = channelMode;
       window.localStorage.setItem("og-channel-mode", channelMode);
       captureReleaseRef.current = cap.release ?? null;
-      if (cap.warning) {
-        setError(cap.warning);
-      }
-      setMeters({ mic: 0, system: 0, backend: cap.backend });
+      setMeters({ mic: 0, system: 0, backend: nativeSystemActive ? cap.backend : "mic" });
       const calendarEventId = getPendingCalendarEventId();
       const sessionPromise = api.createLocalSession(
         `Capture · ${new Date().toLocaleString(undefined, {
@@ -540,15 +636,6 @@ export function useRecorder() {
       }
       streamRef.current = stream;
       systemStreamRef.current = cap.systemStream;
-      if (typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)) {
-        void import("@tauri-apps/api/core")
-          .then(({ invoke }) =>
-            invoke("start_system_audio_capture", {
-              deviceId: cap.backend === "screencapturekit" ? "system-sck" : "mic-default",
-            }),
-          )
-          .catch(() => undefined);
-      }
       liveTracks.forEach((track) => {
         track.enabled = true;
         track.onended = () => {
@@ -559,8 +646,32 @@ export function useRecorder() {
       const rec = createAudioRecorder(stream);
       mediaRef.current = rec;
       mimeRef.current = rec.mimeType || "audio/webm";
+
+      const created = await sessionPromise;
+      sessionIdRef.current = created.sessionId;
+      activeMeetingIdRef.current = created.meetingId;
+      setMeetingId(created.meetingId);
+      recoverySeqRef.current = 0;
+      lastBackupCountRef.current = 0;
+      writeRecordingRecoveryMeta({
+        sessionId: created.sessionId,
+        meetingId: created.meetingId,
+        mime: mimeRef.current,
+        seq: seqRef.current,
+        startedAt: Date.now(),
+        userNotes: userNotesRef.current,
+        channelMode: channelModeRef.current,
+      });
+
       rec.ondataavailable = (ev) => {
-        if (ev.data?.size > 0 && !pausedRef.current) chunksRef.current.push(ev.data);
+        if (ev.data?.size > 0 && !pausedRef.current) {
+          chunksRef.current.push(ev.data);
+          const sid = sessionIdRef.current;
+          if (sid) {
+            const seq = recoverySeqRef.current++;
+            void appendRecoveryChunk(sid, seq, ev.data);
+          }
+        }
       };
       try {
         rec.start(250);
@@ -574,20 +685,29 @@ export function useRecorder() {
 
       recordingRef.current = true;
       setRecording(true);
+      void syncDesktopTrayRecording(true);
       setStatusLine(usePyai ? "Listening — PyAI Hear…" : "Listening…");
       if (!usePyai) startSpeech();
       startElapsedTimer();
 
-      const created = await sessionPromise;
-      sessionIdRef.current = created.sessionId;
-      activeMeetingIdRef.current = created.meetingId;
-      setMeetingId(created.meetingId);
+      if (backupUploadRef.current) window.clearInterval(backupUploadRef.current);
+      backupUploadRef.current = window.setInterval(() => {
+        if (!recordingRef.current || pausedRef.current) return;
+        const sid = sessionIdRef.current;
+        if (!sid) return;
+        const pending = chunksRef.current.slice(lastBackupCountRef.current);
+        if (!pending.length) return;
+        lastBackupCountRef.current = chunksRef.current.length;
+        const blob = new Blob(pending, { type: mimeRef.current });
+        if (blob.size < 4096) return;
+        void api.uploadAudioChunk(sid, blob, seqRef.current++).catch(() => undefined);
+      }, 20_000);
 
       if (usePyai) {
         const client = connectHearStream(hearWsUrl(created.sessionId), {
           onPartial: (text) => {
             if (!recordingRef.current || pausedRef.current) return;
-            setInterim(text);
+            pushInterim(text);
           },
           onFinal: (text) => {
             if (!recordingRef.current || pausedRef.current) return;
@@ -637,8 +757,9 @@ export function useRecorder() {
             },
             {
               systemStream: cap.systemStream,
+              nativeSystemAudio: nativeSystemActive,
               stereo: channelMode === "stereo",
-              onMeters: (levels) => setMeters({ ...levels, backend: cap.backend }),
+              onMeters: (levels) => pushMeters({ ...levels, backend: cap.backend }),
             },
           );
           hearCaptureRef.current = capture;
@@ -667,6 +788,7 @@ export function useRecorder() {
     } catch (err) {
       recordingRef.current = false;
       pausedRef.current = false;
+      void syncDesktopTrayRecording(false);
       stopSpeech();
       cleanupMedia();
       stopTimer();
@@ -683,6 +805,7 @@ export function useRecorder() {
             ? err.message
             : "Could not start recording";
       setError(message);
+      void notifyDesktop("Notewise — could not start recording", message, "error");
       setRecording(false);
       setPaused(false);
       setPhase("idle");
@@ -748,6 +871,11 @@ export function useRecorder() {
     recordingRef.current = false;
     pausedRef.current = false;
     setPaused(false);
+    void syncDesktopTrayRecording(false);
+    if (backupUploadRef.current) {
+      window.clearInterval(backupUploadRef.current);
+      backupUploadRef.current = null;
+    }
     stopSpeech();
     stopTimer();
     try {
@@ -799,6 +927,7 @@ export function useRecorder() {
       if (blob.size > 0) {
         await api.uploadAudioChunk(sid, blob, seqRef.current++);
       }
+      await clearAllRecovery(sid);
       if (usePyai && pcmChunksRef.current.length > 0) {
         const pcmBlob = new Blob(pcmChunksRef.current, { type: "application/octet-stream" });
         await api.uploadPcm(sid, pcmBlob).catch(() => undefined);
@@ -911,6 +1040,7 @@ export function useRecorder() {
           ? err.message
           : "Could not finish recording";
       setError(message);
+      void notifyDesktop("Notewise — recording failed", message, "error");
       setPhase("failed");
       setStatusLine("Ready to capture");
     } finally {

@@ -25,7 +25,13 @@ import { ClaimLine, RunStatusCard } from "../../components/Receipts";
 import { ChannelMeters } from "../../components/ChannelMeters";
 import { UpcomingMeetingsPanel } from "../../components/UpcomingMeetingsPanel";
 import { isDesktopShell } from "../../capture/desktopMiniWindow";
+import { openScreenRecordingSettings } from "../../lib/desktopPermissions";
 import { isMixedSpeakersEnabled, setMixedSpeakersEnabled } from "../../lib/mixedCapture";
+function isMicOnlyNotice(error: string | null) {
+  if (!error) return false;
+  return /mic only|screen recording|meeting audio skipped/i.test(error);
+}
+
 function isEmptyTranscriptError(error: string | null) {
   if (!error) return false;
   return (
@@ -92,6 +98,7 @@ export function RecordPage() {
   const live = recording || Boolean(interim);
   const sessionLive = recording || paused;
   const emptyTranscript = phase === "failed" && isEmptyTranscriptError(error);
+  const blockingError = error && !isMicOnlyNotice(error) ? error : null;
   const webCapture = !isDesktopShell();
   const [mixedSpeakers, setMixedSpeakers] = useState(isMixedSpeakersEnabled);
 
@@ -307,10 +314,25 @@ export function RecordPage() {
             </div>
           </div>
         </div>
-      ) : error ? (
-        <p className="nw-alert relative z-10 mx-4 mt-3 md:mx-5" role="alert">
-          {error}
-        </p>
+      ) : blockingError ? (
+        <div className="relative z-10 mx-4 mt-3 md:mx-5" role="alert">
+          <div className="flex items-start gap-3 rounded-2xl border border-[rgb(185_28_28_/_0.2)] bg-[rgb(254_242_242)] px-4 py-3 shadow-sm">
+            <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-[rgb(185_28_28)]">
+              <Mic className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-sm font-semibold text-[rgb(127_29_29)]">Something went wrong</p>
+              <p className="m-0 mt-1 text-sm leading-relaxed text-[rgb(153_27_27)]">{blockingError}</p>
+              {isDesktopShell() && /microphone|screen recording/i.test(blockingError) ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => void openScreenRecordingSettings()}>
+                    Open System Settings
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {/* Dual pane: transcript + notes — product core */}

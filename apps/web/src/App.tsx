@@ -29,10 +29,10 @@ export function App() {
     <AuthProvider>
     <MeetingBrainProvider>
       <CaptureSessionProvider>
+      <TrayBridge />
       <DesktopShellGate>
       <ConsentModal />
       <VoiceHotkey />
-      <TrayBridge />
       <CalendarFlowHost />
       <Routes>
         <Route

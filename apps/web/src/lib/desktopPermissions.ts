@@ -28,6 +28,22 @@ const MIC_SETTINGS_URL =
 const SCREEN_SETTINGS_URL =
   "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_ScreenCapture";
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function pollPermission(
+  check: () => Promise<boolean>,
+  attempts = 30,
+  delayMs = 100,
+): Promise<boolean> {
+  for (let i = 0; i < attempts; i++) {
+    if (await check()) return true;
+    await sleep(delayMs);
+  }
+  return false;
+}
+
 async function macosPermissionsApi() {
   return import("tauri-plugin-macos-permissions-api");
 }
@@ -53,8 +69,9 @@ export async function getNativeMicrophoneStatus(): Promise<DesktopMicStatus> {
 export async function requestNativeMicrophoneAccess(): Promise<boolean> {
   if (!isDesktopShell()) return true;
   try {
-    const { requestMicrophonePermission } = await macosPermissionsApi();
-    return Boolean(await requestMicrophonePermission());
+    const { requestMicrophonePermission, checkMicrophonePermission } = await macosPermissionsApi();
+    await requestMicrophonePermission();
+    return pollPermission(async () => Boolean(await checkMicrophonePermission()));
   } catch {
     return false;
   }
@@ -83,11 +100,43 @@ export async function getNativeScreenRecordingStatus(): Promise<boolean> {
 export async function requestNativeScreenRecordingAccess(): Promise<boolean> {
   if (!isDesktopShell()) return true;
   try {
-    const { requestScreenRecordingPermission } = await macosPermissionsApi();
-    return Boolean(await requestScreenRecordingPermission());
+    const { requestScreenRecordingPermission, checkScreenRecordingPermission } =
+      await macosPermissionsApi();
+    await requestScreenRecordingPermission();
+    return pollPermission(async () => Boolean(await checkScreenRecordingPermission()));
   } catch {
     return false;
   }
+}
+
+export function screenRecordingHelpMessage(): string {
+  return "Enable Screen Recording for Notewise in System Settings → Privacy & Security → Screen Recording. This captures meeting audio from your speakers — no tab or window sharing prompt.";
+}
+
+const MEETING_AUDIO_SKIP_KEY = "notewise.meeting-audio.skip";
+
+/** User chose mic-only during onboarding — never prompt Screen Recording on Start. */
+export function isMeetingAudioSkipped(): boolean {
+  try {
+    return localStorage.getItem(MEETING_AUDIO_SKIP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setMeetingAudioSkipped(skipped: boolean): void {
+  try {
+    localStorage.setItem(MEETING_AUDIO_SKIP_KEY, skipped ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Only attempt SCK when TCC is already granted — avoids the modal on every Start. */
+export async function shouldUseMeetingAudio(): Promise<boolean> {
+  if (!isDesktopShell()) return false;
+  if (isMeetingAudioSkipped()) return false;
+  return getNativeScreenRecordingStatus();
 }
 
 /**
@@ -199,6 +248,7 @@ export async function detectDesktopPermissions(): Promise<DesktopPermissionSnaps
     screenRecording: { granted: screenGranted },
     gateway,
     missing,
+    /** Mic + gateway is enough to start; system audio enhances when screen recording is granted. */
     readyToRecord: micGranted && gatewayOk,
   };
 }
