@@ -586,17 +586,23 @@ export function useRecorder() {
           },
           onFinal: (text) => {
             if (!recordingRef.current || pausedRef.current) return;
+            const cleaned = text.trim();
+            if (!cleaned) return;
             setInterim("");
-            setTurns((prev) => [
-              ...prev,
-              {
-                id: `live-hear-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                speaker: cap.channelMode === "mix" ? "Speaker" : "Speaking…",
-                kind: "you",
-                text,
-                live: true,
-              },
-            ]);
+            setTurns((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.live && last.text === cleaned) return prev;
+              return [
+                ...prev,
+                {
+                  id: `live-hear-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                  speaker: cap.channelMode === "mix" ? "Speaker" : "Speaking…",
+                  kind: "you",
+                  text: cleaned,
+                  live: true,
+                },
+              ];
+            });
             window.dispatchEvent(
               new CustomEvent("og-utterance", {
                 detail: { text, meetingId: created.meetingId },

@@ -162,13 +162,12 @@ async def _handle_and_forward(
             audio_ms = int(frame.get("audio_ms") or 0)
             start_ms = max(0, t_ms - audio_ms)
             end_ms = t_ms or (start_ms + audio_ms)
-            # Dedupe: speech_final then final often same utterance — skip identical final
+            # Dedupe: speech_final then final often same utterance — skip store + client forward
             if ftype == "final":
                 session = store.get_session(session_id)
                 if session and session.liveTranscript:
                     last = session.liveTranscript[-1]
                     if last.get("text") == text:
-                        await client_ws.send_json(frame)
                         return
             store.append_live_final(
                 session_id,

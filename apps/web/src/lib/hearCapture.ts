@@ -177,6 +177,8 @@ export function connectHearStream(
   ws.binaryType = "arraybuffer";
   const queue: ArrayBuffer[] = [];
   let ready = false;
+  /** PyAI often emits speech_final then final for the same utterance — track to dedupe. */
+  let lastSpeechFinal = "";
 
   const flushQueue = () => {
     while (queue.length && ws.readyState === WebSocket.OPEN) {
@@ -207,9 +209,20 @@ export function connectHearStream(
       handlers.onPartial?.(String(frame.text ?? ""));
       return;
     }
-    if (type === "speech_final" || type === "final") {
+    if (type === "speech_final") {
       const text = String(frame.text ?? "").trim();
-      if (text) handlers.onFinal?.(text, frame);
+      if (text) {
+        lastSpeechFinal = text;
+        handlers.onFinal?.(text, frame);
+      }
+      return;
+    }
+    if (type === "final") {
+      const text = String(frame.text ?? "").trim();
+      if (text && text !== lastSpeechFinal) {
+        handlers.onFinal?.(text, frame);
+      }
+      lastSpeechFinal = "";
       return;
     }
     if (type === "error") {
