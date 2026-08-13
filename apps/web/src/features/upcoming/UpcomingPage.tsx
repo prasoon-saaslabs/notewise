@@ -64,7 +64,7 @@ export function UpcomingPage() {
         </header>
 
         {!user?.calendarConnected ? (
-          <aside className="rounded-2xl border border-dashed border-[var(--nw-border)] bg-white px-5 py-8 text-center text-sm text-[var(--nw-ink-3)]">
+          <aside className="rounded-2xl border border-dashed border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-5 py-8 text-center text-sm text-[var(--nw-ink-3)]">
             Connect Google on the{" "}
             <Link to="/login" className="font-semibold text-[var(--nw-accent-dark)] underline">
               sign-in page
@@ -72,7 +72,7 @@ export function UpcomingPage() {
             to sync your calendar and unlock AI prep briefs.
           </aside>
         ) : events.length === 0 ? (
-          <aside className="rounded-2xl border border-[var(--nw-border)] bg-white px-5 py-8 text-center text-sm text-[var(--nw-ink-3)]">
+          <aside className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-5 py-8 text-center text-sm text-[var(--nw-ink-3)]">
             No upcoming meetings in the next two weeks.
           </aside>
         ) : (
@@ -81,7 +81,7 @@ export function UpcomingPage() {
               <li key={ev.id}>
                 <Link
                   to={`/upcoming/${ev.id}`}
-                  className="block rounded-2xl border border-[var(--nw-border)] bg-white p-4 transition hover:border-[var(--nw-accent)] hover:shadow-[0_8px_24px_rgb(14_116_144_/_0.08)]"
+                  className="block rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-4 transition hover:border-[var(--nw-accent)] hover:shadow-[0_8px_24px_rgb(var(--nw-accent-rgb)_/_0.08)]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

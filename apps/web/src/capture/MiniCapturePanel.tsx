@@ -92,7 +92,7 @@ export function MiniCapturePanel({
             recording
               ? "bg-[rgb(220_38_38_/_0.12)] text-[rgb(185_28_28)]"
               : "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
-          } ${beatCount ? "ring-2 ring-[rgb(14_116_144_/_0.25)]" : ""}`}
+          } ${beatCount ? "ring-2 ring-[rgb(var(--nw-accent-rgb)_/_0.25)]" : ""}`}
           title={expanded ? "Collapse" : "Show transcript & notes"}
           aria-label={expanded ? "Collapse panel" : "Show transcript and notes"}
           aria-pressed={expanded}
@@ -149,7 +149,7 @@ export function MiniCapturePanel({
 
       {expanded ? (
         <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-[rgb(248_250_252)] ring-1 ring-[var(--nw-border)]">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-[var(--nw-surface-2)] ring-1 ring-[var(--nw-border)]">
             <div className="shrink-0 border-b border-[var(--nw-border)] px-2.5 py-1.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-ink-3)]">
               Live transcript
             </div>
@@ -180,7 +180,7 @@ export function MiniCapturePanel({
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-white ring-1 ring-[var(--nw-border)]">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-[var(--nw-surface-solid)] ring-1 ring-[var(--nw-border)]">
             <div className="flex shrink-0 items-center gap-1 border-b border-[var(--nw-border)] px-2.5 py-1.5 text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-ink-3)]">
               <StickyNote className="h-3 w-3" />
               Notes
@@ -205,7 +205,7 @@ export function MiniCapturePanel({
             Live notes
           </div>
           <textarea
-            className="nw-page-input min-h-[72px] w-full flex-1 resize-none rounded-xl border border-[var(--nw-border)] bg-white px-2.5 py-2 text-xs text-[var(--nw-ink)] outline-none"
+            className="nw-page-input min-h-[72px] w-full flex-1 resize-none rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-2 text-xs text-[var(--nw-ink)] outline-none"
             placeholder="Jot notes while you talk…"
             value={userNotes}
             onChange={(e) => setUserNotesDraft(e.target.value)}

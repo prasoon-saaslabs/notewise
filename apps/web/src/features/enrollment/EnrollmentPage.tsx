@@ -81,7 +81,7 @@ export function EnrollmentPage() {
     <div className="nw-enroll relative grid min-h-full place-items-center overflow-hidden p-6">
       <AmbientBackdrop />
       <div className="nw-page-card nw-rise relative z-10 w-full max-w-md p-8 text-center">
-        <div className="nw-brand-mark mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl shadow-[0_10px_24px_rgb(14_116_144_/_0.28)]">
+        <div className="nw-brand-mark mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl shadow-[0_10px_24px_rgb(var(--nw-accent-rgb)_/_0.28)]">
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <p className="m-0 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-4)]">
@@ -98,14 +98,14 @@ export function EnrollmentPage() {
         <div className="relative my-7">
           {recording ? (
             <span
-              className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgb(14_116_144_/_0.3)]"
+              className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgb(var(--nw-accent-rgb)_/_0.3)]"
               style={{ animation: "nw-pulse-ring 2s ease infinite" }}
             />
           ) : null}
           <Waveform active={recording} bars={16} />
         </div>
 
-        <p className="mb-5 rounded-2xl border border-[var(--nw-border)] bg-[rgb(248_250_252)] px-4 py-3.5 text-sm italic leading-relaxed text-[var(--nw-ink-2)]">
+        <p className="mb-5 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-4 py-3.5 text-sm italic leading-relaxed text-[var(--nw-ink-2)]">
           “Hi, I’m enrolling my voice with Notewise for clearer meeting notes.”
         </p>
 

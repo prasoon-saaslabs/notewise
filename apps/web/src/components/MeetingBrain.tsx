@@ -28,11 +28,14 @@ type MeetingBrainContextValue = {
   jumpToCitation: (citation: BrainCitation) => void;
 };
 
-const MeetingBrainContext = createContext<MeetingBrainContextValue | null>(null);
+const MeetingBrainContext = createContext<MeetingBrainContextValue | null>(
+  null
+);
 
 export function useMeetingBrain() {
   const ctx = useContext(MeetingBrainContext);
-  if (!ctx) throw new Error("useMeetingBrain must be used within MeetingBrainProvider");
+  if (!ctx)
+    throw new Error("useMeetingBrain must be used within MeetingBrainProvider");
   return ctx;
 }
 
@@ -70,7 +73,7 @@ export function MeetingBrainProvider({ children }: { children: ReactNode }) {
         state: { jumpLineId: citation.lineId, jumpStartMs: citation.startMs },
       });
     },
-    [closeBrain, navigate],
+    [closeBrain, navigate]
   );
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export function MeetingBrainProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ open, openBrain, closeBrain, entityId, jumpToCitation }),
-    [open, openBrain, closeBrain, entityId, jumpToCitation],
+    [open, openBrain, closeBrain, entityId, jumpToCitation]
   );
 
   return (
@@ -92,24 +95,27 @@ export function MeetingBrainProvider({ children }: { children: ReactNode }) {
       {children}
       {open ? (
         <div
-          className="fixed inset-0 z-[80] flex items-start justify-center bg-[rgb(15_23_42_/_0.45)] p-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center sm:p-6"
+          className="fixed inset-0 z-[80] flex items-start justify-center bg-[var(--nw-modal-backdrop)] p-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center sm:p-6"
           role="presentation"
           onClick={closeBrain}
         >
           <div
-            className="flex max-h-[min(88vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-[28px] border border-[rgb(255_255_255_/_0.52)] bg-[rgb(255_255_255_/_0.58)] shadow-[0_8px_32px_rgb(15_23_42_/_0.12)] backdrop-blur-xl"
+            className="flex max-h-[min(88vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-[28px] border border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] shadow-[var(--nw-shadow-lg)] backdrop-blur-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="meeting-brain-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <header className="flex items-start justify-between gap-3 border-b border-[var(--nw-border)] px-4 py-3.5 sm:px-5">
+            <header className="flex items-start justify-between gap-3 border-b border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3.5 sm:px-5">
               <div className="flex min-w-0 items-start gap-3">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]">
                   <Brain className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h2 id="meeting-brain-title" className="m-0 text-base font-semibold text-[var(--nw-ink)]">
+                  <h2
+                    id="meeting-brain-title"
+                    className="m-0 text-base font-semibold text-[var(--nw-ink)]"
+                  >
                     Notewise brain
                   </h2>
                   <p className="m-0 mt-0.5 text-xs text-[var(--nw-ink-3)]">
@@ -119,14 +125,14 @@ export function MeetingBrainProvider({ children }: { children: ReactNode }) {
               </div>
               <button
                 type="button"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[rgb(248_250_252)]"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
                 aria-label="Close"
                 onClick={closeBrain}
               >
                 <X className="h-4 w-4" />
               </button>
             </header>
-            <div className="min-h-0 flex-1 overflow-auto px-4 py-4 sm:px-5">
+            <div className="min-h-0 flex-1 overflow-auto bg-[var(--nw-surface-solid)] px-4 py-4 sm:px-5">
               <VoiceAsk
                 entityId={entityId}
                 autoFocus
@@ -146,7 +152,7 @@ export function MeetingBrainHeaderTrigger() {
   return (
     <button
       type="button"
-      className="flex w-full max-w-xl min-w-0 items-center gap-2.5 rounded-full border border-[rgb(255_255_255_/_0.62)] bg-[rgb(255_255_255_/_0.48)] px-4 py-2.5 text-left text-sm text-[var(--nw-ink-3)] shadow-[0_4px_20px_rgb(15_23_42_/_0.06)] backdrop-blur-md transition hover:border-[rgb(255_255_255_/_0.78)] hover:bg-[rgb(255_255_255_/_0.65)] hover:text-[var(--nw-ink-2)]"
+      className="flex w-full max-w-xl min-w-0 items-center gap-2.5 rounded-full border border-[var(--nw-glass-border)] bg-[var(--nw-glass-bg)] px-4 py-2.5 text-left text-sm text-[var(--nw-ink-3)] shadow-[var(--nw-shadow-md)] backdrop-blur-md transition hover:border-[var(--nw-border-strong)] hover:bg-[var(--nw-glass-bg-strong)] hover:text-[var(--nw-ink-2)]"
       onClick={() => openBrain()}
     >
       <Sparkles className="h-4 w-4 shrink-0 text-[var(--nw-accent-dark)]" />

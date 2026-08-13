@@ -3,7 +3,7 @@ import { Sparkles } from "lucide-react";
 
 export function AiBadge({ label = "AI generated" }: { label?: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[rgb(14_116_144_/_0.12)] px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-accent-dark)] ring-1 ring-[rgb(14_116_144_/_0.18)]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.12)] px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-accent-dark)] ring-1 ring-[rgb(var(--nw-accent-rgb)_/_0.18)]">
       <Sparkles className="h-2.5 w-2.5" />
       {label}
     </span>
@@ -25,9 +25,9 @@ export function AiSurface({
 }) {
   return (
     <section
-      className={`nw-ai-surface overflow-hidden rounded-2xl border border-[rgb(14_116_144_/_0.18)] shadow-[0_1px_0_rgb(15_23_42_/_0.04)] ${className}`}
+      className={`nw-ai-surface overflow-hidden rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.18)] shadow-[0_1px_0_var(--nw-glass-shadow)] ${className}`}
     >
-      <header className="flex items-start justify-between gap-3 border-b border-[rgb(14_116_144_/_0.12)] px-4 py-3">
+      <header className="flex items-start justify-between gap-3 border-b border-[rgb(var(--nw-accent-rgb)_/_0.12)] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]">
             <Sparkles className="h-4 w-4" />
@@ -43,7 +43,7 @@ export function AiSurface({
       </header>
       <div className="p-4">{children}</div>
       {footer ? (
-        <footer className="border-t border-[rgb(14_116_144_/_0.1)] bg-white/50 px-4 py-3">{footer}</footer>
+        <footer className="border-t border-[rgb(var(--nw-accent-rgb)_/_0.1)] bg-[var(--nw-glass-bg)] px-4 py-3">{footer}</footer>
       ) : null}
     </section>
   );
@@ -59,7 +59,7 @@ export function AiMetric({
   hint?: string;
 }) {
   return (
-    <div className="nw-intel-card rounded-2xl border border-[var(--nw-border)] bg-white px-3 py-2.5">
+    <div className="nw-intel-card rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5">
       <p className="m-0 text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
         {label}
       </p>

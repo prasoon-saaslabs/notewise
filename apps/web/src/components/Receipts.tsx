@@ -20,7 +20,7 @@ export function CitationChip({
     <button
       type="button"
       onClick={onJump}
-      className="ml-1 rounded-full bg-[rgb(14_116_144_/_0.12)] px-1.5 py-0.5 text-[0.6rem] font-bold text-[var(--nw-accent-dark)]"
+      className="ml-1 rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.12)] px-1.5 py-0.5 text-[0.6rem] font-bold text-[var(--nw-accent-dark)]"
       title="Jump to transcript"
     >
       {formatMs(startMs)}

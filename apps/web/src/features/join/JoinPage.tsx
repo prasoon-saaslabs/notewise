@@ -67,7 +67,7 @@ function PyaiUnsupportedJoin() {
             ].map((line) => (
               <li
                 key={line}
-                className="flex items-start gap-2.5 rounded-xl bg-[rgb(248_250_252)] px-3.5 py-2.5 text-sm text-[var(--nw-ink-2)]"
+                className="flex items-start gap-2.5 rounded-xl bg-[var(--nw-surface-2)] px-3.5 py-2.5 text-sm text-[var(--nw-ink-2)]"
               >
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--nw-accent-dark)]" />
                 {line}
@@ -147,7 +147,7 @@ function NestJoinForm() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://meet.google.com/abc-defg-hij"
-                className="nw-page-input w-full rounded-2xl border border-[var(--nw-border)] bg-white py-3 pl-10 pr-3 text-sm font-normal text-[var(--nw-ink)] outline-none"
+                className="nw-page-input w-full rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] py-3 pl-10 pr-3 text-sm font-normal text-[var(--nw-ink)] outline-none"
                 inputMode="url"
                 autoComplete="off"
               />
@@ -160,7 +160,7 @@ function NestJoinForm() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Weekly delivery review"
-              className="nw-page-input rounded-2xl border border-[var(--nw-border)] bg-white px-3.5 py-3 text-sm font-normal text-[var(--nw-ink)] outline-none"
+              className="nw-page-input rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3.5 py-3 text-sm font-normal text-[var(--nw-ink)] outline-none"
               maxLength={200}
             />
           </label>
@@ -234,7 +234,7 @@ function NestJoinForm() {
           </ol>
         </div>
 
-        <div className="rounded-2xl border border-[var(--nw-border)] bg-[linear-gradient(180deg,#fff_0%,#f8fafc_100%)] p-4 text-sm text-[var(--nw-ink-3)]">
+        <div className="rounded-2xl border border-[var(--nw-border)] nw-surface-gradient p-4 text-sm text-[var(--nw-ink-3)]">
           <div className="mb-1.5 flex items-center gap-2 font-semibold text-[var(--nw-ink-2)]">
             <ShieldCheck className="h-4 w-4 text-[var(--nw-accent-dark)]" />
             Provider setup

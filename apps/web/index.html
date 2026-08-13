@@ -1,9 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="ocean-mist">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Notewise</title>
+    <script>
+      try {
+        var t = localStorage.getItem("nw-theme");
+        if (t) {
+          document.documentElement.dataset.theme = t;
+        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.documentElement.dataset.theme = "carbon-blue";
+        } else {
+          document.documentElement.dataset.theme = "ocean-mist";
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

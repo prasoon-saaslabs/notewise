@@ -19,7 +19,7 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
 
   if (!entities.length) {
     return (
-      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--nw-border)] bg-white px-6 py-12 text-center">
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-6 py-12 text-center">
         <AiPageHero
           eyebrow="Relationship memory"
           title="Your people graph is empty"
@@ -45,15 +45,15 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
       />
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-2xl border border-[var(--nw-border)] bg-white px-3 py-2.5 text-center">
+        <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-center">
           <p className="m-0 text-xl font-bold text-[var(--nw-ink)]">{entities.length}</p>
           <p className="m-0 text-[0.62rem] uppercase tracking-wide text-[var(--nw-ink-4)]">Contacts</p>
         </div>
-        <div className="rounded-2xl border border-[var(--nw-border)] bg-white px-3 py-2.5 text-center">
+        <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-center">
           <p className="m-0 text-xl font-bold text-[var(--nw-ink)]">{totalMeetings}</p>
           <p className="m-0 text-[0.62rem] uppercase tracking-wide text-[var(--nw-ink-4)]">Meetings</p>
         </div>
-        <div className="rounded-2xl border border-[var(--nw-border)] bg-white px-3 py-2.5 text-center">
+        <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-center">
           <p className="m-0 text-xl font-bold text-[rgb(180_83_9)]">{totalOpen}</p>
           <p className="m-0 text-[0.62rem] uppercase tracking-wide text-[var(--nw-ink-4)]">Open items</p>
         </div>
@@ -81,7 +81,7 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
               <li key={e.id}>
                 <Link
                   to={`/people/${e.id}`}
-                  className="nw-intel-card flex items-center justify-between gap-3 rounded-2xl border border-[var(--nw-border)] bg-white px-4 py-3"
+                  className="nw-intel-card flex items-center justify-between gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3"
                 >
                   <div className="min-w-0">
                     <p className="m-0 truncate text-sm font-semibold text-[var(--nw-ink)]">{e.name}</p>

@@ -26,13 +26,13 @@ export function RegeneratingNotes({ active }: { active: boolean }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-[rgb(14_116_144_/_0.22)] bg-[linear-gradient(135deg,rgb(14_116_144_/_0.08),#fff_55%,rgb(79_70_229_/_0.06))] p-5"
+      className="relative overflow-hidden rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.22)] nw-accent-panel-gradient p-5"
       role="status"
       aria-live="polite"
     >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[rgb(14_116_144_/_0.12)] blur-2xl" />
+      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.12)] blur-2xl" />
       <div className="relative flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-[rgb(14_116_144_/_0.15)]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--nw-surface-solid)] shadow-sm ring-1 ring-[rgb(var(--nw-accent-rgb)_/_0.15)]">
           <Sparkles className="h-5 w-5 animate-pulse text-[var(--nw-accent-dark)]" />
         </span>
         <div className="min-w-0 flex-1">
