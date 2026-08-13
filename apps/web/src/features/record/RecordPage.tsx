@@ -106,11 +106,11 @@ export function RecordPage() {
   }, [turns.length, interim]);
 
   return (
-    <PageMotion className="nw-capture relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[var(--nw-border)] bg-white shadow-[0_1px_0_rgb(15_23_42_/_0.03)]">
+    <PageMotion className="nw-capture nw-card relative flex h-full min-h-0 flex-col overflow-hidden">
       <div className="nw-capture-glow pointer-events-none absolute inset-0" aria-hidden />
 
       {/* Control strip: status left, actions flush right (stacks only on narrow phones) */}
-      <header className="nw-capture-toolbar relative z-10 border-b border-[var(--nw-border)] bg-white/90 px-3 py-2.5 backdrop-blur-sm sm:px-4 md:px-5 md:py-3">
+      <header className="nw-capture-toolbar relative z-10 border-b border-[rgb(255_255_255_/_0.45)] bg-[rgb(255_255_255_/_0.42)] px-3 py-2.5 backdrop-blur-md sm:px-4 md:px-5 md:py-3">
         <div className="nw-capture-status flex min-w-0 items-center gap-2.5 sm:gap-3">
           <button
             type="button"
@@ -230,7 +230,7 @@ export function RecordPage() {
       </header>
 
       {webCapture && phase === "idle" && !sessionLive ? (
-        <div className="relative z-10 border-b border-[var(--nw-border)] bg-[rgb(248_250_252)] px-4 py-3 md:px-5">
+        <div className="relative z-10 border-b border-[var(--nw-border)] bg-[var(--nw-accent-subtle)]/50 px-4 py-3 md:px-5">
           <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--nw-ink-2)]">
             <input
               type="checkbox"
@@ -256,7 +256,7 @@ export function RecordPage() {
       ) : null}
 
       {(processing || phase === "ready") && (
-        <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-[var(--nw-border)] bg-[rgb(248_250_252)] px-4 py-2 md:px-5">
+        <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-[var(--nw-border)] bg-[var(--nw-surface-2)]/60 px-4 py-2 md:px-5">
           {PHASES.map((step, i) => {
             const done = phase === "ready" || i < idx;
             const active = step.id === phase;
@@ -319,7 +319,7 @@ export function RecordPage() {
         {/* Live transcript */}
         <section className="flex min-h-0 flex-col border-b border-[var(--nw-border)] lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-2 px-4 py-2.5 md:px-5">
-            <h3 className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
+            <h3 className="m-0 text-sm font-medium text-[var(--nw-accent)]">
               Live transcript
             </h3>
             {live ? (
@@ -346,7 +346,7 @@ export function RecordPage() {
           >
             {turns.length === 0 && !interim ? (
               <div className="nw-capture-empty flex h-full min-h-[220px] flex-col items-center justify-center px-6 text-center">
-                <div className="nw-capture-empty-orb mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]">
+                <div className="nw-capture-empty-orb mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[var(--nw-accent-soft)] text-[var(--nw-accent)]">
                   <Mic className="h-6 w-6" />
                 </div>
                 <p className="m-0 text-base font-semibold tracking-tight text-[var(--nw-ink)]">
@@ -394,12 +394,7 @@ export function RecordPage() {
                     >
                       {!sameSpeaker ? (
                         <div className="mb-1 flex items-center gap-2">
-                          <SpeakerChip label={t.speaker} kind={t.kind} />
-                          {t.live ? (
-                            <span className="text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
-                              live
-                            </span>
-                          ) : null}
+                          <SpeakerChip label={t.speaker} kind={t.kind} live={t.live} />
                           {pyai &&
                           phase === "ready" &&
                           meetingId &&
@@ -485,7 +480,7 @@ export function RecordPage() {
                       Your scratchpad
                     </span>
                     <textarea
-                      className="nw-capture-pad w-full resize-none rounded-2xl border border-[rgb(217_119_6_/_0.2)] bg-[rgb(255_251_235_/_0.65)] px-3.5 py-3 text-sm leading-relaxed text-[var(--nw-ink)] outline-none transition focus:border-[rgb(217_119_6_/_0.45)] focus:bg-white"
+                      className="nw-capture-pad w-full resize-none rounded-2xl border border-[rgb(217_119_6_/_0.2)] bg-[rgb(255_251_235_/_0.65)] px-3.5 py-3 text-sm leading-relaxed text-[var(--nw-ink)] outline-none transition"
                       rows={sessionLive ? 8 : 5}
                       placeholder="pricing pushback?? · follow up Tuesday · send proposal…"
                       value={userNotes}
@@ -598,21 +593,21 @@ export function RecordPage() {
                     {meetingId ? (
                       <Link
                         to={`/library/${meetingId}`}
-                        className="nw-library-cta group relative mt-1 overflow-hidden rounded-2xl border border-[rgb(14_116_144_/_0.22)] bg-[linear-gradient(135deg,#0f766e_0%,#0e7490_55%,#0369a1_100%)] px-4 py-3.5 text-white shadow-[0_12px_28px_rgb(14_116_144_/_0.28)] transition hover:brightness-105"
+                        className="nw-library-cta group relative mt-1 flex overflow-hidden rounded-2xl border border-[rgb(13_148_136_/_0.28)] bg-[rgb(13_148_136_/_0.1)] px-4 py-3.5 backdrop-blur-md shadow-[0_4px_20px_rgb(13_148_136_/_0.08)] transition hover:border-[rgb(13_148_136_/_0.4)] hover:bg-[rgb(13_148_136_/_0.16)]"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/15">
+                        <div className="flex w-full items-center gap-3">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[rgb(13_148_136_/_0.2)] bg-[rgb(255_255_255_/_0.55)] text-[var(--nw-accent-dark)] backdrop-blur-sm">
                             <Sparkles className="h-5 w-5" />
                           </span>
                           <div className="min-w-0 flex-1 text-left">
-                            <p className="m-0 text-sm font-semibold tracking-tight">
+                            <p className="m-0 text-sm font-semibold tracking-tight text-[var(--nw-accent-dark)]">
                               Open in Library
                             </p>
-                            <p className="m-0 mt-0.5 text-xs text-white/80">
+                            <p className="m-0 mt-0.5 text-xs text-[var(--nw-ink-3)]">
                               Full transcript, notes, and actions for this meeting
                             </p>
                           </div>
-                          <ArrowRight className="h-4 w-4 shrink-0 transition group-hover:translate-x-0.5" />
+                          <ArrowRight className="h-4 w-4 shrink-0 text-[var(--nw-accent-dark)] transition group-hover:translate-x-0.5" />
                         </div>
                       </Link>
                     ) : null}

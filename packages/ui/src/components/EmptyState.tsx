@@ -25,7 +25,7 @@ export function EmptyState({
       )}
     >
       {icon ? <div className="mb-1 text-xl opacity-50">{icon}</div> : null}
-      <p className="nw-display m-0 font-bold text-[var(--nw-ink-2)]">{title}</p>
+      <p className="nw-display m-0 font-medium text-[var(--nw-ink)]">{title}</p>
       {description ? (
         <p className="m-0 max-w-xs text-xs leading-relaxed text-[var(--nw-ink-4)]">{description}</p>
       ) : null}

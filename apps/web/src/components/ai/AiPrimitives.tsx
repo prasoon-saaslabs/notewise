@@ -121,7 +121,7 @@ export function AiBulletList({
       ? "before:bg-[rgb(239_68_68)]"
       : variant === "action"
         ? "before:bg-[var(--nw-accent)]"
-        : "before:bg-[rgb(79_70_229)]";
+        : "before:bg-[var(--nw-accent)]";
 
   return (
     <ul className="m-0 flex list-none flex-col gap-2 p-0">

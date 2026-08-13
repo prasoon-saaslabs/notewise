@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "record";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "record" | "glass" | "glass-muted";
 
 const variantClass: Record<Variant, string> = {
   primary: "nw-btn--primary",
@@ -9,6 +9,8 @@ const variantClass: Record<Variant, string> = {
   ghost: "nw-btn--ghost",
   danger: "nw-btn--danger",
   record: "nw-btn--record",
+  glass: "nw-btn--primary",
+  "glass-muted": "nw-btn--secondary",
 };
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

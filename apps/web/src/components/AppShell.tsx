@@ -1,16 +1,61 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Calendar, Library, Mic, Settings2, Shield, Sparkles, UserRound, Users } from "lucide-react";
+import {
+  Calendar,
+  Library,
+  Mic,
+  Settings2,
+  Shield,
+  UserRound,
+  Users,
+} from "lucide-react";
+import { LogoMark } from "@notewise/ui";
 import { MeetingBrainHeaderTrigger } from "./MeetingBrain";
 import { UserMenu } from "./UserMenu";
 
 const links = [
   { to: "/", label: "Capture", hint: "Live STT", end: true, icon: Mic },
-  { to: "/upcoming", label: "Upcoming", hint: "Prep briefs", end: false, icon: Calendar },
-  { to: "/library", label: "Library", hint: "Notes & search", end: false, icon: Library },
-  { to: "/people", label: "People", hint: "Relationship AI", end: false, icon: Users },
-  { to: "/profile", label: "Profile", hint: "Account & AI", end: false, icon: UserRound },
-  { to: "/trust", label: "Trust", hint: "Gates & spend", end: false, icon: Shield },
-  { to: "/settings", label: "Settings", hint: "Stack & voice", end: false, icon: Settings2 },
+  {
+    to: "/upcoming",
+    label: "Upcoming",
+    hint: "Prep briefs",
+    end: false,
+    icon: Calendar,
+  },
+  {
+    to: "/library",
+    label: "Library",
+    hint: "Notes & search",
+    end: false,
+    icon: Library,
+  },
+  {
+    to: "/people",
+    label: "People",
+    hint: "Relationship AI",
+    end: false,
+    icon: Users,
+  },
+  {
+    to: "/profile",
+    label: "Profile",
+    hint: "Account & AI",
+    end: false,
+    icon: UserRound,
+  },
+  {
+    to: "/trust",
+    label: "Trust",
+    hint: "Gates & spend",
+    end: false,
+    icon: Shield,
+  },
+  {
+    to: "/settings",
+    label: "Settings",
+    hint: "Stack & voice",
+    end: false,
+    icon: Settings2,
+  },
 ] as const;
 
 export function AppShell() {
@@ -18,17 +63,18 @@ export function AppShell() {
     <div className="nw-shell flex h-full">
       <aside className="nw-shell-rail hidden w-[72px] shrink-0 flex-col items-center py-3 md:flex lg:w-[200px] lg:items-stretch lg:px-2.5 lg:py-4 xl:w-[228px] xl:px-3">
         <div className="mb-4 flex flex-col items-center lg:mb-6 lg:flex-row lg:gap-2.5 lg:px-2">
-          <span
-            className="nw-brand-mark nw-shell-brand grid h-9 w-9 place-items-center rounded-xl shadow-[0_6px_16px_rgb(14_116_144_/_0.25)]"
+          <LogoMark
+            className="nw-shell-brand"
+            size={36}
             title="Notewise"
-          >
-            <Sparkles className="h-4 w-4 text-white" />
-          </span>
+          />
           <div className="nw-shell-brand-text hidden min-w-0 lg:block">
             <p className="m-0 truncate text-sm font-bold tracking-tight text-[var(--nw-ink)]">
               Notewise
             </p>
-            <p className="m-0 truncate text-[0.65rem] text-[var(--nw-ink-4)]">AI meeting intelligence</p>
+            <p className="m-0 truncate text-[0.65rem] text-[var(--nw-ink-4)]">
+              AI meeting intelligence
+            </p>
           </div>
         </div>
 
@@ -44,10 +90,10 @@ export function AppShell() {
               title={`${label} — ${hint}`}
               aria-label={label}
               className={({ isActive }) =>
-                `nw-shell-nav group relative flex w-full flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[0.62rem] font-semibold transition lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2.5 ${
+                `nw-shell-nav group relative flex w-full flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[0.62rem] font-medium transition lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2.5 ${
                   isActive
-                    ? "is-active bg-white text-[var(--nw-accent-dark)] shadow-[0_8px_20px_rgb(14_116_144_/_0.1)] ring-1 ring-[rgb(14_116_144_/_0.14)]"
-                    : "text-[var(--nw-ink-4)] hover:bg-white/70 hover:text-[var(--nw-ink-2)]"
+                    ? "is-active nw-glass-nav-active text-[var(--nw-accent-dark)]"
+                    : "text-[var(--nw-ink-3)] hover:bg-white/40 hover:text-[var(--nw-ink)]"
                 }`
               }
               style={{ animationDelay: `${i * 40}ms` }}
@@ -55,17 +101,19 @@ export function AppShell() {
               {({ isActive }) => (
                 <>
                   <span
-                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition lg:h-8 lg:w-8 ${
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition lg:h-8 lg:w-8 ${
                       isActive
                         ? "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
                         : "bg-transparent text-current group-hover:bg-[var(--nw-surface-2)]"
                     }`}
                   >
-                    <Icon className="h-4 w-4" strokeWidth={2.1} />
+                    <Icon className="h-4 w-4" strokeWidth={2} />
                   </span>
                   <span className="nw-shell-nav-label flex min-w-0 flex-col items-center lg:items-start">
-                    <span className="max-w-full truncate leading-none">{label}</span>
-                    <span className="mt-0.5 hidden text-[0.6rem] font-medium normal-case tracking-normal text-[var(--nw-ink-4)] xl:block">
+                    <span className="max-w-full truncate leading-none">
+                      {label}
+                    </span>
+                    <span className="mt-0.5 hidden text-[0.6rem] font-normal normal-case tracking-normal text-[var(--nw-ink-4)] xl:block">
                       {hint}
                     </span>
                   </span>
@@ -87,7 +135,7 @@ export function AppShell() {
         </main>
 
         <nav
-          className="nw-shell-mobile flex border-t border-[var(--nw-border)] bg-white/95 px-1 py-1 backdrop-blur md:hidden"
+          className="nw-shell-mobile flex px-1 py-1 md:hidden"
           aria-label="Mobile"
         >
           {links.map(({ to, label, end, icon: Icon }) => (
@@ -96,10 +144,10 @@ export function AppShell() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[0.6rem] font-semibold transition ${
+                `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 text-[0.6rem] font-medium transition ${
                   isActive
-                    ? "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
-                    : "text-[var(--nw-ink-4)]"
+                    ? "nw-glass-nav-active text-[var(--nw-accent-dark)]"
+                    : "text-[var(--nw-ink-3)]"
                 }`
               }
             >

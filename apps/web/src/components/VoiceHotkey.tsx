@@ -22,8 +22,10 @@ export function VoiceHotkey() {
       const client = connectHearStream(hearWsUrl(sessionId), {
         onPartial: (t) => setHud(t || "Listening…"),
         onFinal: (t) => {
-          finals.push(t);
-          setHud(t);
+          const cleaned = t.trim();
+          if (!cleaned || finals[finals.length - 1] === cleaned) return;
+          finals.push(cleaned);
+          setHud(cleaned);
         },
         onError: (m) => setHud(m),
       });
