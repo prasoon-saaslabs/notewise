@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { BrandIcon } from "@notewise/ui";
 
 type AppBrandProps = {
   size?: "sm" | "md" | "lg";
@@ -8,20 +8,17 @@ type AppBrandProps = {
 
 const SIZES = {
   sm: {
-    mark: "h-9 w-9",
-    icon: "h-4 w-4",
+    mark: 36,
     title: "text-sm",
     tagline: "text-[0.62rem]",
   },
   md: {
-    mark: "h-12 w-12",
-    icon: "h-5 w-5",
+    mark: 48,
     title: "text-xl",
     tagline: "text-xs",
   },
   lg: {
-    mark: "h-16 w-16",
-    icon: "h-7 w-7",
+    mark: 64,
     title: "text-2xl",
     tagline: "text-sm",
   },
@@ -35,12 +32,10 @@ export function AppBrand({
   const s = SIZES[size];
   return (
     <div className={`flex flex-col items-center text-center ${className}`}>
-      <span
-        className={`nw-brand-mark grid ${s.mark} place-items-center rounded-2xl shadow-[0_8px_24px_rgb(var(--nw-accent-rgb)_/_0.28)]`}
-        aria-hidden
-      >
-        <Sparkles className={`${s.icon} text-white`} />
-      </span>
+      <BrandIcon
+        size={s.mark}
+        className="drop-shadow-[0_8px_24px_rgba(14,116,144,0.28)]"
+      />
       <h1
         className={`m-0 mt-4 font-bold tracking-tight text-[var(--nw-ink)] ${s.title}`}
       >
