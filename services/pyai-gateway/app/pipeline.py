@@ -31,6 +31,7 @@ from app.pyai.recap import (
     submit_utterances,
     wait_for_recap,
 )
+from app.pyai.recap_utterances import fresh_recap_call_id
 from app.pyai.trace import record_run
 from app.notes_builder import (
     build_notes_from_transcript,
@@ -165,14 +166,14 @@ async def finalize_session(
         meeting_mode = get_mode(session.modeId or meeting.modeId)
         started = time.monotonic()
         try:
-            await submit_utterances(
+            submitted = await submit_utterances(
                 call_id,
                 utterances,
                 customer_name=meeting.title,
                 user_notes=user_notes,
                 pack_id=meeting_mode.get("pack_id"),
             )
-            recap = await wait_for_recap(call_id)
+            recap = await wait_for_recap(str(submitted.get("call_id") or call_id))
             notes = merge_recap_with_user_notes(
                 map_recap_to_notes(recap),
                 user_notes,
@@ -307,7 +308,7 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
     if not meeting:
         raise ValueError("Meeting not found")
     store.update_meeting(meeting_id, status="processing")
-    call_id = meeting.callId or meeting.id
+    call_id = fresh_recap_call_id(meeting.callId or meeting.id)
     segments = [
         {
             "speaker": "you" if t.kind == "you" else t.speaker,
@@ -326,14 +327,14 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
     notes_text = user_notes if user_notes is not None else meeting.userNotesDraft
     started = time.monotonic()
     try:
-        await submit_utterances(
+        submitted = await submit_utterances(
             call_id,
             utterances,
             customer_name=meeting.title,
             user_notes=notes_text,
             pack_id=get_mode(meeting.modeId).get("pack_id"),
         )
-        recap = await wait_for_recap(call_id)
+        recap = await wait_for_recap(str(submitted.get("call_id") or call_id))
         notes = merge_recap_with_user_notes(
             map_recap_to_notes(recap),
             notes_text,

@@ -45,13 +45,17 @@ async def ask_with_recap(
         f"QUESTION: {question.strip()}"
     )
     try:
-        await submit_utterances(
+        submitted = await submit_utterances(
             call_id,
             utterances,
             user_notes=question_block,
             pack_id=pack_id,
         )
-        recap = await wait_for_recap(call_id, timeout_s=75, interval_s=2.0)
+        recap = await wait_for_recap(
+            str(submitted.get("call_id") or call_id),
+            timeout_s=75,
+            interval_s=2.0,
+        )
         notes = map_recap_to_notes(recap)
     except PyAIError as e:
         body = (e.body or "") + str(e)
