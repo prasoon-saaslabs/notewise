@@ -452,6 +452,14 @@ a {
   border-radius: 999px;
 }
 
+.nw-simple-page .nw-simple-meeting-title,
+.nw-simple-page .nw-simple-meeting-title:focus,
+.nw-simple-page .nw-simple-meeting-title:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .nw-mini-panel {
   height: 100%;
   background: var(--nw-gradient-surface);
@@ -1067,6 +1075,70 @@ a {
 
 .nw-progress-fill {
   transition: width 80ms linear;
+}
+
+.nw-audio-seek {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.5rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nw-audio-seek:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.nw-audio-seek::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.nw-audio-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -4px;
+  border-radius: 999px;
+  border: 2px solid var(--nw-surface-solid);
+  background: var(--nw-accent);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.nw-audio-seek:not(:disabled):hover::-webkit-slider-thumb,
+.nw-audio-seek:not(:disabled):active::-webkit-slider-thumb {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.14);
+}
+
+.nw-audio-seek::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border: 0;
+}
+
+.nw-audio-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--nw-surface-solid);
+  background: var(--nw-accent);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+}
+
+.nw-audio-seek:focus-visible {
+  outline: none;
+}
+
+.nw-audio-seek:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.2);
+}
+
+.nw-audio-seek:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.2);
 }
 
 .nw-title-shimmer {

@@ -98,20 +98,6 @@ export function SimpleTranscriptBar({
           <div className="nw-simple-transcript-wave flex h-8 shrink-0 items-center overflow-hidden px-1">
             <Waveform active={recording && !paused} bars={14} />
           </div>
-          <button
-            type="button"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
-            aria-expanded={transcriptOpen}
-            aria-haspopup={panelLayout ? undefined : "dialog"}
-            aria-label={transcriptOpen ? "Hide transcript" : "Show transcript"}
-            onClick={() => setTranscriptOpen(!transcriptOpen)}
-          >
-            <ChevronUp
-              className={`h-4 w-4 transition-transform ${
-                transcriptOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
           {showPreview ? (
             <div
               className="min-w-0 flex-1 overflow-hidden px-1"
@@ -138,6 +124,20 @@ export function SimpleTranscriptBar({
           ) : (
             <span className="min-w-0 flex-1" aria-hidden />
           )}
+          <button
+            type="button"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
+            aria-expanded={transcriptOpen}
+            aria-haspopup={panelLayout ? undefined : "dialog"}
+            aria-label={transcriptOpen ? "Hide transcript" : "Show transcript"}
+            onClick={() => setTranscriptOpen(!transcriptOpen)}
+          >
+            <ChevronUp
+              className={`h-4 w-4 transition-transform ${
+                transcriptOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
           <button
             type="button"
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-danger-soft)] hover:text-[var(--nw-danger)]"

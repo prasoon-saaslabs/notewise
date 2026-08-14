@@ -6,9 +6,7 @@ import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
 import {
   Download,
   FileText,
-  Pause,
   Pencil,
-  Play,
   RefreshCw,
   Sparkles,
   Square,
@@ -33,6 +31,7 @@ import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
+import { MeetingAudioPlayer } from "../../components/MeetingAudioPlayer";
 
 /** Ready meetings always; failed ones if they have transcript to rebuild from. */
 function meetingCanRegenerate(status?: string, transcriptLen = 0) {
@@ -61,15 +60,6 @@ function BackendTag({ backend }: { backend?: MeetingBackend | string | null }) {
   );
 }
 
-function formatTime(sec: number) {
-  if (!Number.isFinite(sec) || sec < 0) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${m}:${s}`;
-}
-
 const BOT_STEPS = [
   { id: "bot_joining", label: "Bot joining lobby" },
   { id: "bot_live", label: "Live capture in call" },
@@ -88,10 +78,6 @@ export function LibraryPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [showTranscript, setShowTranscript] = useState(true);
   const [regenError, setRegenError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -256,14 +242,7 @@ export function LibraryPage() {
   const stepIdx = meeting ? botStepIndex(meeting.status) : 0;
 
   useEffect(() => {
-    setPlaying(false);
-    setCurrent(0);
-    setDuration(0);
     setRegenError(null);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
   }, [selectedId]);
 
   useEffect(() => {
@@ -292,22 +271,6 @@ export function LibraryPage() {
       });
     }
   }, [meeting?.transcript?.length, meeting?.status]);
-
-  async function togglePlay() {
-    const el = audioRef.current;
-    if (!el || !meeting?.audioUrl) return;
-    if (el.paused) {
-      try {
-        await el.play();
-        setPlaying(true);
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      el.pause();
-      setPlaying(false);
-    }
-  }
 
   return (
     <PageMotion className="nw-card grid h-full min-h-0 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -778,60 +741,12 @@ export function LibraryPage() {
               </div>
             ) : null}
 
-            <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 shadow-[0_1px_0_rgb(15_23_42_/_0.04)]">
-              <button
-                type="button"
-                className="nw-play-orb grid h-9 w-9 place-items-center rounded-full bg-[var(--nw-accent)] text-white disabled:opacity-40"
-                aria-label={playing ? "Pause" : "Play"}
-                disabled={!meeting.audioUrl}
-                onClick={() => void togglePlay()}
-              >
-                {playing ? (
-                  <Pause className="h-3.5 w-3.5" />
-                ) : (
-                  <Play className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(current)}
-              </span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--nw-surface-3)]">
-                <i
-                  className="nw-progress-fill block h-full rounded-full bg-[linear-gradient(90deg,var(--nw-accent),#0ea5e9)] not-italic"
-                  style={{
-                    width: `${
-                      duration ? Math.min(100, (current / duration) * 100) : 0
-                    }%`,
-                  }}
-                />
-              </div>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(duration || meeting.durationSec || 0)}
-              </span>
-              {meeting.audioUrl ? (
-                <audio
-                  ref={audioRef}
-                  src={meeting.audioUrl}
-                  preload="metadata"
-                  onLoadedMetadata={(e) =>
-                    setDuration(e.currentTarget.duration || 0)
-                  }
-                  onTimeUpdate={(e) =>
-                    setCurrent(e.currentTarget.currentTime || 0)
-                  }
-                  onEnded={() => setPlaying(false)}
-                  onPause={() => setPlaying(false)}
-                  onPlay={() => setPlaying(true)}
-                />
-              ) : (
-                <span
-                  className="nw-muted text-xs"
-                  title="Record a new meeting to enable playback"
-                >
-                  No audio (record again)
-                </span>
-              )}
-            </div>
+            <MeetingAudioPlayer
+              key={meeting.id}
+              className="mx-5 mt-3"
+              src={meeting.audioUrl}
+              durationHintSec={meeting.durationSec}
+            />
 
             <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
               {meeting.status === "processing" ? (
@@ -864,6 +779,7 @@ export function LibraryPage() {
                         userNotesEditable
                         onUserNotesChange={persistedUserNotes.handleChange}
                         userNotesSaveHint={persistedUserNotes.saveHint}
+                        userNotesPlacement="last"
                         onJump={(lineId) => {
                           setShowTranscript(true);
                           if (!lineId) return;
