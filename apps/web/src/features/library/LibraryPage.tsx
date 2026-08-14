@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
 import {
   Download,
   FileText,
-  Pencil,
   RefreshCw,
   Sparkles,
   Square,
   Trash2,
-  X,
 } from "lucide-react";
 import type { MeetingBackend } from "@notewise/api-client";
 import {
@@ -22,11 +19,11 @@ import {
 } from "../../lib/meetingsCatalog";
 import { MeetingNotesIntelligence } from "../../components/MeetingNotesIntelligence";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
-import { NotesEditor } from "../../components/notes/NotesEditor";
 import {
   usePersistedUserNotes,
 } from "../../components/notes/usePersistedUserNotes";
 import { api } from "../../lib/api";
+import { formatMeetingListWhen, formatWhen } from "../../lib/calendarFormat";
 import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
@@ -83,10 +80,7 @@ export function LibraryPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editNotes, setEditNotes] = useState("");
   const [q, setQ] = useState("");
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -208,7 +202,6 @@ export function LibraryPage() {
       clientForBackend(meetingBackend).updateMeeting(mid, { title, userNotes }),
     onSuccess: () => {
       setEditingTitle(false);
-      setEditOpen(false);
       setDownloadOpen(false);
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
@@ -243,6 +236,7 @@ export function LibraryPage() {
 
   useEffect(() => {
     setRegenError(null);
+    setEditingTitle(false);
   }, [selectedId]);
 
   useEffect(() => {
@@ -334,9 +328,20 @@ export function LibraryPage() {
                 <p className="m-0 mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--nw-ink-3)]">
                   {m.snippet || m.status}
                 </p>
-                <span className="mt-1.5 inline-block text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
-                  {m.source}
-                </span>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
+                    {m.source}
+                  </span>
+                  {m.createdAt ? (
+                    <time
+                      dateTime={m.createdAt}
+                      className="shrink-0 text-[0.62rem] text-[var(--nw-ink-4)]"
+                      title={formatWhen(m.createdAt)}
+                    >
+                      {formatMeetingListWhen(m.createdAt)}
+                    </time>
+                  ) : null}
+                </div>
               </Link>
             ))
           )}
@@ -354,47 +359,55 @@ export function LibraryPage() {
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--nw-border)] px-5 py-4">
               <div className="min-w-0 flex-1">
                 {editingTitle ? (
-                  <form
-                    className="flex max-w-xl flex-wrap items-center gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
+                  <input
+                    autoFocus
+                    value={titleDraft}
+                    maxLength={200}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={() => {
+                      const current =
+                        meeting.title || displayMeetingTitle(meeting);
                       const next = titleDraft.trim();
-                      if (!next || next === meeting.title) {
+                      if (!next || next === current) {
                         setEditingTitle(false);
                         return;
                       }
                       rename.mutate({ mid: meeting.id, title: next });
                     }}
-                  >
-                    <input
-                      autoFocus
-                      value={titleDraft}
-                      maxLength={200}
-                      onChange={(e) => setTitleDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setEditingTitle(false);
-                      }}
-                      className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
-                      aria-label="Meeting title"
-                    />
-                    <Button
-                      size="sm"
-                      type="submit"
-                      disabled={rename.isPending || !titleDraft.trim()}
-                    >
-                      {rename.isPending ? "Saving…" : "Save"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setEditingTitle(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </form>
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setEditingTitle(false);
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    disabled={rename.isPending}
+                    className="nw-page-input nw-page-title m-0 w-full max-w-xl rounded-lg border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-1 text-[var(--nw-ink)] outline-none focus:border-[var(--nw-accent)]"
+                    aria-label="Meeting title"
+                  />
                 ) : (
-                  <h2 className="nw-page-title nw-title-shimmer m-0">
+                  <h2
+                    className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 transition hover:bg-[var(--nw-surface-2)]"
+                    onClick={() => {
+                      setTitleDraft(
+                        meeting.title || displayMeetingTitle(meeting),
+                      );
+                      setEditingTitle(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setTitleDraft(
+                          meeting.title || displayMeetingTitle(meeting),
+                        );
+                        setEditingTitle(true);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    title="Click to rename"
+                  >
                     {displayMeetingTitle(meeting)}
                   </h2>
                 )}
@@ -417,6 +430,14 @@ export function LibraryPage() {
                       </span>
                     ))}
                 </div>
+                {meeting.createdAt ? (
+                  <time
+                    dateTime={meeting.createdAt}
+                    className="mt-2 block text-xs text-[var(--nw-ink-4)]"
+                  >
+                    {formatWhen(meeting.createdAt)}
+                  </time>
+                ) : null}
                 {meeting.meetingUrl ? (
                   <a
                     className="mt-2 inline-block text-xs font-semibold text-[var(--nw-accent-dark)] underline"
@@ -551,18 +572,6 @@ export function LibraryPage() {
                 </div>
                 <button
                   type="button"
-                  className="nw-library-tool inline-flex h-9 w-9 items-center justify-center rounded-xl"
-                  title="Edit title & notes"
-                  onClick={() => {
-                    setEditTitle(meeting.title || displayMeetingTitle(meeting));
-                    setEditNotes(meeting.userNotes || "");
-                    setEditOpen(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
                   className="nw-library-tool danger inline-flex h-9 w-9 items-center justify-center rounded-xl"
                   title="Delete meeting"
                   onClick={() => setDeleteOpen(true)}
@@ -602,99 +611,6 @@ export function LibraryPage() {
                 </p>
               ) : null}
             </div>
-
-            {editOpen
-              ? createPortal(
-                  <div
-                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
-                    role="presentation"
-                    onClick={() => setEditOpen(false)}
-                  >
-                    <div
-                      className="nw-modal-dialog w-full max-w-lg rounded-2xl p-5"
-                      role="dialog"
-                      aria-modal="true"
-                      aria-labelledby="edit-meeting-title"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-2">
-                        <h3
-                          id="edit-meeting-title"
-                          className="m-0 text-base font-semibold text-[var(--nw-ink)]"
-                        >
-                          Edit meeting
-                        </h3>
-                        <button
-                          type="button"
-                          className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
-                          onClick={() => setEditOpen(false)}
-                          aria-label="Close"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <form
-                        className="flex flex-col gap-3"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const title = editTitle.trim();
-                          if (!title) return;
-                          saveMeeting.mutate({
-                            mid: meeting.id,
-                            title,
-                            userNotes: editNotes,
-                          });
-                        }}
-                      >
-                        <label className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Title
-                          </span>
-                          <input
-                            value={editTitle}
-                            maxLength={200}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-                          />
-                        </label>
-                        <div className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Your notes (scratchpad)
-                          </span>
-                          <NotesEditor
-                            variant="field"
-                            minHeight={144}
-                            value={editNotes}
-                            onChange={setEditNotes}
-                            placeholder="Pricing pushback, follow-ups, context…"
-                            aria-label="Your notes scratchpad"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2 pt-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={
-                              saveMeeting.isPending || !editTitle.trim()
-                            }
-                          >
-                            {saveMeeting.isPending ? "Saving…" : "Save"}
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>,
-                  document.body
-                )
-              : null}
 
             {deleteOpen ? (
               <DeleteMeetingModal
