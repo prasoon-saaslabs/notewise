@@ -60,6 +60,7 @@ export function SimpleFrontPage() {
             variant="simple"
             initialVisibleCount={2}
             collapsible
+            showAllHref="/upcoming"
             headerAction={
               <Link
                 to={SIMPLE_NOTE_PATH}

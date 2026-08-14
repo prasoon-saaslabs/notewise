@@ -1,9 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
 import { AppWaveform } from "@/components/demos/app/AppWaveform";
-import { MiniCaptureDemo } from "@/components/demos/app/MiniCaptureDemo";
 import { cn } from "@/lib/utils";
 
 type FeatureIcon =
@@ -31,32 +29,33 @@ export function FeatureDemoThumb({
       )}
     >
       {icon === "video" && (
-        <div className="w-[72%] rounded-2xl border border-border/80 bg-white/70 p-3 shadow-sm">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="nw-capture-mic is-live grid h-7 w-7 place-items-center">
-              <span className="h-2 w-2 rounded-sm bg-white" />
-            </span>
-            <span className="font-mono text-[10px] font-semibold text-ink">
-              00:14
-            </span>
-            <span className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[8px] font-bold uppercase text-red-700">
-              Live
-            </span>
+        <div className="w-[82%] overflow-hidden rounded-2xl border border-border/80 bg-white/85 shadow-sm">
+          <div className="grid grid-cols-2 border-b border-border/80">
+            <div className="border-r border-border/80 px-2.5 py-2">
+              <p className="font-display text-[10px] text-ink">New Meeting</p>
+              <p className="mt-1 text-[8px] text-ink-muted">Write notes</p>
+            </div>
+            <div className="px-2.5 py-2">
+              <p className="text-[8px] font-medium text-teal">Live transcript</p>
+              <p className="mt-1 text-[8px] text-ink-muted">Listening…</p>
+            </div>
           </div>
-          <AppWaveform active={active} bars={12} className="h-7" />
+          <div className="flex items-center gap-1 px-2 py-1.5">
+            <AppWaveform active={active} bars={10} className="h-5" />
+            <span className="ml-auto text-[7px] text-ink-muted">Stop</span>
+          </div>
         </div>
       )}
 
       {icon === "check" && (
         <div className="w-[78%] rounded-2xl border border-border bg-white/80 p-3 text-[9px] text-ink-secondary shadow-sm">
-          <p className="font-bold uppercase tracking-wider text-ink-muted">
-            Run status
-          </p>
-          <p className="mt-1">6 cited · 0 blocked</p>
-          <p className="mt-2">Send SOC 2 report by Friday</p>
-          <span className="mt-1 inline-block rounded-full bg-teal/10 px-1.5 py-0.5 font-bold text-teal">
-            0:31
+          <p className="font-display text-[10px] text-ink">Standup Meeting</p>
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-muted px-1.5 py-0.5 text-[7px] font-semibold text-teal-hover">
+            Enhanced
           </span>
+          <p className="mt-2 leading-relaxed">
+            Tableau project recap and prioritization weakness.
+          </p>
         </div>
       )}
 
@@ -124,15 +123,6 @@ export function FeatureDemoThumb({
         </div>
       )}
 
-      {active && icon === "video" ? (
-        <motion.div
-          className="pointer-events-none absolute bottom-2 right-2 w-[34%] scale-[0.78]"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <MiniCaptureDemo timer="00:08" note="follow up Tuesday" />
-        </motion.div>
-      ) : null}
     </div>
   );
 }

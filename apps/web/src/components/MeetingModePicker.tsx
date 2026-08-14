@@ -89,11 +89,6 @@ export function MeetingModePicker({
           >
             {modeHint(active?.id)}
           </span>
-          {active?.pack_id ? (
-            <span className="block text-[0.65rem] text-[var(--nw-ink-4)]">
-              Pack: {active.pack_id}
-            </span>
-          ) : null}
         </p>
       ) : null}
     </div>

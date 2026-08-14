@@ -2,11 +2,10 @@
 
 import { motion, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 import { AppDemoShell } from "@/components/demos/app/AppDemoShell";
-import { CaptureToolbarDemo } from "@/components/demos/app/CaptureToolbarDemo";
 import { LibraryNotesDemo } from "@/components/demos/app/LibraryNotesDemo";
-import { LiveTranscriptDemo } from "@/components/demos/LiveTranscriptDemo";
-import { PhaseStepperDemo } from "@/components/demos/app/PhaseStepperDemo";
-import { ProfileSnapshotDemo } from "@/components/demos/app/ProfileSnapshotDemo";
+import { SimpleCaptureDemo } from "@/components/demos/app/SimpleCaptureDemo";
+import { UpcomingMeetsDemo } from "@/components/demos/app/UpcomingMeetsDemo";
+import { HERO_DEMO } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type PipelineStageDemoProps = {
@@ -24,35 +23,37 @@ export function PipelineStageDemo({ progress, className }: PipelineStageDemoProp
 
   if (prefersReducedMotion) {
     return (
-      <AppDemoShell title="Library · notes with receipts" className={className}>
-        <LibraryNotesDemo animate={false} />
+      <AppDemoShell chrome={false} className={className}>
+        <LibraryNotesDemo />
       </AppDemoShell>
     );
   }
 
   return (
-    <AppDemoShell title="How a call becomes memory" className={cn("min-h-[420px]", className)}>
+    <AppDemoShell chrome={false} className={cn("min-h-[420px]", className)}>
       <div className="relative min-h-[380px]">
         <motion.div style={{ opacity: stage0 }} className="absolute inset-0">
-          <CaptureToolbarDemo mode="live" timer="00:14" statusLine="Menu-bar · mic + system audio" />
-          <LiveTranscriptDemo active={false} />
+          <UpcomingMeetsDemo />
         </motion.div>
 
         <motion.div style={{ opacity: stage1 }} className="absolute inset-0">
-          <CaptureToolbarDemo mode="processing" timer="00:27" statusLine="Transcribing with PyAI Hear…" />
-          <PhaseStepperDemo activeIndex={1} />
-          <LiveTranscriptDemo active />
+          <SimpleCaptureDemo
+            title={HERO_DEMO.newMeetingTitle}
+            listening
+            transcriptActive={false}
+          />
         </motion.div>
 
         <motion.div style={{ opacity: stage2 }} className="absolute inset-0">
-          <CaptureToolbarDemo mode="ready" timer="00:31" statusLine="Citation gate · 6 cited · 0 blocked" />
-          <PhaseStepperDemo activeIndex={3} />
-          <LibraryNotesDemo />
+          <SimpleCaptureDemo
+            title={HERO_DEMO.meetingTitle}
+            transcriptActive
+            activeLine={0}
+          />
         </motion.div>
 
         <motion.div style={{ opacity: stage3 }} className="absolute inset-0">
-          <CaptureToolbarDemo mode="idle" timer="—" statusLine="People · cross-meeting intelligence" />
-          <ProfileSnapshotDemo progress={1} />
+          <LibraryNotesDemo />
         </motion.div>
       </div>
     </AppDemoShell>

@@ -3,6 +3,7 @@ import { BrandIcon } from "@notewise/ui";
 type AppBrandProps = {
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
+  layout?: "stack" | "row";
   className?: string;
 };
 
@@ -27,26 +28,37 @@ const SIZES = {
 export function AppBrand({
   size = "md",
   showTagline = true,
+  layout = "stack",
   className = "",
 }: AppBrandProps) {
   const s = SIZES[size];
+  const isRow = layout === "row";
   return (
-    <div className={`flex flex-col items-center text-center ${className}`}>
+    <div
+      className={`flex ${
+        isRow
+          ? "flex-row items-center justify-center gap-3"
+          : "flex-col items-center text-center"
+      } ${className}`}
+    >
       <BrandIcon
         size={s.mark}
-        className="drop-shadow-[0_8px_24px_rgba(14,116,144,0.28)]"
+        className="shrink-0 drop-shadow-[0_8px_24px_rgba(14,116,144,0.28)]"
       />
       <h1
-        className={`m-0 mt-4 font-bold tracking-tight text-[var(--nw-ink)] ${s.title}`}
+        className={`m-0 font-bold tracking-tight text-[var(--nw-ink)] ${s.title} ${
+          isRow ? "" : "mt-4"
+        }`}
       >
         Notewise
       </h1>
       {showTagline ? (
-        <p
-          className={`m-0 mt-1 font-medium text-[var(--nw-ink-3)] ${s.tagline}`}
-        >
-          AI meeting intelligence
-        </p>
+        // <p
+        //   className={`m-0 mt-1 font-medium text-[var(--nw-ink-3)] ${s.tagline}`}
+        // >
+        //   AI meeting intelligence
+        // </p>
+        <></>
       ) : null}
     </div>
   );

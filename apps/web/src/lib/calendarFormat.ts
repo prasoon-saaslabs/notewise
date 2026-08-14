@@ -9,6 +9,23 @@ export function formatWhen(iso: string) {
   });
 }
 
+/** Compact date · time for meeting list rows. */
+export function formatMeetingListWhen(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const now = new Date();
+  const date = d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
+  });
+  const time = d.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${date} · ${time}`;
+}
+
 export function minsUntil(iso: string) {
   const ms = new Date(iso).getTime() - Date.now();
   return Math.max(0, Math.round(ms / 60_000));

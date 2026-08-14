@@ -6,7 +6,6 @@ import {
   ChevronRight,
   LayoutGrid,
   Library,
-  Mic,
   Users,
 } from "lucide-react";
 import { LogoMark } from "@notewise/ui";
@@ -22,7 +21,6 @@ const links = [
     end: true,
     icon: LayoutGrid,
   },
-  { to: "/capture", label: "Capture", hint: "Live STT", end: true, icon: Mic },
   {
     to: "/upcoming",
     label: "Upcoming",

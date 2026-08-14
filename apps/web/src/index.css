@@ -452,6 +452,14 @@ a {
   border-radius: 999px;
 }
 
+.nw-simple-page .nw-simple-meeting-title,
+.nw-simple-page .nw-simple-meeting-title:focus,
+.nw-simple-page .nw-simple-meeting-title:focus-visible {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .nw-mini-panel {
   height: 100%;
   background: var(--nw-gradient-surface);
@@ -1232,6 +1240,70 @@ a {
   transition: width 80ms linear;
 }
 
+.nw-audio-seek {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.5rem;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nw-audio-seek:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.nw-audio-seek::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.nw-audio-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -4px;
+  border-radius: 999px;
+  border: 2px solid var(--nw-surface-solid);
+  background: var(--nw-accent);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.nw-audio-seek:not(:disabled):hover::-webkit-slider-thumb,
+.nw-audio-seek:not(:disabled):active::-webkit-slider-thumb {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.14);
+}
+
+.nw-audio-seek::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border: 0;
+}
+
+.nw-audio-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--nw-surface-solid);
+  background: var(--nw-accent);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+}
+
+.nw-audio-seek:focus-visible {
+  outline: none;
+}
+
+.nw-audio-seek:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.2);
+}
+
+.nw-audio-seek:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgb(var(--nw-accent-rgb) / 0.2);
+}
+
 .nw-title-shimmer {
   background: linear-gradient(110deg, var(--nw-ink) 30%, var(--nw-accent-dark) 50%, var(--nw-ink) 70%);
   background-size: 200% 100%;
@@ -1547,4 +1619,110 @@ a {
 .nw-notes-display ul,
 .nw-notes-display ol {
   color: var(--nw-ink-2);
+}
+
+/* Google Identity — Sign in with Google (official material button) */
+.gsi-material-button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #747775;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: Roboto, arial, sans-serif;
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-align: center;
+  transition:
+    background-color 0.218s,
+    border-color 0.218s,
+    box-shadow 0.218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  max-width: 400px;
+  min-width: min-content;
+}
+
+.gsi-material-button--block {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 20px;
+  margin-right: 12px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-icon svg {
+  display: block;
+  height: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  flex-grow: 0;
+  font-family: Roboto, arial, sans-serif;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsi-material-button .gsi-material-button-state {
+  transition: opacity 0.218s;
+  background-color: #303030;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+}
+
+.gsi-material-button:disabled {
+  cursor: default;
+  background-color: rgb(255 255 255 / 0.38);
+  border-color: rgb(31 31 31 / 0.12);
+}
+
+.gsi-material-button:disabled .gsi-material-button-contents,
+.gsi-material-button:disabled .gsi-material-button-icon {
+  opacity: 0.38;
+}
+
+.gsi-material-button:not(:disabled):active .gsi-material-button-state,
+.gsi-material-button:not(:disabled):focus-visible .gsi-material-button-state {
+  opacity: 0.12;
+}
+
+.gsi-material-button:not(:disabled):hover {
+  box-shadow:
+    0 1px 2px 0 rgb(60 64 67 / 0.3),
+    0 1px 3px 1px rgb(60 64 67 / 0.15);
+}
+
+.gsi-material-button:not(:disabled):hover .gsi-material-button-state {
+  opacity: 0.08;
 }

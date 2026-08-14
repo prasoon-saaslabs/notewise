@@ -12,6 +12,7 @@ type Props = {
   interim: string;
   recording: boolean;
   paused: boolean;
+  processing?: boolean;
   onClose: () => void;
 };
 
@@ -20,6 +21,7 @@ export function SimpleTranscriptPanel({
   interim,
   recording,
   paused,
+  processing = false,
   onClose,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -37,7 +39,13 @@ export function SimpleTranscriptPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const status = paused ? "Paused" : recording ? "Live" : "Transcript";
+  const status = paused
+    ? "Paused"
+    : recording
+      ? "Live"
+      : processing
+        ? "Processing"
+        : "Transcript";
 
   return (
     <section className="flex min-h-0 flex-col border-t border-[var(--nw-border)] md:border-t-0 md:border-l">
@@ -82,7 +90,9 @@ export function SimpleTranscriptPanel({
         aria-live="polite"
       >
         {turns.length === 0 && !interim ? (
-          <p className="m-0 text-sm text-[var(--nw-ink-4)]">Listening…</p>
+          <p className="m-0 text-sm text-[var(--nw-ink-4)]">
+            {processing ? "Processing transcript…" : "Listening…"}
+          </p>
         ) : (
           <div className="text-sm leading-relaxed text-[var(--nw-ink-2)]">
             {turns.map((t) => (

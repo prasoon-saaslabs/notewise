@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
+import { EmptyState, SpeakerChip } from "@notewise/ui";
 import {
   Download,
   FileText,
-  Pause,
-  Pencil,
-  Play,
   RefreshCw,
   Sparkles,
   Square,
   Trash2,
-  X,
 } from "lucide-react";
 import type { MeetingBackend } from "@notewise/api-client";
 import {
@@ -24,13 +19,14 @@ import {
 } from "../../lib/meetingsCatalog";
 import { MeetingNotesIntelligence } from "../../components/MeetingNotesIntelligence";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
-import { NotesEditor } from "../../components/notes/NotesEditor";
 import { usePersistedUserNotes } from "../../components/notes/usePersistedUserNotes";
 import { api } from "../../lib/api";
+import { formatMeetingListWhen, formatWhen } from "../../lib/calendarFormat";
 import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
+import { MeetingAudioPlayer } from "../../components/MeetingAudioPlayer";
 import { MeetingModePicker } from "../../components/MeetingModePicker";
 import { useRegeneratingOverlay } from "../../hooks/useRegeneratingOverlay";
 import {
@@ -65,15 +61,6 @@ function BackendTag({ backend }: { backend?: MeetingBackend | string | null }) {
   );
 }
 
-function formatTime(sec: number) {
-  if (!Number.isFinite(sec) || sec < 0) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${m}:${s}`;
-}
-
 const BOT_STEPS = [
   { id: "bot_joining", label: "Bot joining lobby" },
   { id: "bot_live", label: "Live capture in call" },
@@ -92,27 +79,20 @@ export function LibraryPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [showTranscript, setShowTranscript] = useState(true);
   const [regenError, setRegenError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editNotes, setEditNotes] = useState("");
   const [q, setQ] = useState("");
   const [modeId, setModeId] = useState(
-    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID,
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID
   );
   const [modeError, setModeError] = useState<string | null>(null);
   const [regenTriggered, setRegenTriggered] = useState(false);
   const [regenReason, setRegenReason] = useState<"regenerate" | "mode-change">(
-    "regenerate",
+    "regenerate"
   );
   const [notesRevealKey, setNotesRevealKey] = useState(0);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
@@ -124,7 +104,7 @@ export function LibraryPage() {
         const diag = await ensureDesktopGateway();
         if (!diag.reachable) {
           throw new Error(
-            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support.",
+            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support."
           );
         }
       }
@@ -165,7 +145,7 @@ export function LibraryPage() {
   const meetingBackend: MeetingBackend =
     meeting?.backend === "pyai" || meeting?.backend === "nest"
       ? meeting.backend
-      : (selectedBackend ?? "nest");
+      : selectedBackend ?? "nest";
 
   const remove = useMutation({
     mutationFn: (mid: string) =>
@@ -217,7 +197,7 @@ export function LibraryPage() {
       void qc.setQueryData(
         ["meeting", meetingBackend, selectedId],
         (prev: typeof detail.data | undefined) =>
-          prev ? { ...prev, status: "processing" as const } : prev,
+          prev ? { ...prev, status: "processing" as const } : prev
       );
     },
     onSuccess: (data) => {
@@ -237,7 +217,7 @@ export function LibraryPage() {
                 notes: data.notes ?? prev.notes,
                 snippet: snippet ?? prev.snippet,
               }
-            : prev,
+            : prev
       );
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
@@ -272,7 +252,6 @@ export function LibraryPage() {
       }),
     onSuccess: () => {
       setEditingTitle(false);
-      setEditOpen(false);
       setDownloadOpen(false);
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
@@ -293,7 +272,7 @@ export function LibraryPage() {
 
   const canRegenerate = meetingCanRegenerate(
     meeting?.status,
-    meeting?.transcript?.length ?? 0,
+    meeting?.transcript?.length ?? 0
   );
   const canRegenerateFromTranscript = (meeting?.transcript?.length ?? 0) > 0;
   const isRegeneratingRaw = refreshNotes.isPending || regenTriggered;
@@ -308,16 +287,10 @@ export function LibraryPage() {
   const stepIdx = meeting ? botStepIndex(meeting.status) : 0;
 
   useEffect(() => {
-    setPlaying(false);
-    setCurrent(0);
-    setDuration(0);
     setRegenError(null);
+    setEditingTitle(false);
     setModeError(null);
     setRegenTriggered(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
   }, [selectedId]);
 
   useEffect(() => {
@@ -365,22 +338,6 @@ export function LibraryPage() {
     }
   }, [meeting?.transcript?.length, meeting?.status]);
 
-  async function togglePlay() {
-    const el = audioRef.current;
-    if (!el || !meeting?.audioUrl) return;
-    if (el.paused) {
-      try {
-        await el.play();
-        setPlaying(true);
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      el.pause();
-      setPlaying(false);
-    }
-  }
-
   return (
     <PageMotion className="nw-card grid h-full min-h-0 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
       <aside className="nw-library-rail flex min-h-0 flex-col border-b border-[var(--nw-border)] md:border-b-0 md:border-r">
@@ -399,8 +356,8 @@ export function LibraryPage() {
             {list.isError
               ? "Could not load meetings"
               : isDesktopPyaiOnly()
-                ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
-                : `${meetings.length} across Nest & PyAI`}
+              ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
+              : `${meetings.length} across Nest & PyAI`}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
@@ -411,8 +368,8 @@ export function LibraryPage() {
                 list.error instanceof Error
                   ? list.error.message
                   : isDesktopPyaiOnly()
-                    ? "Start the local PyAI gateway (port 3002), then refresh."
-                    : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
+                  ? "Start the local PyAI gateway (port 3002), then refresh."
+                  : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
               }
               compact
             />
@@ -443,9 +400,20 @@ export function LibraryPage() {
                 <p className="m-0 mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--nw-ink-3)]">
                   {m.snippet || m.status}
                 </p>
-                <span className="mt-1.5 inline-block text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
-                  {m.source}
-                </span>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
+                    {m.source}
+                  </span>
+                  {m.createdAt ? (
+                    <time
+                      dateTime={m.createdAt}
+                      className="shrink-0 text-[0.62rem] text-[var(--nw-ink-4)]"
+                      title={formatWhen(m.createdAt)}
+                    >
+                      {formatMeetingListWhen(m.createdAt)}
+                    </time>
+                  ) : null}
+                </div>
               </Link>
             ))
           )}
@@ -463,49 +431,47 @@ export function LibraryPage() {
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--nw-border)] px-5 py-4">
               <div className="min-w-0 flex-1">
                 {editingTitle ? (
-                  <form
-                    className="flex max-w-xl flex-wrap items-center gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
+                  <input
+                    autoFocus
+                    value={titleDraft}
+                    maxLength={200}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={() => {
+                      const current =
+                        meeting.title || displayMeetingTitle(meeting);
                       const next = titleDraft.trim();
-                      if (!next || next === meeting.title) {
+                      if (!next || next === current) {
                         setEditingTitle(false);
                         return;
                       }
                       rename.mutate({ mid: meeting.id, title: next });
                     }}
-                  >
-                    <input
-                      autoFocus
-                      value={titleDraft}
-                      maxLength={200}
-                      onChange={(e) => setTitleDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setEditingTitle(false);
-                      }}
-                      className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
-                      aria-label="Meeting title"
-                    />
-                    <Button
-                      size="sm"
-                      type="submit"
-                      disabled={rename.isPending || !titleDraft.trim()}
-                    >
-                      {rename.isPending ? "Saving…" : "Save"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setEditingTitle(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </form>
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setEditingTitle(false);
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    disabled={rename.isPending}
+                    className="nw-page-input nw-page-title m-0 w-full max-w-xl rounded-lg border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-1 text-[var(--nw-ink)] outline-none focus:border-[var(--nw-accent)]"
+                    aria-label="Meeting title"
+                  />
                 ) : (
-                  <h2 className="nw-page-title nw-title-shimmer m-0">
+                  <button
+                    type="button"
+                    className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 text-left transition hover:bg-[var(--nw-surface-2)]"
+                    onClick={() => {
+                      setTitleDraft(
+                        meeting.title || displayMeetingTitle(meeting)
+                      );
+                      setEditingTitle(true);
+                    }}
+                    title="Click to rename"
+                  >
                     {displayMeetingTitle(meeting)}
-                  </h2>
+                  </button>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <BackendTag backend={meeting.backend} />
@@ -526,6 +492,14 @@ export function LibraryPage() {
                       </span>
                     ))}
                 </div>
+                {meeting.createdAt ? (
+                  <time
+                    dateTime={meeting.createdAt}
+                    className="mt-2 block text-xs text-[var(--nw-ink-4)]"
+                  >
+                    {formatWhen(meeting.createdAt)}
+                  </time>
+                ) : null}
                 {meeting.meetingUrl ? (
                   <a
                     className="mt-2 inline-block text-xs font-semibold text-[var(--nw-accent-dark)] underline"
@@ -624,7 +598,7 @@ export function LibraryPage() {
                                   [JSON.stringify(data, null, 2)],
                                   {
                                     type: "application/json",
-                                  },
+                                  }
                                 );
                                 const a = document.createElement("a");
                                 a.href = URL.createObjectURL(blob);
@@ -660,18 +634,6 @@ export function LibraryPage() {
                     </>
                   ) : null}
                 </div>
-                <button
-                  type="button"
-                  className="nw-library-tool inline-flex h-9 w-9 items-center justify-center rounded-xl"
-                  title="Edit title & notes"
-                  onClick={() => {
-                    setEditTitle(meeting.title || displayMeetingTitle(meeting));
-                    setEditNotes(meeting.userNotes || "");
-                    setEditOpen(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
                 <button
                   type="button"
                   className="nw-library-tool danger inline-flex h-9 w-9 items-center justify-center rounded-xl"
@@ -714,99 +676,6 @@ export function LibraryPage() {
               ) : null}
             </div>
 
-            {editOpen
-              ? createPortal(
-                  <div
-                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
-                    role="presentation"
-                    onClick={() => setEditOpen(false)}
-                  >
-                    <div
-                      className="nw-modal-dialog w-full max-w-lg rounded-2xl p-5"
-                      role="dialog"
-                      aria-modal="true"
-                      aria-labelledby="edit-meeting-title"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-2">
-                        <h3
-                          id="edit-meeting-title"
-                          className="m-0 text-base font-semibold text-[var(--nw-ink)]"
-                        >
-                          Edit meeting
-                        </h3>
-                        <button
-                          type="button"
-                          className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
-                          onClick={() => setEditOpen(false)}
-                          aria-label="Close"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <form
-                        className="flex flex-col gap-3"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const title = editTitle.trim();
-                          if (!title) return;
-                          saveMeeting.mutate({
-                            mid: meeting.id,
-                            title,
-                            userNotes: editNotes,
-                          });
-                        }}
-                      >
-                        <label className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Title
-                          </span>
-                          <input
-                            value={editTitle}
-                            maxLength={200}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-                          />
-                        </label>
-                        <div className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Your notes (scratchpad)
-                          </span>
-                          <NotesEditor
-                            variant="field"
-                            minHeight={144}
-                            value={editNotes}
-                            onChange={setEditNotes}
-                            placeholder="Pricing pushback, follow-ups, context…"
-                            aria-label="Your notes scratchpad"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2 pt-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={
-                              saveMeeting.isPending || !editTitle.trim()
-                            }
-                          >
-                            {saveMeeting.isPending ? "Saving…" : "Save"}
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>,
-                  document.body,
-                )
-              : null}
-
             {deleteOpen ? (
               <DeleteMeetingModal
                 open={deleteOpen}
@@ -836,8 +705,8 @@ export function LibraryPage() {
                           active
                             ? "font-semibold text-[var(--nw-accent-dark)]"
                             : done
-                              ? "text-[var(--nw-success)]"
-                              : "text-[var(--nw-ink-4)]"
+                            ? "text-[var(--nw-success)]"
+                            : "text-[var(--nw-ink-4)]"
                         }`}
                       >
                         <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[0.65rem]">
@@ -852,60 +721,12 @@ export function LibraryPage() {
               </div>
             ) : null}
 
-            <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 shadow-[0_1px_0_rgb(15_23_42_/_0.04)]">
-              <button
-                type="button"
-                className="nw-play-orb grid h-9 w-9 place-items-center rounded-full bg-[var(--nw-accent)] text-white disabled:opacity-40"
-                aria-label={playing ? "Pause" : "Play"}
-                disabled={!meeting.audioUrl}
-                onClick={() => void togglePlay()}
-              >
-                {playing ? (
-                  <Pause className="h-3.5 w-3.5" />
-                ) : (
-                  <Play className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(current)}
-              </span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--nw-surface-3)]">
-                <i
-                  className="nw-progress-fill block h-full rounded-full bg-[linear-gradient(90deg,var(--nw-accent),#0ea5e9)] not-italic"
-                  style={{
-                    width: `${
-                      duration ? Math.min(100, (current / duration) * 100) : 0
-                    }%`,
-                  }}
-                />
-              </div>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(duration || meeting.durationSec || 0)}
-              </span>
-              {meeting.audioUrl ? (
-                <audio
-                  ref={audioRef}
-                  src={meeting.audioUrl}
-                  preload="metadata"
-                  onLoadedMetadata={(e) =>
-                    setDuration(e.currentTarget.duration || 0)
-                  }
-                  onTimeUpdate={(e) =>
-                    setCurrent(e.currentTarget.currentTime || 0)
-                  }
-                  onEnded={() => setPlaying(false)}
-                  onPause={() => setPlaying(false)}
-                  onPlay={() => setPlaying(true)}
-                />
-              ) : (
-                <span
-                  className="nw-muted text-xs"
-                  title="Record a new meeting to enable playback"
-                >
-                  No audio (record again)
-                </span>
-              )}
-            </div>
+            <MeetingAudioPlayer
+              key={meeting.id}
+              className="mx-5 mt-3"
+              src={meeting.audioUrl}
+              durationHintSec={meeting.durationSec}
+            />
 
             <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
               {/* Intelligence stack — primary product surface */}
@@ -940,9 +761,9 @@ export function LibraryPage() {
                         {
                           onError: (err: Error) =>
                             setModeError(
-                              err.message || "Could not update meeting mode",
+                              err.message || "Could not update meeting mode"
                             ),
-                        },
+                        }
                       );
                     }}
                   />
@@ -971,7 +792,8 @@ export function LibraryPage() {
                           userNotesEditable
                           onUserNotesChange={persistedUserNotes.handleChange}
                           userNotesSaveHint={persistedUserNotes.saveHint}
-                          onJump={(lineId?: string) => {
+                          userNotesPlacement="last"
+                          onJump={(lineId) => {
                             setShowTranscript(true);
                             if (!lineId) return;
                             document

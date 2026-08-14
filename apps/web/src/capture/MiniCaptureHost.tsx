@@ -9,7 +9,6 @@ import {
 import { isCaptureActive } from "./miniCaptureSync";
 import { isDesktopShell, openMiniCaptureWindow } from "./desktopMiniWindow";
 import {
-  isSimpleCaptureSession,
   isSimpleNoteSurface,
   SIMPLE_NOTE_PATH,
 } from "../features/simple/simpleCapture";
@@ -34,9 +33,8 @@ export function MiniCaptureHost() {
   const navigate = useNavigate();
   const isMiniRoute = location.pathname.startsWith("/mini-capture");
   const active = isCaptureActive(session);
-  const onCapturePage = location.pathname === "/capture";
   const onSimpleNotePage = isSimpleNoteSurface(location.pathname);
-  const onPrimaryCaptureSurface = onCapturePage || onSimpleNotePage;
+  const onPrimaryCaptureSurface = onSimpleNotePage;
   const [pos, setPos] = useState({ x: 16, y: 16 });
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const pipWinRef = useRef<Window | null>(null);
@@ -118,11 +116,8 @@ export function MiniCaptureHost() {
         /* ignore */
       }
     }
-    if (
-      location.pathname !== "/capture" &&
-      location.pathname !== SIMPLE_NOTE_PATH
-    ) {
-      navigate(isSimpleCaptureSession() ? SIMPLE_NOTE_PATH : "/capture");
+    if (!isSimpleNoteSurface(location.pathname)) {
+      navigate(SIMPLE_NOTE_PATH);
     }
     try {
       window.focus();
@@ -206,10 +201,7 @@ export function MiniCaptureHost() {
     const onVis = () => {
       if (!isCaptureActive(sessionRef.current)) return;
       if (document.hidden) presentAway();
-      else if (
-        location.pathname === "/capture" ||
-        isSimpleNoteSurface(location.pathname)
-      ) {
+      else if (isSimpleNoteSurface(location.pathname)) {
         setForceFloat(false);
       }
     };
@@ -224,7 +216,7 @@ export function MiniCaptureHost() {
     !pipActive &&
     !isDesktopShell() &&
     !onSimpleNotePage &&
-    (onCapturePage ? forceFloat : true);
+    forceFloat;
 
   return showInAppFloat ? (
     <div
