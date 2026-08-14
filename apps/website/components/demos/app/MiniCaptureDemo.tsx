@@ -15,7 +15,7 @@ export function MiniCaptureDemo({
   return (
     <div
       className={cn(
-        "nw-mini-panel overflow-hidden rounded-[22px] border border-border bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl",
+        "nw-mini-panel overflow-hidden rounded-[22px] border border-border bg-paper-elevated shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur-xl",
         className,
       )}
     >
@@ -33,7 +33,7 @@ export function MiniCaptureDemo({
           {note}
         </div>
         <div className="flex gap-2 pt-1">
-          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-border bg-white py-2 text-xs font-semibold text-ink-secondary">
+          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-border bg-paper-muted py-2 text-xs font-semibold text-ink-secondary">
             <Pause className="h-3.5 w-3.5" />
             Pause
           </span>
