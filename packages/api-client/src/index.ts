@@ -340,21 +340,26 @@ export class NotewiseApiClient {
     title?: string,
     opts?: {
       name?: string;
+      userNotes?: string;
       modeId?: string;
       channelMode?: string;
       calendarEventId?: string;
     }
   ) {
+    const body: Record<string, string | undefined> = {
+      source: "local",
+      name: opts?.name,
+      title,
+      modeId: opts?.modeId,
+      channelMode: opts?.channelMode,
+      calendarEventId: opts?.calendarEventId,
+    };
+    if (opts?.userNotes != null && opts.userNotes.trim()) {
+      body.userNotes = opts.userNotes;
+    }
     return this.request<CreateSessionResponse>("/sessions", {
       method: "POST",
-      body: JSON.stringify({
-        source: "local",
-        name: opts?.name,
-        title,
-        modeId: opts?.modeId,
-        channelMode: opts?.channelMode,
-        calendarEventId: opts?.calendarEventId,
-      }),
+      body: JSON.stringify(body),
     });
   }
 

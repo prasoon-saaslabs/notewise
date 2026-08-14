@@ -11,6 +11,7 @@ from app.config import settings
 from app.pipeline import finalize_session
 from app.pyai.hear_stream import proxy_hear_stream
 from app.store.file_store import store
+from app.store.margin import write_margin_folder
 from app.store.models import User
 
 log = logging.getLogger("routes.sessions")
@@ -21,6 +22,7 @@ class CreateSessionBody(BaseModel):
     source: str = "local"
     title: str | None = None
     name: str | None = None
+    userNotes: str | None = None
     channelMode: str | None = None
     checkInEndMs: int | None = Field(default=None, ge=0, le=60_000)
     modeId: str | None = None
@@ -61,6 +63,9 @@ async def create_session(
                 title = ev.title
             if ev.manualNotes and not body.resolved_title():
                 pass
+    user_notes = body.userNotes.strip()[:20_000] if body.userNotes else None
+    if user_notes == "":
+        user_notes = None
     session, meeting = store.create_session(
         title=title,
         channel_mode=body.channelMode or "mono",
@@ -68,11 +73,16 @@ async def create_session(
         mode_id=body.modeId,
         source=body.source or "local",
         calendar_event_id=calendar_event_id,
+        user_notes_draft=user_notes,
     )
     if calendar_event_id and user:
         ev = store.get_calendar_event(calendar_event_id)
         if ev and ev.entityIds:
             store.update_meeting(meeting.id, entityIds=ev.entityIds)
+    if user_notes:
+        refreshed = store.get_meeting(meeting.id)
+        if refreshed:
+            write_margin_folder(refreshed, user_notes=user_notes)
     return {"sessionId": session.id, "meetingId": meeting.id}
 
 
