@@ -1,12 +1,5 @@
 import { Button } from "@notewise/ui";
-import {
-  Maximize2,
-  Mic,
-  Pause,
-  Play,
-  Square,
-  StickyNote,
-} from "lucide-react";
+import { Maximize2, Mic, Pause, Play, Square, StickyNote } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCaptureSession } from "./CaptureSessionContext";
 import {
@@ -16,6 +9,7 @@ import {
 } from "./miniCaptureSync";
 import { focusMainWindow } from "./desktopMiniWindow";
 import { MINI_LAYOUT_EVENT, resizeDocumentPipWindow } from "./documentPip";
+import { NotesEditor } from "../components/notes/NotesEditor";
 
 const COMPACT_HEIGHT = 300;
 const EXPANDED_HEIGHT = 560;
@@ -59,9 +53,12 @@ export function MiniCapturePanel({
   const beatCount = turns.length + (interim ? 1 : 0);
 
   useEffect(() => {
-    resizeDocumentPipWindow(MINI_WIDTH, expanded ? EXPANDED_HEIGHT : COMPACT_HEIGHT);
+    resizeDocumentPipWindow(
+      MINI_WIDTH,
+      expanded ? EXPANDED_HEIGHT : COMPACT_HEIGHT
+    );
     window.dispatchEvent(
-      new CustomEvent(MINI_LAYOUT_EVENT, { detail: { expanded } }),
+      new CustomEvent(MINI_LAYOUT_EVENT, { detail: { expanded } })
     );
   }, [expanded]);
 
@@ -73,7 +70,9 @@ export function MiniCapturePanel({
   if (!active && !busy) {
     return (
       <div className="nw-mini-panel flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-        <p className="m-0 text-sm font-semibold text-[var(--nw-ink-2)]">No active capture</p>
+        <p className="m-0 text-sm font-semibold text-[var(--nw-ink-2)]">
+          No active capture
+        </p>
         <p className="m-0 text-xs text-[var(--nw-ink-4)]">{statusLine}</p>
       </div>
     );
@@ -81,9 +80,9 @@ export function MiniCapturePanel({
 
   return (
     <div
-      className={`nw-mini-panel flex h-full min-h-0 flex-col ${compact ? "p-2.5" : "p-3"} ${
-        expanded ? "nw-mini-panel--expanded" : ""
-      }`}
+      className={`nw-mini-panel flex h-full min-h-0 flex-col ${
+        compact ? "p-2.5" : "p-3"
+      } ${expanded ? "nw-mini-panel--expanded" : ""}`}
     >
       <header className="flex shrink-0 items-center gap-2 border-b border-[var(--nw-border)] pb-2">
         <button
@@ -92,7 +91,9 @@ export function MiniCapturePanel({
             recording
               ? "bg-[rgb(220_38_38_/_0.12)] text-[rgb(185_28_28)]"
               : "bg-[var(--nw-accent-soft)] text-[var(--nw-accent-dark)]"
-          } ${beatCount ? "ring-2 ring-[rgb(var(--nw-accent-rgb)_/_0.25)]" : ""}`}
+          } ${
+            beatCount ? "ring-2 ring-[rgb(var(--nw-accent-rgb)_/_0.25)]" : ""
+          }`}
           title={expanded ? "Collapse" : "Show transcript & notes"}
           aria-label={expanded ? "Collapse panel" : "Show transcript and notes"}
           aria-pressed={expanded}
@@ -116,10 +117,10 @@ export function MiniCapturePanel({
             {paused
               ? "Paused"
               : recording
-                ? expanded
-                  ? "Live transcript + notes"
-                  : "Live · tap pulse to expand"
-                : statusLine}
+              ? expanded
+                ? "Live transcript + notes"
+                : "Live · tap pulse to expand"
+              : statusLine}
           </p>
         </div>
         <button
@@ -165,7 +166,10 @@ export function MiniCapturePanel({
               ) : (
                 <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                   {visibleTurns.map((t) => (
-                    <li key={t.id} className="text-xs leading-snug text-[var(--nw-ink-2)]">
+                    <li
+                      key={t.id}
+                      className="text-xs leading-snug text-[var(--nw-ink-2)]"
+                    >
                       <span className="font-semibold text-[var(--nw-accent-dark)]">
                         {t.speaker}:{" "}
                       </span>
@@ -173,7 +177,9 @@ export function MiniCapturePanel({
                     </li>
                   ))}
                   {interim ? (
-                    <li className="text-xs italic leading-snug text-[var(--nw-ink-4)]">{interim}</li>
+                    <li className="text-xs italic leading-snug text-[var(--nw-ink-4)]">
+                      {interim}
+                    </li>
                   ) : null}
                 </ul>
               )}
@@ -190,11 +196,13 @@ export function MiniCapturePanel({
                 {notes.executiveSummary}
               </p>
             ) : null}
-            <textarea
-              className="nw-page-input m-0 min-h-[88px] w-full flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-xs text-[var(--nw-ink)] outline-none"
+            <NotesEditor
+              variant="compact"
+              minHeight={88}
               placeholder="Jot notes while you talk…"
               value={userNotes}
-              onChange={(e) => setUserNotesDraft(e.target.value)}
+              onChange={setUserNotesDraft}
+              aria-label="Live notes"
             />
           </div>
         </div>
@@ -204,17 +212,23 @@ export function MiniCapturePanel({
             <StickyNote className="h-3 w-3" />
             Live notes
           </div>
-          <textarea
-            className="nw-page-input min-h-[72px] w-full flex-1 resize-none rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-2 text-xs text-[var(--nw-ink)] outline-none"
+          <NotesEditor
+            variant="compact"
+            minHeight={72}
             placeholder="Jot notes while you talk…"
             value={userNotes}
-            onChange={(e) => setUserNotesDraft(e.target.value)}
+            onChange={setUserNotesDraft}
+            className="flex-1"
+            aria-label="Live notes"
           />
         </div>
       )}
 
       {error ? (
-        <p className="mt-1.5 shrink-0 text-[0.65rem] text-[var(--nw-danger)]" role="alert">
+        <p
+          className="mt-1.5 shrink-0 text-[0.65rem] text-[var(--nw-danger)]"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
@@ -239,7 +253,13 @@ export function MiniCapturePanel({
             </>
           )}
         </Button>
-        <Button size="sm" variant="danger" className="flex-1" disabled={busy} onClick={() => void stop()}>
+        <Button
+          size="sm"
+          variant="danger"
+          className="flex-1"
+          disabled={busy}
+          onClick={() => void stop()}
+        >
           <Square className="h-3.5 w-3.5" fill="currentColor" />
           Stop
         </Button>
