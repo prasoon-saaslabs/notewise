@@ -402,6 +402,23 @@ class SqliteStore:
             ).fetchall()
             return [Entity.model_validate_json(r["payload"]) for r in rows]
 
+    def delete_entity(self, entity_id: str) -> bool:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT 1 FROM entities WHERE id = ?", (entity_id,)
+            ).fetchone()
+            if not row:
+                return False
+            self._conn.execute(
+                "DELETE FROM entity_mentions WHERE entity_id = ?", (entity_id,)
+            )
+            self._conn.execute(
+                "DELETE FROM commitments WHERE entity_id = ?", (entity_id,)
+            )
+            self._conn.execute("DELETE FROM entities WHERE id = ?", (entity_id,))
+            self._conn.commit()
+            return True
+
     def find_entity(self, *, name: str, company: str | None = None) -> Entity | None:
         name_l = name.strip().lower()
         company_l = (company or "").strip().lower() or None

@@ -20,10 +20,17 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 class CreateSessionBody(BaseModel):
     source: str = "local"
     title: str | None = None
+    name: str | None = None
     channelMode: str | None = None
     checkInEndMs: int | None = Field(default=None, ge=0, le=60_000)
     modeId: str | None = None
     calendarEventId: str | None = None
+
+    def resolved_title(self) -> str | None:
+        for raw in (self.name, self.title):
+            if raw and raw.strip():
+                return raw.strip()[:200]
+        return None
 
 
 class LiveTurnIn(BaseModel):
@@ -45,14 +52,14 @@ async def create_session(
     user: User | None = Depends(get_optional_user),
 ):
     body = body or CreateSessionBody()
-    title = body.title
+    title = body.resolved_title()
     calendar_event_id = body.calendarEventId
     if calendar_event_id and user:
         ev = store.get_calendar_event(calendar_event_id)
         if ev and ev.userId == user.id:
             if not title:
                 title = ev.title
-            if ev.manualNotes and not body.title:
+            if ev.manualNotes and not body.resolved_title():
                 pass
     session, meeting = store.create_session(
         title=title,
