@@ -9,6 +9,11 @@ import {
 import { isCaptureActive } from "./miniCaptureSync";
 import { isDesktopShell, openMiniCaptureWindow } from "./desktopMiniWindow";
 import {
+  isSimpleCaptureSession,
+  isSimpleNoteSurface,
+  SIMPLE_NOTE_PATH,
+} from "../features/simple/simpleCapture";
+import {
   DISMISS_MINI_EVENT,
   FORCE_FLOAT_EVENT,
   MINI_LAYOUT_EVENT,
@@ -29,7 +34,9 @@ export function MiniCaptureHost() {
   const navigate = useNavigate();
   const isMiniRoute = location.pathname.startsWith("/mini-capture");
   const active = isCaptureActive(session);
-  const onCapturePage = location.pathname === "/";
+  const onCapturePage = location.pathname === "/capture";
+  const onSimpleNotePage = isSimpleNoteSurface(location.pathname);
+  const onPrimaryCaptureSurface = onCapturePage || onSimpleNotePage;
   const [pos, setPos] = useState({ x: 16, y: 16 });
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const pipWinRef = useRef<Window | null>(null);
@@ -63,14 +70,18 @@ export function MiniCaptureHost() {
     pipReactRootRef.current.render(
       <CaptureSessionContext.Provider value={sessionRef.current}>
         <MiniCapturePanel onExpand={() => dismissRef.current()} />
-      </CaptureSessionContext.Provider>,
+      </CaptureSessionContext.Provider>
     );
   }, []);
 
   const attachPip = useCallback(
     (detail: PipMount) => {
       if (!detail?.root || !detail.window) return;
-      if (pipWinRef.current && pipWinRef.current !== detail.window && !pipWinRef.current.closed) {
+      if (
+        pipWinRef.current &&
+        pipWinRef.current !== detail.window &&
+        !pipWinRef.current.closed
+      ) {
         try {
           pipWinRef.current.close();
         } catch {
@@ -91,7 +102,7 @@ export function MiniCaptureHost() {
         }
       });
     },
-    [renderPipPanel, teardownPipRoot],
+    [renderPipPanel, teardownPipRoot]
   );
 
   const dismissMini = useCallback(() => {
@@ -107,8 +118,11 @@ export function MiniCaptureHost() {
         /* ignore */
       }
     }
-    if (location.pathname !== "/") {
-      navigate("/");
+    if (
+      location.pathname !== "/capture" &&
+      location.pathname !== SIMPLE_NOTE_PATH
+    ) {
+      navigate(isSimpleCaptureSession() ? SIMPLE_NOTE_PATH : "/capture");
     }
     try {
       window.focus();
@@ -137,7 +151,9 @@ export function MiniCaptureHost() {
     };
     const onDismiss = () => dismissMini();
     const onMiniLayout = (ev: Event) => {
-      const expanded = Boolean((ev as CustomEvent<{ expanded?: boolean }>).detail?.expanded);
+      const expanded = Boolean(
+        (ev as CustomEvent<{ expanded?: boolean }>).detail?.expanded
+      );
       setFloatExpanded(expanded);
     };
     window.addEventListener(PIP_READY_EVENT, onPipReady);
@@ -181,55 +197,48 @@ export function MiniCaptureHost() {
       setForceFloat(true);
     };
 
-    const hideOverlay = () => {
-      if (isDesktopShell()) {
-        void import("./desktopMiniWindow").then((m) => m.closeMiniCaptureWindow());
-        return;
-      }
-      setForceFloat(false);
-    };
-
-    if (!onCapturePage) {
+    if (!onPrimaryCaptureSurface) {
       presentAway();
+    } else {
+      setForceFloat(false);
     }
 
     const onVis = () => {
       if (!isCaptureActive(sessionRef.current)) return;
       if (document.hidden) presentAway();
-      else if (location.pathname === "/") hideOverlay();
-    };
-
-    const onBlur = () => {
-      if (!isDesktopShell() || !isCaptureActive(sessionRef.current)) return;
-      presentAway();
-    };
-
-    const onFocus = () => {
-      if (!isDesktopShell() || !isCaptureActive(sessionRef.current)) return;
-      if (location.pathname === "/") hideOverlay();
+      else if (
+        location.pathname === "/capture" ||
+        isSimpleNoteSurface(location.pathname)
+      ) {
+        setForceFloat(false);
+      }
     };
 
     document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [active, onCapturePage, pipActive, location.pathname]);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [active, onPrimaryCaptureSurface, pipActive, location.pathname]);
 
   if (isMiniRoute || !active) return null;
 
   const showInAppFloat =
-    !pipActive && !isDesktopShell() && (!onCapturePage || forceFloat);
+    !pipActive &&
+    !isDesktopShell() &&
+    !onSimpleNotePage &&
+    (onCapturePage ? forceFloat : true);
 
   return showInAppFloat ? (
     <div
-      className={`nw-mini-float ${floatExpanded ? "nw-mini-float--expanded" : ""}`}
+      className={`nw-mini-float ${
+        floatExpanded ? "nw-mini-float--expanded" : ""
+      }`}
       style={{ right: pos.x, bottom: pos.y }}
       onPointerDown={(e) => {
-        if ((e.target as HTMLElement).closest("button, textarea, a, input")) return;
+        if (
+          (e.target as HTMLElement).closest(
+            "button, textarea, a, input, .nw-notes-editor, .ProseMirror"
+          )
+        )
+          return;
         dragRef.current = {
           dx: e.clientX + pos.x,
           dy: e.clientY + pos.y,

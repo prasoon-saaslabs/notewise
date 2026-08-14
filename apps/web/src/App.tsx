@@ -15,6 +15,9 @@ import { UpcomingPage } from "./features/upcoming/UpcomingPage";
 import { MeetingPrepPage } from "./features/upcoming/MeetingPrepPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import { TrustPage } from "./features/trust/TrustPage";
+import { SimpleFrontPage } from "./features/simple/SimpleFrontPage";
+import { SimpleNotePage } from "./features/simple/SimpleNotePage";
+import { SimpleNoteResultPage } from "./features/simple/SimpleNoteResultPage";
 import { VoiceHotkey } from "./components/VoiceHotkey";
 import { TrayBridge } from "./components/TrayBridge";
 import { AuthProvider } from "./auth/AuthContext";
@@ -27,46 +30,56 @@ import { DesktopShellGate } from "./components/DesktopShellGate";
 export function App() {
   return (
     <AuthProvider>
-    <MeetingBrainProvider>
-      <CaptureSessionProvider>
-      <TrayBridge />
-      <DesktopShellGate>
-      <ConsentModal />
-      <VoiceHotkey />
-      <CalendarFlowHost />
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <RedirectIfAuthed>
-              <LoginPage />
-            </RedirectIfAuthed>
-          }
-        />
-        <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/mini-capture" element={<MiniCapturePage />} />
-        <Route element={<RequireAuth />}>
-          <Route element={<AppShell />}>
-            <Route index element={<RecordPage />} />
-            <Route path="upcoming" element={<UpcomingPage />} />
-            <Route path="upcoming/:eventId" element={<MeetingPrepPage />} />
-            <Route path="join" element={<JoinPage />} />
-            <Route path="library" element={<LibraryPage />} />
-            <Route path="library/:id" element={<LibraryPage />} />
-            <Route path="people" element={<PeoplePage />} />
-            <Route path="people/:id" element={<PeoplePage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="trust" element={<TrustPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="/onboarding" element={<EnrollmentPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-      <MiniCaptureHost />
-      </DesktopShellGate>
-    </CaptureSessionProvider>
-    </MeetingBrainProvider>
+      <MeetingBrainProvider>
+        <CaptureSessionProvider>
+          <DesktopShellGate>
+            <ConsentModal />
+            <VoiceHotkey />
+            <TrayBridge />
+            <CalendarFlowHost />
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <RedirectIfAuthed>
+                    <LoginPage />
+                  </RedirectIfAuthed>
+                }
+              />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
+              <Route path="/mini-capture" element={<MiniCapturePage />} />
+              <Route element={<RequireAuth />}>
+                <Route element={<AppShell />}>
+                  <Route index element={<SimpleFrontPage />} />
+                  <Route path="simple" element={<Navigate to="/" replace />} />
+                  <Route path="capture" element={<RecordPage />} />
+                  <Route path="simple/note" element={<SimpleNotePage />} />
+                  <Route
+                    path="simple/note/:meetingId"
+                    element={<SimpleNoteResultPage />}
+                  />
+                  <Route path="upcoming" element={<UpcomingPage />} />
+                  <Route
+                    path="upcoming/:eventId"
+                    element={<MeetingPrepPage />}
+                  />
+                  <Route path="join" element={<JoinPage />} />
+                  <Route path="library" element={<LibraryPage />} />
+                  <Route path="library/:id" element={<LibraryPage />} />
+                  <Route path="people" element={<PeoplePage />} />
+                  <Route path="people/:id" element={<PeoplePage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="trust" element={<TrustPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
+                <Route path="/onboarding" element={<EnrollmentPage />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+            <MiniCaptureHost />
+          </DesktopShellGate>
+        </CaptureSessionProvider>
+      </MeetingBrainProvider>
     </AuthProvider>
   );
 }

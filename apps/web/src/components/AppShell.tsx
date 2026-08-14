@@ -4,6 +4,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  LayoutGrid,
   Library,
   Mic,
   Settings2,
@@ -17,7 +18,14 @@ import { ThemePicker } from "./ThemePicker";
 import { UserMenu } from "./UserMenu";
 
 const links = [
-  { to: "/", label: "Capture", hint: "Live STT", end: true, icon: Mic },
+  {
+    to: "/",
+    label: "Simple",
+    hint: "Quick notes",
+    end: true,
+    icon: LayoutGrid,
+  },
+  { to: "/capture", label: "Capture", hint: "Live STT", end: true, icon: Mic },
   {
     to: "/upcoming",
     label: "Upcoming",
@@ -170,10 +178,12 @@ export function AppShell() {
                     : "w-full px-1 py-2 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2.5"
                 } ${
                   isActive
-                    ? `is-active text-[var(--nw-accent-dark)]${railCollapsed ? "" : " nw-glass-nav-active"}`
+                    ? `is-active text-[var(--nw-accent-dark)]${
+                        railCollapsed ? "" : " nw-glass-nav-active"
+                      }`
                     : railCollapsed
-                      ? "text-[var(--nw-ink-3)] hover:text-[var(--nw-ink)]"
-                      : "text-[var(--nw-ink-3)] hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
+                    ? "text-[var(--nw-ink-3)] hover:text-[var(--nw-ink)]"
+                    : "text-[var(--nw-ink-3)] hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
                 }`
               }
               style={{ animationDelay: `${i * 40}ms` }}

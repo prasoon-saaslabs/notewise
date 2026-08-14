@@ -4,6 +4,7 @@ import { PageMotion } from "../../components/PageMotion";
 import { MeetingPrepContent } from "../../components/MeetingPrepContent";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
 import { setPendingCalendarEventId } from "../../lib/authSession";
+import { SIMPLE_NOTE_PATH } from "../simple/simpleCapture";
 import type { EventPrepDetail } from "@notewise/api-client";
 
 export function MeetingPrepPage() {
@@ -21,7 +22,7 @@ export function MeetingPrepPage() {
     setPendingCalendarEventId(prep.eventId);
     if (manualNotes.trim()) setUserNotesDraft(manualNotes);
     if (!recording && !paused) void start();
-    navigate("/", { replace: true });
+    navigate(SIMPLE_NOTE_PATH, { replace: true });
   };
 
   return (
