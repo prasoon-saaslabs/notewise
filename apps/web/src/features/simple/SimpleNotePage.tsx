@@ -1,21 +1,28 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar } from "lucide-react";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
 import { PageMotion } from "../../components/PageMotion";
 import { NotesEditor } from "../../components/notes/NotesEditor";
+import { api } from "../../lib/api";
+import { debounce } from "../../lib/throttle";
 import { SimpleTranscriptBar } from "./SimpleTranscriptBar";
 import { SimpleTranscriptPanel } from "./SimpleTranscriptPanel";
 import {
   clearSimpleCapture,
+  DEFAULT_SIMPLE_MEETING_NAME,
+  isEditedSimpleMeetingName,
   isEmptyTranscriptError,
   markSimpleCapture,
+  resetSimpleMeetingName,
+  setSimpleMeetingName,
   SIMPLE_NOTE_PATH,
 } from "./simpleCapture";
 
 export function SimpleNotePage() {
   const navigate = useNavigate();
   const [transcriptOpen, setTranscriptOpen] = useState(true);
+  const [meetingName, setMeetingName] = useState(DEFAULT_SIMPLE_MEETING_NAME);
   const autoStartedRef = useRef(false);
   /** Only redirect to results after finishing a capture started on this visit. */
   const sawLiveCaptureRef = useRef(false);
@@ -49,8 +56,46 @@ export function SimpleNotePage() {
     (busy || !autoStartedRef.current);
   const showTranscriptPanel = transcriptOpen && (live || starting);
 
+  const persistMeetingName = useMemo(
+    () =>
+      debounce((id: string, name: string) => {
+        if (!isEditedSimpleMeetingName(name)) return;
+        void api.updateMeeting(id, { title: name.trim() });
+      }, 400),
+    [],
+  );
+
+  const onMeetingNameChange = useCallback(
+    (next: string) => {
+      setMeetingName(next);
+      setSimpleMeetingName(next);
+      if (meetingId && isEditedSimpleMeetingName(next)) {
+        persistMeetingName(meetingId, next);
+      }
+    },
+    [meetingId, persistMeetingName],
+  );
+
+  const onMeetingNameBlur = useCallback(() => {
+    const trimmed = meetingName.trim();
+    if (!trimmed) {
+      setMeetingName(DEFAULT_SIMPLE_MEETING_NAME);
+      setSimpleMeetingName(DEFAULT_SIMPLE_MEETING_NAME);
+      return;
+    }
+    if (trimmed !== meetingName) {
+      setMeetingName(trimmed);
+      setSimpleMeetingName(trimmed);
+    }
+    if (meetingId && isEditedSimpleMeetingName(trimmed)) {
+      persistMeetingName(meetingId, trimmed);
+    }
+  }, [meetingId, meetingName, persistMeetingName]);
+
   useEffect(() => {
     markSimpleCapture();
+    resetSimpleMeetingName();
+    setMeetingName(DEFAULT_SIMPLE_MEETING_NAME);
   }, []);
 
   useEffect(() => {
@@ -116,9 +161,16 @@ export function SimpleNotePage() {
                   ← Back
                 </Link>
               ) : null}
-              <h1 className="m-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] md:text-4xl">
-                New Meeting
-              </h1>
+              <input
+                type="text"
+                value={meetingName}
+                onChange={(e) => onMeetingNameChange(e.target.value)}
+                onBlur={onMeetingNameBlur}
+                maxLength={200}
+                aria-label="Meeting name"
+                placeholder={DEFAULT_SIMPLE_MEETING_NAME}
+                className="m-0 w-full min-w-0 border-0 bg-transparent p-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] outline-none placeholder:text-[var(--nw-ink-4)] focus:ring-0 md:text-4xl"
+              />
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-1 text-xs font-medium text-[var(--nw-ink-3)]">
                   <Calendar className="h-3 w-3" />

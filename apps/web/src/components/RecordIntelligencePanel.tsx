@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Briefcase, ChevronDown, Sparkles, Users } from "lucide-react";
+import { Briefcase, ChevronDown, Plus, Sparkles, Users } from "lucide-react";
 import { api } from "../lib/api";
 import type { EntityRecord, MeetingMode } from "@notewise/api-client";
 import type { ProcessPhase } from "../hooks/useRecorder";
 import { PreCallBriefCard } from "./PreCallBriefCard";
+import { CreateEntityModal } from "./people/CreateEntityModal";
 
 const MODE_HINTS: Record<string, string> = {
   "sales-discovery": "Objections, budget, next steps",
@@ -31,6 +32,9 @@ export function RecordIntelligencePanel({
   const [entityId, setEntityId] = useState(
     () => localStorage.getItem("og-entity-id") || ""
   );
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createPending, setCreatePending] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     void api
@@ -73,6 +77,32 @@ export function RecordIntelligencePanel({
       ? ` · ${entities.find((e) => e.id === entityId)?.name ?? "Contact"}`
       : ""
   }`;
+
+  async function handleCreateEntity(body: {
+    name: string;
+    kind: EntityRecord["kind"];
+    company?: string | null;
+  }) {
+    setCreatePending(true);
+    setCreateError(null);
+    try {
+      const entity = await api.createEntity(body);
+      setEntities((prev) =>
+        [...prev.filter((e) => e.id !== entity.id), entity].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      );
+      setEntityId(entity.id);
+      localStorage.setItem("og-entity-id", entity.id);
+      setCreateOpen(false);
+    } catch (err) {
+      setCreateError(
+        err instanceof Error ? err.message : "Could not create contact",
+      );
+    } finally {
+      setCreatePending(false);
+    }
+  }
 
   return (
     <section className="nw-accent-panel-gradient overflow-hidden rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.18)] shadow-[0_1px_0_var(--nw-glass-shadow)]">
@@ -138,52 +168,71 @@ export function RecordIntelligencePanel({
             </p>
           </div>
 
-          {entities.length > 0 ? (
-            <div>
-              <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
-                <Users className="h-3.5 w-3.5" />
-                Meeting with
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  disabled={optionsLocked}
-                  onClick={() => {
-                    setEntityId("");
-                    localStorage.removeItem("og-entity-id");
-                  }}
-                  className={pillClass(!entityId)}
-                >
-                  Anyone
-                </button>
-                {entities.slice(0, 8).map((e) => {
-                  const active = entityId === e.id;
-                  return (
-                    <button
-                      key={e.id}
-                      type="button"
-                      disabled={optionsLocked}
-                      onClick={() => {
-                        setEntityId(e.id);
-                        localStorage.setItem("og-entity-id", e.id);
-                      }}
-                      className={pillClass(active)}
-                    >
-                      {e.name}
-                    </button>
-                  );
-                })}
-              </div>
-              {entityId ? <PreCallBriefCard entityId={entityId} /> : null}
+          <div>
+            <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
+              <Users className="h-3.5 w-3.5" />
+              Meeting with
             </div>
-          ) : (
-            <p className="m-0 rounded-xl bg-[var(--nw-glass-bg)] px-3 py-2 text-xs text-[var(--nw-ink-3)] ring-1 ring-[var(--nw-border)]">
-              People & companies appear here after your first recorded or
-              imported meeting.
-            </p>
-          )}
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                disabled={optionsLocked}
+                onClick={() => {
+                  setEntityId("");
+                  localStorage.removeItem("og-entity-id");
+                }}
+                className={pillClass(!entityId)}
+              >
+                Anyone
+              </button>
+              {entities.map((e) => {
+                const active = entityId === e.id;
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    disabled={optionsLocked}
+                    onClick={() => {
+                      setEntityId(e.id);
+                      localStorage.setItem("og-entity-id", e.id);
+                    }}
+                    className={pillClass(active)}
+                  >
+                    {e.name}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                disabled={optionsLocked}
+                onClick={() => {
+                  setCreateError(null);
+                  setCreateOpen(true);
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--nw-glass-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] transition hover:bg-[rgb(var(--nw-accent-rgb)_/_0.08)] hover:text-[var(--nw-accent-dark)] disabled:cursor-not-allowed disabled:opacity-55"
+                aria-label="Add contact"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add
+              </button>
+            </div>
+            {entityId ? <PreCallBriefCard entityId={entityId} /> : null}
+            {!entities.length ? (
+              <p className="m-0 mt-2 text-[0.72rem] leading-relaxed text-[var(--nw-ink-3)]">
+                Add a contact to pull prep context into this capture.
+              </p>
+            ) : null}
+          </div>
         </div>
       ) : null}
+
+      <CreateEntityModal
+        open={createOpen}
+        onClose={() => !createPending && setCreateOpen(false)}
+        onSubmit={handleCreateEntity}
+        pending={createPending}
+        error={createError}
+      />
     </section>
   );
 }

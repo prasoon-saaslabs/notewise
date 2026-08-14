@@ -4,6 +4,31 @@ import { isCaptureActive } from "../../capture/miniCaptureSync";
 export const SIMPLE_HOME_PATH = "/";
 export const SIMPLE_NOTE_PATH = "/home/note";
 export const SIMPLE_CAPTURE_KEY = "og-simple-capture";
+export const DEFAULT_SIMPLE_MEETING_NAME = "New Meeting";
+
+let simpleMeetingName = DEFAULT_SIMPLE_MEETING_NAME;
+
+export function setSimpleMeetingName(name: string) {
+  simpleMeetingName = name;
+}
+
+export function getSimpleMeetingName() {
+  return simpleMeetingName;
+}
+
+export function resetSimpleMeetingName() {
+  simpleMeetingName = DEFAULT_SIMPLE_MEETING_NAME;
+}
+
+export function isEditedSimpleMeetingName(name?: string) {
+  const value = (name ?? simpleMeetingName).trim();
+  return (
+    value.length > 0 &&
+    value.localeCompare(DEFAULT_SIMPLE_MEETING_NAME, undefined, {
+      sensitivity: "accent",
+    }) !== 0
+  );
+}
 
 export function markSimpleCapture() {
   try {
@@ -19,6 +44,7 @@ export function clearSimpleCapture() {
   } catch {
     /* ignore */
   }
+  resetSimpleMeetingName();
 }
 
 export function isSimpleCaptureSession() {

@@ -203,14 +203,17 @@ async def finalize_session(
         if duration is None and turns:
             duration = max(t.endMs for t in turns) / 1000.0
 
-        title = suggest_meeting_title(
-            turns,
-            preferred=(notes.title if notes else None) or meeting.title,
-            user_notes=user_notes,
-            takeaways=list(notes.takeaways or []) if notes else None,
-            summary=notes.executiveSummary if notes else None,
-            created_at=meeting.createdAt,
-        )
+        if meeting.title and not is_placeholder_title(meeting.title):
+            title = meeting.title.strip()
+        else:
+            title = suggest_meeting_title(
+                turns,
+                preferred=(notes.title if notes else None) or meeting.title,
+                user_notes=user_notes,
+                takeaways=list(notes.takeaways or []) if notes else None,
+                summary=notes.executiveSummary if notes else None,
+                created_at=meeting.createdAt,
+            )
         if notes and (is_placeholder_title(notes.title) or notes.title != title):
             notes = notes.model_copy(update={"title": title})
         snippet = None
@@ -358,14 +361,17 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
         started=started,
     )
     entity_ids = extract_and_link(meeting.id, meeting.transcript, notes, title=meeting.title)
-    title = suggest_meeting_title(
-        meeting.transcript,
-        preferred=(notes.title if notes else None) or meeting.title,
-        user_notes=notes_text,
-        takeaways=list(notes.takeaways or []) if notes else None,
-        summary=notes.executiveSummary if notes else None,
-        created_at=meeting.createdAt,
-    )
+    if meeting.title and not is_placeholder_title(meeting.title):
+        title = meeting.title.strip()
+    else:
+        title = suggest_meeting_title(
+            meeting.transcript,
+            preferred=(notes.title if notes else None) or meeting.title,
+            user_notes=notes_text,
+            takeaways=list(notes.takeaways or []) if notes else None,
+            summary=notes.executiveSummary if notes else None,
+            created_at=meeting.createdAt,
+        )
     if notes and (is_placeholder_title(notes.title) or notes.title != title):
         notes = notes.model_copy(update={"title": title})
     updated = store.update_meeting(

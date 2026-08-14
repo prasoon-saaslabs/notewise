@@ -30,6 +30,11 @@ import {
 } from "../lib/recordingRecovery";
 import { throttle } from "../lib/throttle";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  getSimpleMeetingName,
+  isEditedSimpleMeetingName,
+  isSimpleCaptureSession,
+} from "../features/simple/simpleCapture";
 
 type Turn = {
   id: string;
@@ -659,15 +664,25 @@ export function useRecorder() {
         backend: nativeSystemActive ? cap.backend : "mic",
       });
       const calendarEventId = getPendingCalendarEventId();
-      const sessionPromise = api.createLocalSession(
-        `Capture · ${new Date().toLocaleString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })}`,
-        { modeId, channelMode, calendarEventId: calendarEventId ?? undefined }
-      );
+      const simpleCapture = isSimpleCaptureSession();
+      const sessionPromise = simpleCapture
+        ? api.createLocalSession(undefined, {
+            ...(isEditedSimpleMeetingName()
+              ? { name: getSimpleMeetingName().trim() }
+              : {}),
+            modeId,
+            channelMode,
+            calendarEventId: calendarEventId ?? undefined,
+          })
+        : api.createLocalSession(
+            `Capture · ${new Date().toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}`,
+            { modeId, channelMode, calendarEventId: calendarEventId ?? undefined }
+          );
       const stream = cap.recordStream;
       const liveTracks = stream
         .getAudioTracks()
