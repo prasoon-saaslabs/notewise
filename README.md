@@ -17,6 +17,26 @@ MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage g
 
 ---
 
+## Screenshots
+
+### Home — quick notes and upcoming meets
+
+![Notewise home dashboard](docs/screenshots/home.png)
+
+### Upcoming — prep briefs before each call
+
+![Notewise upcoming meetings](docs/screenshots/upcoming.png)
+
+### Library — searchable meeting intelligence
+
+![Notewise library with notes and transcript](docs/screenshots/library.png)
+
+### People — relationship graph and network pulse
+
+![Notewise people and relationship AI](docs/screenshots/people.png)
+
+---
+
 ## Get started
 
 **You need:** macOS (recommended), Node 20+, Python 3.9+, pnpm, and a [PyAI API key](https://api.pyai.com).
@@ -38,25 +58,25 @@ make doctor   # verify Python, Node, API key, and permissions
 
 ## What you can do
 
-| | |
-|---|---|
-| **Capture** | Live transcription, meeting modes (General, Sales, 1:1, Standup, Investor), optional people tags |
-| **Notes** | Executive summary, takeaways, action items — each tied to the transcript |
-| **Library** | Search every meeting on disk; regenerate notes in a different mode |
-| **People** | Relationship graph, briefs, commitments, and objections over time |
-| **Calendar** | Google Calendar sync, prep briefs, and upcoming-call reminders |
-| **Ask** | Q&A across your library with citations (Meeting brain, voice shortcut) |
+|              |                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| **Capture**  | Live transcription, meeting modes (General, Sales, 1:1, Standup, Investor), optional people tags |
+| **Notes**    | Executive summary, takeaways, action items — each tied to the transcript                         |
+| **Library**  | Search every meeting on disk; regenerate notes in a different mode                               |
+| **People**   | Relationship graph, briefs, commitments, and objections over time                                |
+| **Calendar** | Google Calendar sync, prep briefs, and upcoming-call reminders                                   |
+| **Ask**      | Q&A across your library with citations (Meeting brain, voice shortcut)                           |
 
 ---
 
 ## Run locally
 
-| What | URL | Command |
-|------|-----|---------|
-| Web app | http://127.0.0.1:5173 | `make dev` or `make web` |
-| AI gateway | http://127.0.0.1:3002 | `make run` (included in `make dev`) |
-| Desktop (dev) | native window | `make desktop` |
-| Marketing site | http://127.0.0.1:5174 | `make website` |
+| What           | URL                   | Command                             |
+| -------------- | --------------------- | ----------------------------------- |
+| Web app        | http://127.0.0.1:5173 | `make dev` or `make web`            |
+| AI gateway     | http://127.0.0.1:3002 | `make run` (included in `make dev`) |
+| Desktop (dev)  | native window         | `make desktop`                      |
+| Marketing site | http://127.0.0.1:5174 | `make website`                      |
 
 **Two terminals** (optional):
 
@@ -89,11 +109,11 @@ Dev uses the repo gateway (`services/pyai-gateway/.venv`). The DMG bundles a por
 
 Copy `.env.example` files and add your keys. Never commit secrets.
 
-| File | Purpose |
-|------|---------|
-| `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT |
-| `apps/web/.env` | Gateway proxy target |
-| `apps/website/.env.local` | Public DMG + GitHub URLs (marketing site only) |
+| File                         | Purpose                                        |
+| ---------------------------- | ---------------------------------------------- |
+| `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT                    |
+| `apps/web/.env`              | Gateway proxy target                           |
+| `apps/website/.env.local`    | Public DMG + GitHub URLs (marketing site only) |
 
 Custom meeting modes live in `modes/*.yaml`. Upload PyAI packs with `make upload-packs` when you change them.
 
@@ -101,12 +121,12 @@ Custom meeting modes live in `modes/*.yaml`. Upload PyAI packs with `make upload
 
 ## Documentation
 
-| Doc | Contents |
-|-----|----------|
-| **[docs/USAGE.md](docs/USAGE.md)** | Complete guide — every screen, shortcut, and troubleshooting step |
-| [services/pyai-gateway/README.md](services/pyai-gateway/README.md) | Gateway API and pipeline |
-| [apps/desktop/README.md](apps/desktop/README.md) | Tauri app, DMG build, first launch |
-| [apps/website/README.md](apps/website/README.md) | Marketing site and Vercel deploy |
+| Doc                                                                | Contents                                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **[docs/USAGE.md](docs/USAGE.md)**                                 | Complete guide — every screen, shortcut, and troubleshooting step |
+| [services/pyai-gateway/README.md](services/pyai-gateway/README.md) | Gateway API and pipeline                                          |
+| [apps/desktop/README.md](apps/desktop/README.md)                   | Tauri app, DMG build, first launch                                |
+| [apps/website/README.md](apps/website/README.md)                   | Marketing site and Vercel deploy                                  |
 
 Product docs (when the site is running): http://localhost:5174/docs
 
