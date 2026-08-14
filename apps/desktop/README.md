@@ -23,7 +23,7 @@ Put your PyAI key in `services/pyai-gateway/.env` — desktop dev reads it autom
 
 ## Build DMG (release)
 
-End users get a bundled gateway (system Python + vendored deps). No venv required on their Mac.
+End users get a bundled gateway (Homebrew Python matching the staged ABI + vendored deps). macOS `/usr/bin/python3` (3.9) is not used.
 
 ```bash
 make setup
@@ -53,7 +53,8 @@ Closing the main window hides to the menu bar (does not quit).
 |---------|-----|
 | Gateway not responding | `make doctor` · check `~/Library/Application Support/com.notewise.app/data/gateway.log` |
 | Dev desktop can't find gateway | Run `make setup` from `notewise/` root |
-| Port 3002 in use | Quit other Notewise instances or `make run` in another terminal |
+| `make run` dies when desktop opens | Fully **Quit Notewise** from the menu bar (closing the window is not enough). Desktop now attaches to a healthy `:3002` instead of killing it. |
+| DMG sidecar crash / Python 3.9 | Install matching Python: `brew install python@3.14` (see `.python-version` in the staged gateway). Rebuild the DMG after `make stage-gateway`. |
 
 ## Enterprise distribution
 

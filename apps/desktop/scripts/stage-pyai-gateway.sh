@@ -48,6 +48,8 @@ fi
 echo "==> Copying vendor site-packages (python${PYVER})..."
 mkdir -p "$STAGE/vendor"
 rsync -a "$SITE_PACKAGES/" "$STAGE/vendor/"
+printf '%s\n' "$PYVER" > "$STAGE/.python-version"
+cp "$ROOT/apps/desktop/scripts/find-gateway-python.sh" "$STAGE/find-gateway-python.sh"
 
 cat > "$LAUNCHER" <<'LAUNCHER_EOF'
 #!/usr/bin/env bash
@@ -103,13 +105,26 @@ if ! GW_ROOT="$(resolve_gw_root)"; then
   exit 1
 fi
 
-PY="$(command -v python3 || true)"
-if [[ -z "$PY" && -x /usr/bin/python3 ]]; then
-  PY=/usr/bin/python3
+# GUI apps often only see /usr/bin/python3 (3.9). Prefer Homebrew + exact ABI.
+export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
+
+FINDER="$GW_ROOT/find-gateway-python.sh"
+if [[ ! -f "$FINDER" ]]; then
+  log "ERROR missing find-gateway-python.sh under $GW_ROOT"
+  echo "Notewise gateway: python finder missing from bundle" >&2
+  exit 1
 fi
-if [[ -z "$PY" ]]; then
-  log "ERROR python3 not found on PATH"
-  echo "Notewise gateway: python3 not found" >&2
+# shellcheck source=apps/desktop/scripts/find-gateway-python.sh
+source "$FINDER"
+
+REQUIRED=""
+if [[ -f "$GW_ROOT/.python-version" ]]; then
+  REQUIRED="$(tr -d '[:space:]' < "$GW_ROOT/.python-version")"
+fi
+
+if ! PY="$(find_gateway_python "$REQUIRED")"; then
+  log "ERROR python ${REQUIRED:-3.10+} not found (need Homebrew, not Xcode 3.9)"
+  echo "Notewise gateway: Python ${REQUIRED:-3.10+} not found. Install with: brew install python@${REQUIRED:-3.12}" >&2
   exit 1
 fi
 
