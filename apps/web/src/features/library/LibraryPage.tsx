@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
+import { EmptyState, SpeakerChip } from "@notewise/ui";
 import {
   Download,
   FileText,
@@ -387,29 +387,19 @@ export function LibraryPage() {
                     aria-label="Meeting title"
                   />
                 ) : (
-                  <h2
-                    className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 transition hover:bg-[var(--nw-surface-2)]"
+                  <button
+                    type="button"
+                    className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 text-left transition hover:bg-[var(--nw-surface-2)]"
                     onClick={() => {
                       setTitleDraft(
                         meeting.title || displayMeetingTitle(meeting),
                       );
                       setEditingTitle(true);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setTitleDraft(
-                          meeting.title || displayMeetingTitle(meeting),
-                        );
-                        setEditingTitle(true);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
                     title="Click to rename"
                   >
                     {displayMeetingTitle(meeting)}
-                  </h2>
+                  </button>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <BackendTag backend={meeting.backend} />
