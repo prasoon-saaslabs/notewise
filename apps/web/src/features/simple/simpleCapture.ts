@@ -2,7 +2,7 @@ import type { ProcessPhase } from "../../hooks/useRecorder";
 import { isCaptureActive } from "../../capture/miniCaptureSync";
 
 export const SIMPLE_HOME_PATH = "/";
-export const SIMPLE_NOTE_PATH = "/simple/note";
+export const SIMPLE_NOTE_PATH = "/home/note";
 export const SIMPLE_CAPTURE_KEY = "og-simple-capture";
 
 export function markSimpleCapture() {
@@ -46,7 +46,9 @@ export function isSimpleSessionInProgress(session: {
 }
 
 export function isSimpleNoteSurface(pathname: string) {
-  return pathname === SIMPLE_NOTE_PATH;
+  return (
+    pathname === SIMPLE_NOTE_PATH || pathname.startsWith(`${SIMPLE_NOTE_PATH}/`)
+  );
 }
 
 export function isSimpleHomeSurface(pathname: string) {

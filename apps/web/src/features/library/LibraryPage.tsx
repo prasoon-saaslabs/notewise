@@ -25,7 +25,7 @@ import {
   getCatalogMeeting,
   listAllMeetings,
 } from "../../lib/meetingsCatalog";
-import { ClaimLine, RunStatusCard } from "../../components/Receipts";
+import { ClaimLine } from "../../components/Receipts";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
 import { NotesEditor } from "../../components/notes/NotesEditor";
 import { NotesDisplay } from "../../components/notes/NotesDisplay";
@@ -166,7 +166,6 @@ function NotesIntelligence({
 
   return (
     <div className="flex flex-col gap-3">
-      <RunStatusCard status={notes?.runStatus} dropped={notes?.droppedCount} />
       {userNotesEditable ? (
         <SectionCard
           icon={<StickyNote className="h-4 w-4" />}
@@ -177,10 +176,6 @@ function NotesIntelligence({
           {userNotesSaveHint === "saving" ? (
             <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
               Saving…
-            </p>
-          ) : userNotesSaveHint === "saved" ? (
-            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
-              Saved
             </p>
           ) : userNotesSaveHint === "error" ? (
             <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-danger)]">

@@ -31,18 +31,22 @@ export function usePersistedUserNotes({
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    initializedRef.current = false;
     lastSavedRef.current = null;
-    setDraft("");
     setSaveHint("idle");
+    if (!meetingId) {
+      initializedRef.current = false;
+      setDraft("");
+      return;
+    }
+    initializedRef.current = false;
   }, [meetingId]);
 
   useEffect(() => {
-    if (!enabled || initializedRef.current) return;
+    if (!enabled || !meetingId || initializedRef.current) return;
     setDraft(sourceValue);
     lastSavedRef.current = sourceValue;
     initializedRef.current = true;
-  }, [enabled, sourceValue]);
+  }, [enabled, meetingId, sourceValue]);
 
   useEffect(() => {
     if (!enabled) return;

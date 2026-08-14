@@ -19,7 +19,7 @@ export function EntityListRail({
       (e) =>
         e.name.toLowerCase().includes(needle) ||
         (e.company || "").toLowerCase().includes(needle) ||
-        e.kind.includes(needle),
+        e.kind.includes(needle)
     );
   }, [entities, q]);
 
@@ -31,13 +31,15 @@ export function EntityListRail({
         if (bo !== ao) return bo - ao;
         return a.name.localeCompare(b.name);
       }),
-    [filtered],
+    [filtered]
   );
 
   return (
-    <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] md:w-72 lg:w-80">
+    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] md:w-72 lg:w-80">
       <div className="border-b border-[var(--nw-border)] p-3">
-        <h2 className="m-0 text-sm font-bold text-[var(--nw-ink)]">Relationships</h2>
+        <h2 className="m-0 text-sm font-bold text-[var(--nw-ink)]">
+          Relationships
+        </h2>
         <p className="m-0 mt-0.5 text-[0.65rem] text-[var(--nw-ink-4)]">
           {entities.length} contact{entities.length === 1 ? "" : "s"} in memory
         </p>
@@ -106,7 +108,9 @@ export function EntityListRail({
         })}
         {!sorted.length ? (
           <li className="px-2 py-6 text-center text-xs text-[var(--nw-ink-4)]">
-            {q.trim() ? "No matches." : "Record or import meetings to build relationship memory."}
+            {q.trim()
+              ? "No matches."
+              : "Record or import meetings to build relationship memory."}
           </li>
         ) : null}
       </ul>

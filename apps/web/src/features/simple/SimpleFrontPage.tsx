@@ -1,20 +1,18 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Calendar, FileText, Plus, Trash2 } from "lucide-react";
+import { FileText, Plus, Trash2 } from "lucide-react";
 import type { MeetingBackend } from "@notewise/api-client";
-import { api } from "../../lib/api";
-import { useAuth } from "../../auth/AuthContext";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
 import { PageMotion } from "../../components/PageMotion";
-import { isUpcoming } from "../../lib/calendarFormat";
+import { UpcomingCallsSection } from "../../components/UpcomingCallsSection";
 import {
   clientForBackend,
   displayMeetingTitle,
   listAllMeetings,
 } from "../../lib/meetingsCatalog";
-import { formatEventTime, groupEventsByDay, isToday } from "./simpleCalendar";
+import { isToday } from "./simpleCalendar";
 import { isSimpleSessionInProgress, SIMPLE_NOTE_PATH } from "./simpleCapture";
 
 type DeleteTarget = {
@@ -28,14 +26,7 @@ export function SimpleFrontPage() {
   const qc = useQueryClient();
   const session = useCaptureSession();
   const sessionInProgress = isSimpleSessionInProgress(session);
-  const { user } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
-  const calendarQ = useQuery({
-    queryKey: ["calendar-events", user?.id],
-    queryFn: () => api.listCalendarEvents(),
-    enabled: Boolean(user?.calendarConnected),
-    refetchInterval: 60_000,
-  });
 
   const meetingsQ = useQuery({
     queryKey: ["meetings", "catalog"],
@@ -43,21 +34,11 @@ export function SimpleFrontPage() {
   });
 
   useEffect(() => {
-    if (!user?.calendarConnected) return;
-    void api.syncCalendar().then(() => calendarQ.refetch());
-  }, [user?.id, user?.calendarConnected]);
-
-  useEffect(() => {
     if (sessionInProgress) {
       navigate(SIMPLE_NOTE_PATH, { replace: true });
     }
   }, [sessionInProgress, navigate]);
 
-  const upcomingEvents = (calendarQ.data?.events ?? []).filter((ev) =>
-    isUpcoming(ev.startAt)
-  );
-  const dayGroups = groupEventsByDay(upcomingEvents.slice(0, 12));
-  const nextEvent = upcomingEvents[0];
   const todayNotes = (meetingsQ.data ?? [])
     .filter((m) => isToday(m.createdAt))
     .slice(0, 6);
@@ -75,117 +56,20 @@ export function SimpleFrontPage() {
     <PageMotion className="nw-simple-page nw-page-surface flex h-full min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-auto px-4 py-5 md:px-8 md:py-7">
         <div className="mx-auto w-full max-w-2xl">
-          <header className="mb-6 flex items-start justify-between gap-3">
-            <h1 className="m-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] md:text-4xl">
-              Coming up
-            </h1>
-            <Link
-              to={SIMPLE_NOTE_PATH}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-1.5 text-sm font-medium text-[var(--nw-ink)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
-            >
-              <Plus className="h-4 w-4" />
-              {sessionInProgress ? "Continue Meeting" : "New Meeting"}
-            </Link>
-          </header>
-
-          {!user?.calendarConnected ? (
-            <section className="mb-6 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-8 text-center">
-              <Calendar className="mx-auto mb-2 h-8 w-8 text-[var(--nw-ink-4)]" />
-              <p className="m-0 text-sm font-medium text-[var(--nw-ink-2)]">
-                Calendar not integrated
-              </p>
-              <p className="m-0 mt-1 text-xs text-[var(--nw-ink-4)]">
-                Connect Google on{" "}
-                <Link
-                  to="/profile"
-                  className="font-semibold text-[var(--nw-accent-dark)] underline"
-                >
-                  Profile
-                </Link>{" "}
-                to see upcoming meetings here.
-              </p>
-            </section>
-          ) : dayGroups.length === 0 ? (
-            <section className="mb-6 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-6 text-sm text-[var(--nw-ink-3)]">
-              No upcoming meetings in the next two weeks.
-            </section>
-          ) : (
-            <section className="mb-6 overflow-hidden rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)]">
-              {dayGroups.map(({ label, items }, gi) => (
-                <div
-                  key={label}
-                  className={
-                    gi > 0 ? "border-t border-[var(--nw-border)]" : undefined
-                  }
-                >
-                  <div className="flex items-center gap-2 px-4 py-2.5">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        gi === 0
-                          ? "bg-[var(--nw-danger)]"
-                          : "bg-[var(--nw-ink-4)]"
-                      }`}
-                    />
-                    <span className="text-sm font-semibold text-[var(--nw-ink)]">
-                      {label}
-                    </span>
-                  </div>
-                  {items.length === 0 ? (
-                    <p className="m-0 px-4 pb-3 text-xs text-[var(--nw-ink-4)]">
-                      No more events today.
-                    </p>
-                  ) : (
-                    <ul className="m-0 list-none p-0 pb-2">
-                      {items.map((ev) => (
-                        <li
-                          key={ev.id}
-                          className="flex gap-3 px-4 py-2 text-sm text-[var(--nw-ink-2)]"
-                        >
-                          <span className="w-1 shrink-0 rounded-full bg-[var(--nw-accent)]" />
-                          <span className="min-w-0">
-                            <span className="font-medium text-[var(--nw-ink)]">
-                              {ev.title}
-                            </span>
-                            <span className="mt-0.5 block text-xs text-[var(--nw-ink-4)]">
-                              {formatEventTime(ev.startAt, ev.endAt)}
-                            </span>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </section>
-          )}
-
-          {nextEvent ? (
-            <section className="mb-6">
-              <h2 className="m-0 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
-                Upcoming
-              </h2>
-              <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-4 py-3">
-                <p className="m-0 text-sm font-semibold text-[var(--nw-ink)]">
-                  {nextEvent.title}
-                </p>
-                {nextEvent.attendees?.length ? (
-                  <p className="m-0 mt-1 truncate text-xs text-[var(--nw-ink-4)]">
-                    {nextEvent.attendees
-                      .slice(0, 4)
-                      .map((a) => a.name || a.email)
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                ) : null}
-                <p className="m-0 mt-1 text-xs text-[var(--nw-ink-3)]">
-                  {new Date(nextEvent.startAt).toLocaleTimeString(undefined, {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </section>
-          ) : null}
+          <UpcomingCallsSection
+            variant="simple"
+            initialVisibleCount={2}
+            collapsible
+            headerAction={
+              <Link
+                to={SIMPLE_NOTE_PATH}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-1.5 text-sm font-medium text-[var(--nw-ink)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
+              >
+                <Plus className="h-4 w-4" />
+                {sessionInProgress ? "Continue Meeting" : "New Meeting"}
+              </Link>
+            }
+          />
 
           <section>
             <h2 className="m-0 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
@@ -205,7 +89,7 @@ export function SimpleFrontPage() {
                       className="group flex items-center rounded-xl transition hover:bg-[var(--nw-surface-2)]"
                     >
                       <Link
-                        to={`/simple/note/${m.id}?backend=${m.backend}`}
+                        to={`${SIMPLE_NOTE_PATH}/${m.id}?backend=${m.backend}`}
                         className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2"
                       >
                         <FileText className="h-4 w-4 shrink-0 text-[var(--nw-ink-4)]" />

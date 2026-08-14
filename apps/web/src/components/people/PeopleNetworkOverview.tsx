@@ -37,7 +37,8 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
+    <div className="min-h-0 flex-1 overflow-auto">
+      <div className="flex flex-col gap-4">
       <AiPageHero
         eyebrow="Network intelligence"
         title="Relationship graph"
@@ -101,6 +102,7 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
         <Brain className="h-4 w-4" />
         Ask across all relationships
       </Button>
+      </div>
     </div>
   );
 }

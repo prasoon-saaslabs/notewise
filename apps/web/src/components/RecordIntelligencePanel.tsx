@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Briefcase, ChevronDown, Sparkles, Users } from "lucide-react";
 import { api } from "../lib/api";
 import type { EntityRecord, MeetingMode } from "@notewise/api-client";
+import type { ProcessPhase } from "../hooks/useRecorder";
 import { PreCallBriefCard } from "./PreCallBriefCard";
 
 const MODE_HINTS: Record<string, string> = {
@@ -13,8 +14,12 @@ const MODE_HINTS: Record<string, string> = {
 
 export function RecordIntelligencePanel({
   sessionLive,
+  phase,
+  hasNotes,
 }: {
   sessionLive: boolean;
+  phase: ProcessPhase;
+  hasNotes: boolean;
   meetingId?: string | null;
 }) {
   const [open, setOpen] = useState(true);
@@ -37,6 +42,18 @@ export function RecordIntelligencePanel({
       .then(setEntities)
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (sessionLive) {
+      setOpen(true);
+    }
+  }, [sessionLive]);
+
+  useEffect(() => {
+    if (phase === "ready" || hasNotes) {
+      setOpen(false);
+    }
+  }, [phase, hasNotes]);
 
   const modeList = modes.length
     ? modes
