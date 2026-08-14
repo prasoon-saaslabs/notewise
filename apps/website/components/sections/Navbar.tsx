@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { SITE_NAV_LINKS } from "@/lib/constants";
+import { NAV_LINKS } from "@/lib/constants";
 import { GITHUB_URL } from "@/lib/siteConfig";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-6 md:ml-6 md:flex">
-          {SITE_NAV_LINKS.map((link) => (
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
