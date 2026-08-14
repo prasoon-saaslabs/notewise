@@ -22,7 +22,8 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const googleEnabled = providers?.google.enabled;
+  const googleEnabled = providers?.google.enabled === true;
+  const googleUnknown = providers === null;
   const returnPath =
     (location.state as { from?: string } | null)?.from && (location.state as { from: string }).from !== "/login"
       ? (location.state as { from: string }).from
@@ -93,12 +94,16 @@ export function LoginPage() {
             <Button
               variant="primary"
               size="lg"
-              disabled={busy || browserAuthPending || !googleEnabled}
+              disabled={busy || browserAuthPending || googleUnknown || !googleEnabled}
               onClick={() => void continueGoogle()}
               className="justify-center"
             >
               <Calendar className="h-4 w-4" />
-              {browserAuthPending ? "Waiting for browser…" : "Continue with Google"}
+              {browserAuthPending
+                ? "Waiting for browser…"
+                : googleUnknown
+                  ? "Checking Google…"
+                  : "Continue with Google"}
             </Button>
             {browserAuthPending ? (
               <p className="m-0 text-xs text-[var(--nw-accent-dark)]">
@@ -106,10 +111,13 @@ export function LoginPage() {
                 automatically.
               </p>
             ) : null}
-            {!googleEnabled ? (
+            {googleUnknown ? (
+              <p className="m-0 text-xs text-[var(--nw-ink-3)]">Checking whether Google sign-in is available…</p>
+            ) : !googleEnabled ? (
               <p className="m-0 text-xs text-[var(--nw-ink-3)]">
-                Add Google OAuth credentials to the gateway <code className="text-[0.7rem]">.env</code> to
-                enable calendar sync.
+                {isDesktopShell()
+                  ? "Google sign-in is off in this build. Rebuild the DMG after setting GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in services/pyai-gateway/.env."
+                  : "Add Google OAuth credentials to the gateway .env to enable calendar sync."}
               </p>
             ) : (
               <p className="m-0 text-xs text-[var(--nw-ink-3)]">

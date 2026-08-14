@@ -1,4 +1,4 @@
-.PHONY: setup doctor run gateway web dev desktop stage-gateway qa-gateway build-dmg samples
+.PHONY: setup doctor run gateway web website dev desktop stage-gateway qa-gateway build-dmg samples
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GW := services/pyai-gateway
@@ -14,7 +14,8 @@ setup:
 	@echo "Setup complete."
 	@echo "  Web:     make dev          (gateway + UI, one terminal)"
 	@echo "           make run + make web (two terminals)"
-	@echo "  Desktop: make desktop"
+	@echo "  Site:    make website      (marketing site, no gateway)"
+	@echo "  Desktop: make desktop      (Notewise + local PyAI gateway)"
 	@echo "  Check:   make doctor"
 
 doctor:
@@ -27,6 +28,9 @@ gateway:
 
 web:
 	VITE_PROXY_TARGET=http://127.0.0.1:3002 pnpm --filter @notewise/web dev
+
+website:
+	pnpm --filter @notewise/website dev
 
 dev:
 	@bash $(SCRIPTS)/dev-web.sh

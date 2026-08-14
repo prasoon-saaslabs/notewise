@@ -61,6 +61,29 @@ fn append_gateway_log(app: &AppHandle, line: &str) {
     }
 }
 
+fn upsert_env(vars: &mut Vec<(String, String)>, key: &str, value: &str) {
+    if let Some(existing) = vars.iter_mut().find(|(k, _)| k == key) {
+        existing.1 = value.to_string();
+    } else {
+        vars.push((key.to_string(), value.to_string()));
+    }
+}
+
+fn env_value<'a>(vars: &'a [(String, String)], key: &str) -> Option<&'a str> {
+    vars.iter()
+        .find(|(k, v)| k == key && !v.is_empty())
+        .map(|(_, v)| v.as_str())
+}
+
+fn random_hex_secret() -> String {
+    use std::io::Read;
+    let mut buf = [0u8; 32];
+    if let Ok(mut f) = fs::File::open("/dev/urandom") {
+        let _ = f.read_exact(&mut buf);
+    }
+    buf.iter().map(|b| format!("{b:02x}")).collect()
+}
+
 fn write_gateway_env(app: &AppHandle, pyai_api_key: &str) -> Result<(), String> {
     let key = pyai_api_key.trim();
     if key.is_empty() {
@@ -71,8 +94,15 @@ fn write_gateway_env(app: &AppHandle, pyai_api_key: &str) -> Result<(), String> 
     }
     let dir = gateway_data_dir(app)?;
     let path = dir.join("gateway.env");
+    let mut vars = read_env_file(&path);
+    upsert_env(&mut vars, "PYAI_API_KEY", key);
+    if env_value(&vars, "AUTH_JWT_SECRET").is_none() {
+        upsert_env(&mut vars, "AUTH_JWT_SECRET", &random_hex_secret());
+    }
     let mut f = fs::File::create(&path).map_err(|e| format!("write gateway.env: {e}"))?;
-    writeln!(f, "PYAI_API_KEY={key}").map_err(|e| format!("write gateway.env: {e}"))?;
+    for (k, v) in &vars {
+        writeln!(f, "{k}={v}").map_err(|e| format!("write gateway.env: {e}"))?;
+    }
     Ok(())
 }
 
@@ -100,11 +130,20 @@ fn read_gateway_env_vars(app: &AppHandle) -> Vec<(String, String)> {
     read_env_file(&dir.join("gateway.env"))
 }
 
+fn bundled_oauth_env(app: &AppHandle) -> Vec<(String, String)> {
+    let Some(root) = bundled_gateway_root(app) else {
+        return Vec::new();
+    };
+    read_env_file(&root.join("oauth.env"))
+}
+
 fn merged_gateway_env(app: &AppHandle) -> Vec<(String, String)> {
     let mut merged = Vec::new();
+    #[cfg(debug_assertions)]
     if let Some(gw_root) = dev_gateway_root() {
         merged.extend(read_env_file(&gw_root.join(".env")));
     }
+    merged.extend(bundled_oauth_env(app));
     merged.extend(read_gateway_env_vars(app));
     merged
 }
@@ -242,6 +281,7 @@ fn free_gateway_port(app: &AppHandle) {
     std::thread::sleep(Duration::from_millis(500));
 }
 
+#[cfg(debug_assertions)]
 fn spawn_dev_gateway(app: &AppHandle) -> Result<(), String> {
     let gw_root = dev_gateway_root().ok_or_else(|| {
         "Dev gateway not found. Run `make setup` in the notewise repo.".to_string()

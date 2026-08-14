@@ -23,10 +23,11 @@ Put your PyAI key in `services/pyai-gateway/.env` — desktop dev reads it autom
 
 ## Build DMG (release)
 
-End users get a bundled gateway (system Python + vendored deps). No venv required on their Mac.
+No **Xcode** or Swift required — `build.rs` compiles `native/system_audio.m` with **clang** from the Command Line Tools.
 
 ```bash
 make setup
+make stage-gateway
 make build-dmg
 ```
 
@@ -36,7 +37,8 @@ Output: `apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64
 
 1. Grant **Microphone** when prompted
 2. Enter your **PyAI API key** (stored in `~/Library/Application Support/com.notewise.app/data/gateway.env`)
-3. On first capture, grant **Screen Recording** for system audio (optional — mic-only fallback works)
+3. Sign in with Google if this DMG was built with `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `services/pyai-gateway/.env`
+4. On first capture, grant **Screen Recording** for system audio (optional — mic-only fallback works)
 
 ## Menu bar
 

@@ -6,8 +6,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CREDS_FILE="$REPO_ROOT/.git/gh-credentials"
 PAT_FILE="$REPO_ROOT/.git/gh-pat"
-GITHUB_USER="${GITHUB_USER:-prasoon-aihub}"
-REPO_SLUG="${REPO_SLUG:-prasoon-aihub/notewise}"
+GITHUB_USER="${GITHUB_USER:-prasoon-saaslabs}"
+REPO_SLUG="${REPO_SLUG:-prasoon-saaslabs/notewise}"
 
 cd "$REPO_ROOT"
 

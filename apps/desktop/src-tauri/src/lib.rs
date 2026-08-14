@@ -4,6 +4,11 @@ mod audio;
 mod gateway;
 mod mini_panel;
 mod oauth_loopback;
+#[cfg(target_os = "macos")]
+mod native_link;
+
+#[cfg(target_os = "macos")]
+const _: () = native_link::LINKED;
 
 use audio::{
     capture_meters, is_capturing, list_capture_devices, start_system_audio_capture,

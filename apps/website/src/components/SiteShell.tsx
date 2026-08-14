@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { Github, Menu, Sparkles, X } from "lucide-react";
+import { GITHUB_URL } from "../lib/siteConfig";
 
 const NAV = [
   { to: "/features", label: "Features" },
@@ -50,7 +51,7 @@ export function SiteShell() {
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
             <a
-              href="https://github.com"
+              href={GITHUB_URL}
               className="hidden items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold text-[var(--nw-ink-3)] hover:bg-[var(--nw-surface-2)] sm:inline-flex"
               target="_blank"
               rel="noreferrer"

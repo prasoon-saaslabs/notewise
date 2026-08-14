@@ -40,6 +40,7 @@ type AuthContextValue = {
   signInGoogle: () => Promise<void>;
   signOut: () => void;
   refresh: () => Promise<void>;
+  refreshProviders: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -119,18 +120,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyToken],
   );
 
-  useEffect(() => {
-    void (async () => {
+  const refreshProviders = useCallback(async () => {
+    const attempts = isDesktopShell() ? 8 : 1;
+    for (let i = 0; i < attempts; i++) {
       try {
         const p = await api.authProviders();
         setProviders(p);
+        if (p.google?.enabled || i === attempts - 1) return;
       } catch {
-        setProviders({
-          google: { enabled: false },
-          microsoft: { enabled: false, reason: "coming_soon" },
-          guest: { enabled: true },
-        });
+        if (i === attempts - 1) {
+          setProviders({
+            google: { enabled: false },
+            microsoft: { enabled: false, reason: "coming_soon" },
+            guest: { enabled: true },
+          });
+          return;
+        }
       }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await refreshProviders();
       await refresh();
       if (isDesktopShell() && !getAuthToken()) {
         try {
@@ -141,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     })();
-  }, [refresh, signInGuest]);
+  }, [refresh, refreshProviders, signInGuest]);
 
   useEffect(() => {
     if (!isDesktopBrowserOAuthAvailable()) return;
@@ -213,8 +226,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInGoogle,
       signOut,
       refresh,
+      refreshProviders,
     }),
-    [user, loading, providers, browserAuthPending, signInGuest, signInGoogle, signOut, refresh],
+    [user, loading, providers, browserAuthPending, signInGuest, signInGoogle, signOut, refresh, refreshProviders],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

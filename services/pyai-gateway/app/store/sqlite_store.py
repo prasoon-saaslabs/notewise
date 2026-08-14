@@ -106,7 +106,7 @@ CREATE INDEX IF NOT EXISTS idx_calendar_user_start ON calendar_events(user_id, s
 class SqliteStore:
     def __init__(self, path: Path | None = None) -> None:
         self._lock = threading.RLock()
-        self._path = path or (settings.data_dir / "opengranola.sqlite")
+        self._path = path or settings.sqlite_path
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self._path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row

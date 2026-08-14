@@ -12,7 +12,7 @@ MIT licensed · [Privacy policy](../PRIVACY.md)
 |------------|-------|
 | **Use the app** (full guide) | **[docs/USAGE.md](docs/USAGE.md)** ← start here |
 | **Run it in 5 minutes** | [Quick start](#quick-start) below |
-| **Browse the product site** | `pnpm dev:website` → http://localhost:5174 |
+| **Browse the product site** | `make website` → http://localhost:5174 |
 | **Build the macOS app** | [Desktop](#desktop) below |
 
 ---
@@ -72,7 +72,7 @@ make doctor         # Check Python, Node, API key, permissions
 | Web app | 5173 | `make web` or `make dev` |
 | AI gateway | 3002 | `make run` (included in `make dev`) |
 | Desktop (dev) | native | `make desktop` |
-| Marketing site | 5174 | `pnpm dev:website` |
+| Marketing site | 5174 | `make website` or `pnpm dev:website` |
 
 ---
 
@@ -91,12 +91,57 @@ See [apps/desktop/README.md](apps/desktop/README.md) and [docs/USAGE.md](docs/US
 
 ---
 
+## Host the product site
+
+The marketing site (`apps/website`) is a static Vite SPA. Host it on **Vercel Hobby** and serve the macOS installer from **GitHub Releases**. Do not put the DMG on Vercel (file-size limits), and do **not** deploy pyai-gateway to the cloud — the DMG already bundles a local sidecar on `127.0.0.1:3002`.
+
+End users: open the site → download the DMG → paste their own PyAI key. No Python or hosted backend.
+
+### 1. Publish the DMG
+
+```bash
+make setup
+make build-dmg
+# → apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64.dmg
+```
+
+Create a GitHub Release (tag e.g. `v0.1.0`) and attach the DMG. Copy the asset URL. Do not commit the binary.
+
+Until the app is signed and notarized, macOS Gatekeeper may block the first open — **right-click → Open**.
+
+### 2. Deploy the site
+
+1. Import this repo in Vercel (Hobby). Keep the **root directory** as the repo root — [`vercel.json`](vercel.json) sets install, build, and output.
+2. Set these env vars (Production + Preview). They are public download URLs, not secrets:
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `VITE_DMG_URL` | Apple Silicon (or universal) GitHub Release asset URL |
+   | `VITE_DMG_URL_INTEL` | Optional Intel DMG asset URL |
+   | `VITE_GITHUB_URL` | `https://github.com/prasoon-saaslabs/notewise` |
+
+3. Deploy. Routes like `/download` rewrite to `index.html`.
+
+**Preview locally before Vercel** (no Vercel account needed):
+
+```bash
+make website
+# → http://localhost:5174
+```
+
+Copy [`apps/website/.env.example`](apps/website/.env.example) to `apps/website/.env.local` if you want to test a real DMG URL. GitHub links default to [prasoon-saaslabs/notewise](https://github.com/prasoon-saaslabs/notewise). Without `VITE_DMG_URL`, `/download` shows “Release coming soon”.
+
+Do not deploy [`docker-compose.yml`](docker-compose.yml) (legacy Nest + Postgres + Redis). That stack is unused by the PyAI desktop path.
+
+---
+
 ## Configuration
 
 | File | Purpose |
 |------|---------|
 | `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT |
 | `apps/web/.env` | Gateway proxy target |
+| `apps/website/.env.local` | Public DMG + GitHub URLs for the marketing site |
 
 Copy from `.env.example` files. Never commit secrets.
 
@@ -127,14 +172,14 @@ MIT — audit the code, fork it, ship it.
 
 ## GitHub auth (this repo only — PAT)
 
-Use a **Personal Access Token** for `prasoon-aihub/notewise` without changing your global `gh` login.
+Use a **Personal Access Token** for `prasoon-saaslabs/notewise` without changing your global `gh` login.
 
 **1. Create a PAT** at [github.com/settings/tokens](https://github.com/settings/tokens)
 
 | Type | Settings |
 |------|----------|
-| **Fine-grained** (recommended) | Resource owner: `prasoon-aihub` · Repository: `notewise` · Contents: Read and write |
-| **Classic** | Scope: `repo` (on the `prasoon-aihub` account) |
+| **Fine-grained** (recommended) | Resource owner: `prasoon-saaslabs` · Repository: `notewise` · Contents: Read and write |
+| **Classic** | Scope: `repo` (on the `prasoon-saaslabs` account) |
 
 **2. Configure this repo:**
 

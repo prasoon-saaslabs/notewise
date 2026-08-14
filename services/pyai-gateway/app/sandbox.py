@@ -18,7 +18,7 @@ async def ensure_api_key() -> str | None:
     url = f"{settings.pyai_base_url}{mint_path if mint_path.startswith('/') else '/' + mint_path}"
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
-            res = await client.post(url, json={"product": "opengranola"})
+            res = await client.post(url, json={"product": "notewise"})
         if res.status_code >= 400:
             log.warning("sandbox mint skipped: HTTP %s", res.status_code)
             return None

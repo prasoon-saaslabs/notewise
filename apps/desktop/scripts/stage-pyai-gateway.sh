@@ -24,7 +24,28 @@ rsync -a \
   --exclude '__pycache__' \
   --exclude '*.pyc' \
   --exclude '.env' \
+  --exclude 'oauth.env' \
   "$GW_SRC/" "$STAGE/"
+
+# Ship Google OAuth client config with the DMG (not the PyAI user key).
+# Login page enables Google only when GOOGLE_CLIENT_ID + SECRET are present.
+OAUTH_OUT="$STAGE/oauth.env"
+: > "$OAUTH_OUT"
+if [[ -f "$GW_SRC/.env" ]]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      GOOGLE_CLIENT_ID=*|GOOGLE_CLIENT_SECRET=*|GOOGLE_REDIRECT_URI=*|GOOGLE_SCOPES=*|AUTH_JWT_SECRET=*)
+        printf '%s\n' "$line" >> "$OAUTH_OUT"
+        ;;
+    esac
+  done < "$GW_SRC/.env"
+fi
+if grep -q '^GOOGLE_CLIENT_ID=.\+' "$OAUTH_OUT" && grep -q '^GOOGLE_CLIENT_SECRET=.\+' "$OAUTH_OUT"; then
+  echo "==> Staged Google OAuth client for desktop sign-in"
+else
+  echo "==> WARNING: GOOGLE_CLIENT_ID/SECRET missing in services/pyai-gateway/.env"
+  echo "    DMG Google login will stay disabled. See docs/USAGE.md#google-calendar-setup"
+fi
 
 if [[ ! -d "$GW_SRC/.venv" ]]; then
   echo "Creating gateway venv..."
@@ -128,6 +149,12 @@ export PYTHONPATH="${VENDOR}:${GW_ROOT}"
 export PYTHONNOUSERSITE=1
 unset PYTHONHOME
 
+if [[ -f "$GW_ROOT/oauth.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$GW_ROOT/oauth.env"
+  set +a
+fi
 if [[ -f "$DATA_DIR/gateway.env" ]]; then
   set -a
   # shellcheck disable=SC1090
