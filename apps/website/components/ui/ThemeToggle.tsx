@@ -10,8 +10,8 @@ type ThemeToggleProps = {
 };
 
 export function ThemeToggle({ className, variant = "nav" }: ThemeToggleProps) {
-  const { themeId, toggleTheme } = useTheme();
-  const isDark = themeId === "carbon-blue";
+  const { themeId, toggleTheme, mounted } = useTheme();
+  const isDark = mounted && themeId === "carbon-blue";
 
   return (
     <button

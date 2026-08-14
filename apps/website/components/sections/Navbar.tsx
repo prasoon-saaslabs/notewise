@@ -29,16 +29,20 @@ export function Navbar() {
     >
       <nav
         className={cn(
-          "glass-panel flex w-full max-w-5xl items-center gap-4 rounded-full px-4 py-2.5 transition-all duration-300 md:px-5",
+          "glass-panel flex w-full max-w-5xl items-center gap-5 rounded-full px-5 py-3 transition-all duration-300 md:gap-6 md:px-6",
           scrolled && "glass-panel-scrolled",
         )}
         aria-label="Main navigation"
       >
         <Link href="/" className="inline-flex shrink-0 items-center transition-opacity hover:opacity-90">
-          <Logo markSize={36} wordmarkClassName="font-display text-lg font-semibold" />
+          <Logo
+            markSize={36}
+            className="gap-3.5"
+            wordmarkClassName="font-display text-lg font-semibold"
+          />
         </Link>
 
-        <div className="hidden items-center gap-6 md:ml-6 md:flex">
+        <div className="hidden items-center gap-8 md:ml-8 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -55,7 +59,7 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
           <ThemeToggle />
           <Button href={GITHUB_URL} size="sm" variant="glass-muted" external>
             GitHub

@@ -312,7 +312,7 @@ body {
   background: var(--paper-elevated);
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    0 0 0 1px var(--border) inset;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -331,7 +331,7 @@ body {
 .nw-app-demo-glow {
   background:
     radial-gradient(80% 60% at 12% 0%, var(--teal-glow), transparent 55%),
-    radial-gradient(70% 50% at 88% 8%, rgb(153 246 228 / 0.12), transparent 50%),
+    radial-gradient(70% 50% at 88% 8%, var(--teal-glow), transparent 50%),
     linear-gradient(180deg, var(--paper-elevated) 0%, var(--paper) 100%);
 }
 

@@ -70,7 +70,7 @@ export function VisualStory() {
             viewport={{ once: true, margin: "-12% 0px" }}
             transition={{ ...flySpring, delay: 0.1 }}
           >
-            <div className="border-b border-border/80 bg-white/55 px-4 py-2.5 backdrop-blur-sm">
+            <div className="border-b border-border/80 bg-paper-elevated/80 px-4 py-2.5 backdrop-blur-sm">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-teal">
                 Profile · relationship memory
               </p>

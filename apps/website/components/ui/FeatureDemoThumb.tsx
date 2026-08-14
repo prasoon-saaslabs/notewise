@@ -29,7 +29,7 @@ export function FeatureDemoThumb({
       )}
     >
       {icon === "video" && (
-        <div className="w-[82%] overflow-hidden rounded-2xl border border-border/80 bg-white/85 shadow-sm">
+        <div className="w-[82%] overflow-hidden rounded-2xl border border-border/80 bg-paper-elevated shadow-sm">
           <div className="grid grid-cols-2 border-b border-border/80">
             <div className="border-r border-border/80 px-2.5 py-2">
               <p className="font-display text-[10px] text-ink">New Meeting</p>
@@ -48,7 +48,7 @@ export function FeatureDemoThumb({
       )}
 
       {icon === "check" && (
-        <div className="w-[78%] rounded-2xl border border-border bg-white/80 p-3 text-[9px] text-ink-secondary shadow-sm">
+        <div className="w-[78%] rounded-2xl border border-border bg-paper-elevated p-3 text-[9px] text-ink-secondary shadow-sm">
           <p className="font-display text-[10px] text-ink">Standup Meeting</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-teal-muted px-1.5 py-0.5 text-[7px] font-semibold text-teal-hover">
             Enhanced
@@ -69,7 +69,7 @@ export function FeatureDemoThumb({
                   "rounded-full px-2 py-0.5 text-[8px] font-semibold",
                   active && i === 2
                     ? "border border-teal/30 bg-teal/15 text-teal-hover"
-                    : "bg-white/70 text-ink-muted ring-1 ring-border"
+                    : "bg-paper-elevated text-ink-muted ring-1 ring-border"
                 )}
               >
                 {mode}
@@ -80,7 +80,7 @@ export function FeatureDemoThumb({
       )}
 
       {icon === "message" && (
-        <div className="mx-4 w-full rounded-2xl border border-teal/15 bg-white/80 p-3 text-[9px] shadow-sm">
+        <div className="mx-4 w-full rounded-2xl border border-teal/15 bg-paper-elevated p-3 text-[9px] shadow-sm">
           <div className="flex items-center gap-1.5">
             <Sparkles className="h-3 w-3 text-teal" />
             <p className="font-semibold text-ink">Ask your meeting brain</p>
@@ -99,7 +99,7 @@ export function FeatureDemoThumb({
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-xl border border-border bg-white/80 px-2 py-1.5"
+              className="rounded-xl border border-border bg-paper-elevated px-2 py-1.5"
             >
               <p className="text-[7px] font-bold uppercase tracking-wider text-ink-muted">
                 {stat.label}

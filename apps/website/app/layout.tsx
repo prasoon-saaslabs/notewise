@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
-import Script from "next/script";
 import { LenisProvider } from "@/components/providers/LenisProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { SITE } from "@/lib/constants";
@@ -68,12 +67,8 @@ export default function RootLayout({
       className={`${fraunces.variable} ${dmSans.variable} h-full scroll-smooth antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {themeInitScript}
-        </Script>
-      </head>
       <body className="min-h-full bg-paper font-body text-ink">
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <ThemeProvider>
           <LenisProvider>{children}</LenisProvider>
         </ThemeProvider>
