@@ -61,7 +61,10 @@ async def finalize_session(
         raise ValueError("Meeting not found")
 
     store.update_session(session_id, status="finalizing")
-    store.update_meeting(meeting.id, status="processing", userNotesDraft=user_notes)
+    meeting_updates: dict[str, Any] = {"status": "processing"}
+    if user_notes is not None:
+        meeting_updates["userNotesDraft"] = user_notes
+    store.update_meeting(meeting.id, **meeting_updates)
 
     upload_dir = settings.uploads_dir / session_id
     chunk_paths = sorted(upload_dir.glob("chunk-*"))

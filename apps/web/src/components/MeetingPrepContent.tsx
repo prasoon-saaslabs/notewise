@@ -12,7 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import type { EventPrepDetail, PreCallBrief } from "@notewise/api-client";
 import { api } from "../lib/api";
-import { formatWhen, minsUntil } from "../lib/calendarFormat";
+import { formatWhen, formatTimeUntil } from "../lib/calendarFormat";
 import { NotesEditor } from "./notes/NotesEditor";
 
 function EntityBriefSection({ brief }: { brief: PreCallBrief }) {
@@ -124,7 +124,7 @@ export function MeetingPrepContent({
     );
   }
 
-  const mins = minsUntil(prep.startAt);
+  const until = formatTimeUntil(prep.startAt);
 
   return (
     <div className="flex flex-col gap-5">
@@ -141,13 +141,13 @@ export function MeetingPrepContent({
         <p className="m-0 mt-1 flex flex-wrap items-center gap-2 text-sm text-[var(--nw-ink-3)]">
           <Calendar className="h-3.5 w-3.5" />
           {formatWhen(prep.startAt)}
-          {mins > 0 ? ` · in ${mins} min` : " · starting now"}
+          {until ? ` · in ${until}` : " · starting now"}
         </p>
-        {prep.attendees?.length ? (
+        {prep.attendees?.some((a) => a.name?.trim()) ? (
           <p className="m-0 mt-2 flex items-start gap-1.5 text-xs text-[var(--nw-ink-3)]">
             <Users className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             {prep.attendees
-              .map((a) => a.name || a.email)
+              .map((a) => a.name?.trim())
               .filter(Boolean)
               .join(", ")}
           </p>

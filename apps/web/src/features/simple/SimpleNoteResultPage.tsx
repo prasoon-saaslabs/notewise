@@ -7,7 +7,7 @@ import { PageMotion } from "../../components/PageMotion";
 import { NotesEditor } from "../../components/notes/NotesEditor";
 import { clientForBackend, getCatalogMeeting } from "../../lib/meetingsCatalog";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
-import { isEmptyTranscriptError } from "./simpleCapture";
+import { isEmptyTranscriptError, SIMPLE_NOTE_PATH } from "./simpleCapture";
 
 export function SimpleNoteResultPage() {
   const { meetingId = "" } = useParams();
@@ -115,7 +115,7 @@ export function SimpleNoteResultPage() {
   return (
     <PageMotion className="nw-simple-page nw-page-surface flex h-full min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-auto px-4 py-5 md:px-8 md:py-7">
-        <div className="mx-auto w-full max-w-2xl">
+        <div className="mx-auto w-full min-w-0 max-w-2xl">
           <header className="mb-4 flex items-start justify-between gap-3">
             <Link
               to="/"
@@ -124,7 +124,7 @@ export function SimpleNoteResultPage() {
               ← Back
             </Link>
             <Link
-              to="/simple/note"
+              to={SIMPLE_NOTE_PATH}
               state={{ fresh: true }}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-1.5 text-sm font-medium text-[var(--nw-ink)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
             >
@@ -155,7 +155,7 @@ export function SimpleNoteResultPage() {
                 </span>
               </div>
 
-              <article className="mt-6 space-y-4 text-sm leading-relaxed text-[var(--nw-ink-2)]">
+              <article className="mt-6 min-w-0 space-y-4 break-words text-sm leading-relaxed text-[var(--nw-ink-2)]">
                 {emptyTranscript ? (
                   <section>
                     <p className="m-0 text-[var(--nw-ink-3)]">
@@ -168,7 +168,7 @@ export function SimpleNoteResultPage() {
                   </section>
                 ) : notes?.executiveSummary ? (
                   <section>
-                    <p className="m-0 whitespace-pre-wrap">
+                    <p className="m-0 break-words whitespace-pre-wrap">
                       {notes.executiveSummary}
                     </p>
                   </section>
@@ -183,9 +183,11 @@ export function SimpleNoteResultPage() {
                     <h2 className="m-0 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
                       Key points
                     </h2>
-                    <ul className="m-0 list-disc space-y-1 pl-5">
+                    <ul className="m-0 min-w-0 list-disc space-y-1 break-words pl-5">
                       {notes!.takeaways!.map((t, i) => (
-                        <li key={`${t}-${i}`}>{t}</li>
+                        <li key={`${t}-${i}`} className="break-words [overflow-wrap:anywhere]">
+                          {t}
+                        </li>
                       ))}
                     </ul>
                   </section>
@@ -199,10 +201,6 @@ export function SimpleNoteResultPage() {
                     {saveHint === "saving" ? (
                       <span className="text-[0.65rem] text-[var(--nw-ink-4)]">
                         Saving…
-                      </span>
-                    ) : saveHint === "saved" ? (
-                      <span className="text-[0.65rem] text-[var(--nw-ink-4)]">
-                        Saved
                       </span>
                     ) : saveHint === "error" ? (
                       <span className="text-[0.65rem] text-[var(--nw-danger)]">

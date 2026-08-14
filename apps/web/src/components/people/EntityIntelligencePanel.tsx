@@ -78,7 +78,8 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
+    <div className="min-h-0 flex-1 overflow-auto">
+      <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="m-0 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-accent-dark)]">
@@ -221,6 +222,7 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
           </ul>
         </section>
       ) : null}
+      </div>
     </div>
   );
 }
