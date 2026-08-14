@@ -126,8 +126,8 @@ export function MiniCapturePanel({
         <button
           type="button"
           className="nw-mini-icon-btn"
-          title="Back to full Capture"
-          aria-label="Back to full Capture"
+          title="Open full meeting view"
+          aria-label="Open full meeting view"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
