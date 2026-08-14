@@ -21,6 +21,11 @@ if [[ ! -x "$ROOT/services/pyai-gateway/.venv/bin/python" ]]; then
   exit 1
 fi
 
+if pgrep -f '/Applications/Notewise.app/' >/dev/null 2>&1; then
+  echo "==> WARNING: /Applications/Notewise.app is still running (menu bar)."
+  echo "    Quit it (tray → Quit Notewise) before desktop dev, or it will steal port 3002."
+fi
+
 if curl -sf "http://127.0.0.1:${PYAI_GATEWAY_PORT:-3002}/health" >/dev/null 2>&1; then
   echo "==> Gateway already running — desktop dev will attach to it"
 else

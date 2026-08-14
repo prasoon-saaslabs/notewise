@@ -51,11 +51,12 @@ Closing the main window hides to the menu bar (does not quit).
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
-| Gateway not responding | `make doctor` · check `~/Library/Application Support/com.notewise.app/data/gateway.log` |
-| Dev desktop can't find gateway | Run `make setup` from `notewise/` root |
-| Port 3002 in use | Quit other Notewise instances or `make run` in another terminal |
+| Symptom                            | Fix                                                                                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gateway not responding             | `make doctor` · check `~/Library/Application Support/com.notewise.app/data/gateway.log`                                                        |
+| Dev desktop can't find gateway     | Run `make setup` from `notewise/` root                                                                                                         |
+| `make run` dies when desktop opens | Fully **Quit Notewise** from the menu bar (closing the window is not enough). Desktop now attaches to a healthy `:3002` instead of killing it. |
+| DMG sidecar crash / Python 3.9     | Install matching Python: `brew install python@3.14` (see `.python-version` in the staged gateway). Rebuild the DMG after `make stage-gateway`. |
 
 ## Enterprise distribution
 

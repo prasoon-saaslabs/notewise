@@ -5,7 +5,9 @@ import logging
 from typing import Any
 
 from app.config import settings
+from app.modes import pack_id_for_mode
 from app.pyai.client import PyAIError, pyai_request
+from app.pyai.recap_utterances import fold_user_notes_into_utterances
 from app.store.models import ActionItem, NotesPayload
 
 log = logging.getLogger("pyai.recap")
@@ -40,32 +42,29 @@ async def submit_utterances(
     customer_name: str | None = None,
     user_notes: str | None = None,
     pack_id: str | None = None,
+    mode_id: str | None = None,
 ) -> dict[str, Any]:
     await ensure_recap_config()
+    if pack_id is not None:
+        resolved_pack = pack_id.strip() or None
+    else:
+        resolved_pack = pack_id_for_mode(mode_id)
+    payload_utterances = fold_user_notes_into_utterances(utterances, user_notes)
     payload: dict[str, Any] = {
         "call_direction": "inbound",
-        "pack_id": pack_id or settings.recap_pack_id,
-        "utterances": utterances,
+        "utterances": payload_utterances,
     }
+    if resolved_pack:
+        payload["pack_id"] = resolved_pack
     if customer_name:
         payload["customer_name"] = customer_name
-    # Margin merge: typed notes as note_taker context with explicit extraction cues
-    if user_notes and user_notes.strip():
-        note_block = (
-            "NOTE TAKER CONTEXT — Use these live notes together with the transcript. "
-            "Produce a detailed executive summary, concrete action items with owners when "
-            "mentioned, takeaways, and open questions. Prefer action items from both the "
-            f"notes and any commitments in speech.\n\nLive notes:\n{user_notes.strip()}"
-        )
-        payload["utterances"] = [
-            {
-                "speaker_role": "note_taker",
-                "text": note_block,
-                "offset_s": 0.0,
-                "duration_s": 0.1,
-            },
-            *utterances,
-        ]
+    log.info(
+        "Recap submit call_id=%s pack_id=%s mode_id=%s utterances=%d",
+        call_id,
+        resolved_pack or "(pyai-default)",
+        mode_id,
+        len(payload_utterances),
+    )
     result = await pyai_request("POST", f"/recap/calls/{call_id}", json=payload)
     return result if isinstance(result, dict) else {"call_id": call_id}
 

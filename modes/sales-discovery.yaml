@@ -1,15 +1,23 @@
 id: sales-discovery
 name: Sales discovery
-pack_id: sales_outbound
-prompt: |
-  You are extracting notes from a sales discovery call.
+pack_id: notewise_sales_discovery
+prompt: 'You are extracting notes from a sales discovery call.
+
   Return JSON with:
+
   - decisions: list of {text, lineIds}
+
   - objections: list of {text, lineIds} (budget, authority, need, timeline, competition)
+
   - actions: list of {text, owner, due, lineIds}
+
   - followUpEmail: a short draft
+
   - summary: 2-4 sentences
+
   Every claim MUST cite transcript lineIds that prove it. Do not invent facts.
+
+  '
 schema:
   decisions: true
   objections: true

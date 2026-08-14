@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, SpeakerChip } from "@notewise/ui";
 import {
@@ -71,12 +71,16 @@ function phaseIndex(phase: ProcessPhase) {
 export function RecordPage() {
   const pyai = isPyaiBackend();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const [notesRegenerating, setNotesRegenerating] = useState(false);
+  const [notesRevealKey, setNotesRevealKey] = useState(0);
+  const prevRegeneratingRef = useRef(false);
   const {
     recording,
     paused,
     busy,
     elapsed,
     meetingId,
+    sessionId,
     turns,
     notes,
     error,
@@ -118,6 +122,13 @@ export function RecordPage() {
   const onScratchpadChange = meetingId
     ? persistedUserNotes.handleChange
     : setUserNotesDraft;
+
+  useEffect(() => {
+    if (prevRegeneratingRef.current && !notesRegenerating) {
+      setNotesRevealKey((k) => k + 1);
+    }
+    prevRegeneratingRef.current = notesRegenerating;
+  }, [notesRegenerating]);
 
   useEffect(() => {
     if (!transcriptRef.current) return;
@@ -382,10 +393,17 @@ export function RecordPage() {
                   phase={phase}
                   hasNotes={Boolean(notes)}
                   meetingId={meetingId}
+                  sessionId={sessionId}
+                  userNotes={scratchpadValue}
+                  onNotesUpdated={applyMeetingTranscript}
+                  onRegeneratingChange={setNotesRegenerating}
                 />
 
-                {notes ? (
-                  <div className="nw-capture-intel flex flex-col gap-3">
+                {notes && notesRegenerating ? null : notes ? (
+                  <div
+                    key={notesRevealKey}
+                    className="nw-capture-intel nw-notes-reveal flex flex-col gap-3"
+                  >
                     <div className="rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.16)] bg-gradient-to-br from-[rgb(var(--nw-accent-rgb)_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] p-3.5 shadow-[0_1px_0_var(--nw-glass-shadow)]">
                       <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-accent-dark)]">
                         <Sparkles className="h-3.5 w-3.5" />

@@ -24,11 +24,11 @@ export function useEntityDetail(entityId: string | undefined) {
   });
 }
 
-export function useEntityNarrative(entityId: string | undefined, enabled = true) {
+export function useEntityNarrative(entityId: string | undefined, meetingCount = 0) {
   return useQuery({
     queryKey: ["entity-narrative", entityId],
     queryFn: () => api.ask(RELATIONSHIP_PROMPT, entityId),
-    enabled: Boolean(entityId) && enabled,
+    enabled: Boolean(entityId) && meetingCount > 0,
     staleTime: 5 * 60_000,
   });
 }

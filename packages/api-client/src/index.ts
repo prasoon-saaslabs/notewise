@@ -254,7 +254,7 @@ export type EventPrepDetail = {
 export class NotewiseApiClient {
   constructor(
     private readonly baseUrl: string,
-    private readonly fetchImpl: typeof fetch = fetch
+    private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
   private authToken: string | null = null;
@@ -303,7 +303,7 @@ export class NotewiseApiClient {
 
   async getMeeting(id: string) {
     const meeting = await this.request<MeetingDetail>(
-      `/meetings/${encodeURIComponent(id)}`
+      `/meetings/${encodeURIComponent(id)}`,
     );
     return {
       ...meeting,
@@ -317,8 +317,11 @@ export class NotewiseApiClient {
     });
   }
 
-  updateMeeting(id: string, body: { title?: string; userNotes?: string }) {
-    const payload: { title?: string; userNotes?: string } = {};
+  updateMeeting(
+    id: string,
+    body: { title?: string; userNotes?: string; modeId?: string },
+  ) {
+    const payload: { title?: string; userNotes?: string; modeId?: string } = {};
     if (body.title != null) {
       const title = body.title.trim();
       if (!title) return Promise.reject(new Error("Title cannot be empty"));
@@ -326,6 +329,9 @@ export class NotewiseApiClient {
     }
     if (body.userNotes != null) {
       payload.userNotes = body.userNotes;
+    }
+    if (body.modeId != null) {
+      payload.modeId = body.modeId;
     }
     if (!Object.keys(payload).length) {
       return Promise.reject(new Error("Nothing to update"));
@@ -344,7 +350,7 @@ export class NotewiseApiClient {
       modeId?: string;
       channelMode?: string;
       calendarEventId?: string;
-    }
+    },
   ) {
     const body: Record<string, string | undefined> = {
       source: "local",
@@ -376,12 +382,12 @@ export class NotewiseApiClient {
           ? { Authorization: `Bearer ${this.authToken}` }
           : {},
         body: form,
-      }
+      },
     ).then(async (res) => {
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new Error(
-          `Upload failed: ${res.status}${body ? ` — ${body}` : ""}`
+          `Upload failed: ${res.status}${body ? ` — ${body}` : ""}`,
         );
       }
       return res.json() as Promise<{ ok: boolean }>;
@@ -400,7 +406,7 @@ export class NotewiseApiClient {
           ? { Authorization: `Bearer ${this.authToken}` }
           : {},
         body: form,
-      }
+      },
     ).then(async (res) => {
       if (!res.ok) throw new Error(`Live STT failed: ${res.status}`);
       return res.json() as Promise<{
@@ -420,7 +426,7 @@ export class NotewiseApiClient {
         endMs?: number;
         speaker?: string;
       }>;
-    }
+    },
   ) {
     const body: Record<string, unknown> = {};
     if (opts?.userNotes != null) body.userNotes = opts.userNotes;
@@ -442,7 +448,17 @@ export class NotewiseApiClient {
       {
         method: "POST",
         body: JSON.stringify({ checkInEndMs }),
-      }
+      },
+    );
+  }
+
+  updateSessionMode(sessionId: string, modeId: string) {
+    return this.request<{ ok: boolean; modeId: string; packId: string }>(
+      `/sessions/${encodeURIComponent(sessionId)}/mode`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ modeId }),
+      },
     );
   }
 
@@ -458,12 +474,12 @@ export class NotewiseApiClient {
           ? { Authorization: `Bearer ${this.authToken}` }
           : {},
         body: form,
-      }
+      },
     ).then(async (res) => {
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new Error(
-          `PCM upload failed: ${res.status}${body ? ` — ${body}` : ""}`
+          `PCM upload failed: ${res.status}${body ? ` — ${body}` : ""}`,
         );
       }
       return res.json() as Promise<{ ok: boolean; bytes: number }>;
@@ -477,20 +493,25 @@ export class NotewiseApiClient {
       {
         method: "POST",
         body: JSON.stringify({ speaker: rawSpeaker, asYou: true }),
-      }
+      },
     );
   }
 
-  regenerateNotes(meetingId: string, opts?: { userNotes?: string }) {
+  regenerateNotes(
+    meetingId: string,
+    opts?: { userNotes?: string; modeId?: string },
+  ) {
+    const body: { userNotes?: string; modeId?: string } = {};
+    if (opts?.userNotes != null) body.userNotes = opts.userNotes;
+    if (opts?.modeId != null) body.modeId = opts.modeId;
     return this.request<{
       meetingId: string;
       status: MeetingStatus;
       notes?: NotesPayload;
+      snippet?: string;
     }>(`/notes/${encodeURIComponent(meetingId)}/regenerate`, {
       method: "POST",
-      body: JSON.stringify(
-        opts?.userNotes != null ? { userNotes: opts.userNotes } : {}
-      ),
+      body: JSON.stringify(body),
     });
   }
 
@@ -520,7 +541,7 @@ export class NotewiseApiClient {
   stopBot(meetingId: string) {
     return this.request<{ status: MeetingStatus }>(
       `/bots/${encodeURIComponent(meetingId)}/stop`,
-      { method: "POST" }
+      { method: "POST" },
     );
   }
 
@@ -529,7 +550,7 @@ export class NotewiseApiClient {
       `/bots/${encodeURIComponent(meetingId)}/sync`,
       {
         method: "POST",
-      }
+      },
     );
   }
 
@@ -614,7 +635,7 @@ export class NotewiseApiClient {
 
   getBrief(entityId: string) {
     return this.request<PreCallBrief>(
-      `/entities/${encodeURIComponent(entityId)}/brief`
+      `/entities/${encodeURIComponent(entityId)}/brief`,
     );
   }
 
@@ -643,7 +664,7 @@ export class NotewiseApiClient {
       {
         method: "POST",
         body: JSON.stringify({ accepted: true }),
-      }
+      },
     );
   }
 
@@ -653,32 +674,32 @@ export class NotewiseApiClient {
       {
         method: "POST",
         body: JSON.stringify({ userNotes }),
-      }
+      },
     );
   }
 
   listSamples() {
     return this.request<Array<{ id: string; title: string; modeId?: string }>>(
-      "/samples"
+      "/samples",
     );
   }
 
   importSample(id: string) {
     return this.request<{ meetingId: string; title: string }>(
       `/samples/${encodeURIComponent(id)}/import`,
-      { method: "POST" }
+      { method: "POST" },
     );
   }
 
   exportMeetingJson(id: string) {
     return this.request<MeetingDetail>(
-      `/meetings/${encodeURIComponent(id)}/export.json`
+      `/meetings/${encodeURIComponent(id)}/export.json`,
     );
   }
 
   async exportMeetingMd(id: string) {
     const res = await this.fetchImpl(
-      `${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.md`
+      `${this.baseUrl}/meetings/${encodeURIComponent(id)}/export.md`,
     );
     if (!res.ok) throw new Error(`Export failed: ${res.status}`);
     return res.text();
@@ -691,7 +712,7 @@ export class NotewiseApiClient {
         headers: this.authToken
           ? { Authorization: `Bearer ${this.authToken}` }
           : {},
-      }
+      },
     );
     if (!res.ok) throw new Error(`Export failed: ${res.status}`);
     return res.text();
@@ -703,7 +724,7 @@ export class NotewiseApiClient {
 
   authMe() {
     return this.request<{ authenticated: boolean; user: AuthUser | null }>(
-      "/auth/me"
+      "/auth/me",
     );
   }
 
@@ -731,20 +752,20 @@ export class NotewiseApiClient {
       "/calendar/sync",
       {
         method: "POST",
-      }
+      },
     );
   }
 
   getCalendarPrep(eventId: string) {
     return this.request<EventPrepDetail>(
-      `/calendar/events/${encodeURIComponent(eventId)}/prep`
+      `/calendar/events/${encodeURIComponent(eventId)}/prep`,
     );
   }
 
   saveCalendarNotes(eventId: string, notes: string) {
     return this.request<{ ok: boolean; manualNotes: string }>(
       `/calendar/events/${encodeURIComponent(eventId)}/notes`,
-      { method: "PATCH", body: JSON.stringify({ notes }) }
+      { method: "PATCH", body: JSON.stringify({ notes }) },
     );
   }
 

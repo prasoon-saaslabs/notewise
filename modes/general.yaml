@@ -1,0 +1,10 @@
+id: general
+name: General
+# No pack_id — PyAI Recap uses the platform default for this API key.
+prompt: >
+  Extract a concise executive summary, action items with owners when mentioned,
+  key takeaways, and open questions. Do not invent facts not supported by the transcript.
+schema:
+  actions: true
+  takeaways: true
+  openQuestions: true

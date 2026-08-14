@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import {
+  DEFAULT_MEETING_MODE_ID,
+  FALLBACK_MEETING_MODES,
+  mergeMeetingModes,
+} from "../lib/meetingModes";
 import type { MeetingMode } from "@notewise/api-client";
 
 export function ModePicker() {
-  const [modes, setModes] = useState<MeetingMode[]>([]);
-  const [id, setId] = useState(() => localStorage.getItem("og-mode-id") || "sales-discovery");
+  const [modes, setModes] = useState<MeetingMode[]>(FALLBACK_MEETING_MODES);
+  const [id, setId] = useState(
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID,
+  );
 
   useEffect(() => {
-    void api.listModes().then(setModes).catch(() => undefined);
+    void api
+      .listModes()
+      .then((list) => setModes(mergeMeetingModes(list)))
+      .catch(() => setModes(FALLBACK_MEETING_MODES));
   }, []);
 
   return (
@@ -21,7 +31,7 @@ export function ModePicker() {
           localStorage.setItem("og-mode-id", e.target.value);
         }}
       >
-        {(modes.length ? modes : [{ id: "sales-discovery", name: "Sales discovery" }]).map((m) => (
+        {modes.map((m) => (
           <option key={m.id} value={m.id}>
             {m.name}
           </option>

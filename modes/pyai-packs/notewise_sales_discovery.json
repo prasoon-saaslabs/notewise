@@ -1,0 +1,106 @@
+{
+  "pack_id": "notewise_sales_discovery",
+  "version": "1.0.0",
+  "jurisdiction": "notewise",
+  "legal_status": "product_curated",
+  "rules": [
+    {
+      "id": "notewise_sales_discovery_evidence",
+      "name": "evidence_required",
+      "description": "Every factual claim in Recap output must cite transcript lineIds. Do not invent facts not supported by utterances.",
+      "severity": "high",
+      "category": "evidence",
+      "required": true,
+      "instruction": "You are extracting notes from a sales discovery call.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (budget, authority, need, timeline, competition)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: a short draft\n- summary: 2-4 sentences\nEvery claim MUST cite transcript lineIds that prove it. Do not invent facts."
+    },
+    {
+      "id": "notewise_sales_discovery_summary",
+      "name": "executive_summary",
+      "description": "Produce a concise executive summary (2\u20134 sentences unless mode specifies otherwise).",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "summary"
+    },
+    {
+      "id": "notewise_sales_discovery_decisions",
+      "name": "extract_decisions",
+      "description": "Explicit decisions reached on the call.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "decisions"
+    },
+    {
+      "id": "notewise_sales_discovery_objections",
+      "name": "extract_objections",
+      "description": "Concerns, pushback, or blockers raised by either side.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "objections"
+    },
+    {
+      "id": "notewise_sales_discovery_actions",
+      "name": "extract_actions",
+      "description": "Action items with owner and due date when mentioned.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "actions"
+    },
+    {
+      "id": "notewise_sales_discovery_followUpEmail",
+      "name": "extract_followUpEmail",
+      "description": "Short follow-up email draft grounded in the call.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "followUpEmail"
+    },
+    {
+      "id": "notewise_sales_discovery_budget",
+      "name": "extract_budget",
+      "description": "Budget constraints or pricing sensitivity.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "budget"
+    },
+    {
+      "id": "notewise_sales_discovery_authority",
+      "name": "extract_authority",
+      "description": "Decision-maker / buying authority signals.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "authority"
+    },
+    {
+      "id": "notewise_sales_discovery_need",
+      "name": "extract_need",
+      "description": "Pain points and business need.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "need"
+    },
+    {
+      "id": "notewise_sales_discovery_timeline",
+      "name": "extract_timeline",
+      "description": "Timing, urgency, and procurement timeline.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "timeline"
+    },
+    {
+      "id": "notewise_sales_discovery_mode_focus",
+      "name": "mode_focus",
+      "description": "Prioritize BANT signals: budget, authority, need, timeline, and competitive objections.",
+      "severity": "low",
+      "category": "guidance",
+      "required": false
+    }
+  ]
+}

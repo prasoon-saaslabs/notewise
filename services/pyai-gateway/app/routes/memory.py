@@ -59,8 +59,19 @@ async def search(q: str = "", limit: int = 40):
 async def ask(body: AskBody):
     hits = retrieve(body.question, top_k=8)
     if body.entityId:
-        mids = set(store.entity_meeting_ids(body.entityId))
-        hits = [h for h in hits if h["meetingId"] in mids] or hits
+        entity = store.get_entity(body.entityId)
+        if not entity:
+            raise HTTPException(404, "Entity not found")
+        mids = set(store.entity_meeting_ids(body.entityId) or entity.meetingIds or [])
+        if not mids:
+            return {
+                "question": body.question,
+                "answer": [],
+                "hits": [],
+                "source": "no_evidence",
+                "sourceDetail": "No meetings linked to this contact yet.",
+            }
+        hits = [h for h in hits if h["meetingId"] in mids]
 
     source = "no_evidence"
     source_detail: str | None = None

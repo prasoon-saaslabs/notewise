@@ -17,7 +17,7 @@ from app.harness import (
 )
 from app.memory.entities import extract_and_link
 from app.memory.retrieve import index_meeting
-from app.modes import get_mode
+from app.modes import get_mode, pack_id_for_mode
 from app.pyai.client import PyAIError
 from app.pyai.hear_jobs import (
     create_transcription_job,
@@ -31,6 +31,7 @@ from app.pyai.recap import (
     submit_utterances,
     wait_for_recap,
 )
+from app.pyai.recap_utterances import fresh_recap_call_id
 from app.pyai.trace import record_run
 from app.notes_builder import (
     build_notes_from_transcript,
@@ -44,6 +45,22 @@ from app.store.margin import write_margin_folder
 from app.store.models import NotesPayload, TranscriptTurn
 
 log = logging.getLogger("pyai.pipeline")
+
+
+def _meeting_snippet(
+    notes: NotesPayload | None,
+    *,
+    turns: list[TranscriptTurn] | None = None,
+    fallback: str | None = None,
+) -> str | None:
+    if notes and notes.executiveSummary:
+        return notes.executiveSummary.replace("\n", " ")[:160]
+    if turns:
+        for turn in turns:
+            text = (turn.text or "").strip()
+            if text:
+                return text[:160]
+    return fallback
 
 
 async def finalize_session(
@@ -100,6 +117,9 @@ async def finalize_session(
     mode = "channel" if session.channelMode == "stereo" else "diarize"
     bind_mode = "mix" if session.channelMode == "mix" else mode
     call_id = meeting.callId or meeting.id
+    mode_id = session.modeId or meeting.modeId
+    meeting_mode = get_mode(mode_id)
+    recap_pack_id = pack_id_for_mode(mode_id)
     segments: list[dict[str, Any]] = []
     rate_limited = False
 
@@ -110,6 +130,7 @@ async def finalize_session(
                     job_audio,
                     call_id=call_id,
                     mode=mode,  # type: ignore[arg-type]
+                    pack_id=recap_pack_id,
                 )
             except PyAIError as e:
                 if e.status == 429:
@@ -165,17 +186,17 @@ async def finalize_session(
         utterances = segments_to_utterances(segments, you_speaker=you_speaker)
 
         notes: NotesPayload
-        meeting_mode = get_mode(session.modeId or meeting.modeId)
         started = time.monotonic()
         try:
-            await submit_utterances(
+            submitted = await submit_utterances(
                 call_id,
                 utterances,
                 customer_name=meeting.title,
                 user_notes=user_notes,
-                pack_id=meeting_mode.get("pack_id"),
+                pack_id=recap_pack_id,
+                mode_id=meeting_mode.get("id"),
             )
-            recap = await wait_for_recap(call_id)
+            recap = await wait_for_recap(str(submitted.get("call_id") or call_id))
             notes = merge_recap_with_user_notes(
                 map_recap_to_notes(recap),
                 user_notes,
@@ -216,11 +237,7 @@ async def finalize_session(
             )
         if notes and (is_placeholder_title(notes.title) or notes.title != title):
             notes = notes.model_copy(update={"title": title})
-        snippet = None
-        if notes.executiveSummary:
-            snippet = notes.executiveSummary.replace("\n", " ")[:160]
-        elif turns:
-            snippet = turns[0].text[:160]
+        snippet = _meeting_snippet(notes, turns=turns, fallback=meeting.snippet)
         entity_ids = extract_and_link(meeting.id, turns, notes, title=title)
         playback_file = (
             persist_playback(meeting.id, job_audio) if job_audio.exists() else None
@@ -259,6 +276,7 @@ async def _transcribe_audio(
     *,
     call_id: str,
     mode: str,
+    pack_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Hear batch job with diarize/channel; fall back to sync STT on failure."""
     try:
@@ -266,6 +284,7 @@ async def _transcribe_audio(
             job_audio,
             call_id=call_id,
             mode=mode,  # type: ignore[arg-type]
+            pack_id=pack_id,
             include_recap_fields=True,
         )
     except PyAIError as e:
@@ -308,12 +327,36 @@ async def _transcribe_audio(
     return extract_segments(done)
 
 
-async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) -> dict[str, Any]:
+async def regenerate_notes(
+    meeting_id: str,
+    *,
+    user_notes: str | None = None,
+    mode_id: str | None = None,
+) -> dict[str, Any]:
     meeting = store.get_meeting(meeting_id)
     if not meeting:
         raise ValueError("Meeting not found")
-    store.update_meeting(meeting_id, status="processing")
-    call_id = meeting.callId or meeting.id
+    if mode_id:
+        meeting_mode = get_mode(mode_id)
+        store.update_meeting(
+            meeting_id,
+            modeId=meeting_mode.get("id"),
+            status="processing",
+        )
+        meeting = store.get_meeting(meeting_id)
+        assert meeting
+    else:
+        store.update_meeting(meeting_id, status="processing")
+        meeting = store.get_meeting(meeting_id)
+        assert meeting
+
+    resolved_mode_id = meeting.modeId
+    meeting_mode = get_mode(resolved_mode_id)
+    recap_pack_id = pack_id_for_mode(resolved_mode_id)
+    base_call_id = meeting.callId or meeting.id
+    # Fresh Recap call id — POST /recap/calls/{id} is idempotent; reuse would ignore pack changes.
+    recap_call_id = fresh_recap_call_id(base_call_id)
+
     segments = [
         {
             "speaker": "you" if t.kind == "you" else t.speaker,
@@ -331,15 +374,24 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
     utterances = segments_to_utterances(segments, you_speaker=you_speaker)
     notes_text = user_notes if user_notes is not None else meeting.userNotesDraft
     started = time.monotonic()
+    log.info(
+        "regenerate meeting=%s mode=%s pack_id=%s recap_call_id=%s utterances=%d",
+        meeting_id,
+        meeting_mode.get("id"),
+        recap_pack_id,
+        recap_call_id,
+        len(utterances),
+    )
     try:
-        await submit_utterances(
-            call_id,
+        submitted = await submit_utterances(
+            recap_call_id,
             utterances,
             customer_name=meeting.title,
             user_notes=notes_text,
-            pack_id=get_mode(meeting.modeId).get("pack_id"),
+            pack_id=recap_pack_id,
+            mode_id=meeting_mode.get("id"),
         )
-        recap = await wait_for_recap(call_id)
+        recap = await wait_for_recap(str(submitted.get("call_id") or recap_call_id))
         notes = merge_recap_with_user_notes(
             map_recap_to_notes(recap),
             notes_text,
@@ -357,7 +409,7 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
         meeting.id,
         meeting.transcript,
         notes,
-        mode_id=meeting.modeId,
+        mode_id=meeting_mode.get("id"),
         started=started,
     )
     entity_ids = extract_and_link(meeting.id, meeting.transcript, notes, title=meeting.title)
@@ -374,6 +426,11 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
         )
     if notes and (is_placeholder_title(notes.title) or notes.title != title):
         notes = notes.model_copy(update={"title": title})
+    snippet = _meeting_snippet(
+        notes,
+        turns=meeting.transcript,
+        fallback=meeting.snippet,
+    )
     updated = store.update_meeting(
         meeting_id,
         title=title,
@@ -381,11 +438,13 @@ async def regenerate_notes(meeting_id: str, *, user_notes: str | None = None) ->
         status="ready",
         userNotesDraft=notes_text,
         entityIds=entity_ids or meeting.entityIds,
+        modeId=meeting_mode.get("id"),
+        snippet=snippet,
     )
     assert updated
     folder = write_margin_folder(updated, user_notes=notes_text)
     store.update_meeting(meeting_id, marginPath=str(folder))
-    return {"meetingId": meeting_id, "status": "ready", "notes": notes.model_dump()}
+    return {"meetingId": meeting_id, "status": "ready", "notes": notes.model_dump(), "snippet": snippet}
 
 
 async def _gate_and_remember(

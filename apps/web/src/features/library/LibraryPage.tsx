@@ -29,6 +29,12 @@ import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
 import { MeetingAudioPlayer } from "../../components/MeetingAudioPlayer";
+import { MeetingModePicker } from "../../components/MeetingModePicker";
+import { useRegeneratingOverlay } from "../../hooks/useRegeneratingOverlay";
+import {
+  FALLBACK_MEETING_MODES,
+  DEFAULT_MEETING_MODE_ID,
+} from "../../lib/meetingModes";
 
 /** Ready meetings always; failed ones if they have transcript to rebuild from. */
 function meetingCanRegenerate(status?: string, transcriptLen = 0) {
@@ -82,6 +88,15 @@ export function LibraryPage() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [modeId, setModeId] = useState(
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID,
+  );
+  const [modeError, setModeError] = useState<string | null>(null);
+  const [regenTriggered, setRegenTriggered] = useState(false);
+  const [regenReason, setRegenReason] = useState<"regenerate" | "mode-change">(
+    "regenerate",
+  );
+  const [notesRevealKey, setNotesRevealKey] = useState(0);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   const list = useQuery({
@@ -91,7 +106,7 @@ export function LibraryPage() {
         const diag = await ensureDesktopGateway();
         if (!diag.reachable) {
           throw new Error(
-            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support."
+            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support.",
           );
         }
       }
@@ -132,7 +147,7 @@ export function LibraryPage() {
   const meetingBackend: MeetingBackend =
     meeting?.backend === "pyai" || meeting?.backend === "nest"
       ? meeting.backend
-      : selectedBackend ?? "nest";
+      : (selectedBackend ?? "nest");
 
   const remove = useMutation({
     mutationFn: (mid: string) =>
@@ -166,27 +181,58 @@ export function LibraryPage() {
   });
 
   const refreshNotes = useMutation({
-    mutationFn: (mid: string) =>
+    mutationFn: ({
+      mid,
+      modeId: nextModeId,
+    }: {
+      mid: string;
+      modeId?: string;
+    }) =>
       clientForBackend(meetingBackend).regenerateNotes(mid, {
         userNotes: detail.data?.userNotes ?? undefined,
+        modeId: nextModeId,
       }),
-    onMutate: () => {
+    onMutate: (vars) => {
       setRegenError(null);
+      setRegenTriggered(true);
+      setRegenReason(vars.modeId ? "mode-change" : "regenerate");
       void qc.setQueryData(
         ["meeting", meetingBackend, selectedId],
         (prev: typeof detail.data | undefined) =>
-          prev ? { ...prev, status: "processing" as const } : prev
+          prev ? { ...prev, status: "processing" as const } : prev,
       );
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setRegenError(null);
+      setNotesRevealKey((k) => k + 1);
+      const snippet =
+        data.snippet ??
+        data.notes?.executiveSummary?.replace(/\n/g, " ").slice(0, 160) ??
+        undefined;
+      void qc.setQueryData(
+        ["meeting", meetingBackend, selectedId],
+        (prev: typeof detail.data | undefined) =>
+          prev
+            ? {
+                ...prev,
+                status: "ready" as const,
+                notes: data.notes ?? prev.notes,
+                snippet: snippet ?? prev.snippet,
+              }
+            : prev,
+      );
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
       });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
+      if (data?.status === "ready" || data?.status === "failed") {
+        setRegenTriggered(false);
+      }
     },
-    onError: (err: Error) =>
-      setRegenError(err.message || "Could not regenerate notes"),
+    onError: (err: Error) => {
+      setRegenTriggered(false);
+      setRegenError(err.message || "Could not regenerate notes");
+    },
   });
 
   const saveMeeting = useMutation({
@@ -194,12 +240,18 @@ export function LibraryPage() {
       mid,
       title,
       userNotes,
+      modeId: nextModeId,
     }: {
       mid: string;
       title?: string;
       userNotes?: string;
+      modeId?: string;
     }) =>
-      clientForBackend(meetingBackend).updateMeeting(mid, { title, userNotes }),
+      clientForBackend(meetingBackend).updateMeeting(mid, {
+        title,
+        userNotes,
+        modeId: nextModeId,
+      }),
     onSuccess: () => {
       setEditingTitle(false);
       setDownloadOpen(false);
@@ -222,11 +274,13 @@ export function LibraryPage() {
 
   const canRegenerate = meetingCanRegenerate(
     meeting?.status,
-    meeting?.transcript?.length ?? 0
+    meeting?.transcript?.length ?? 0,
   );
-  const isRegenerating =
-    refreshNotes.isPending ||
-    (meeting?.status === "processing" && Boolean(meeting?.transcript?.length));
+  const canRegenerateFromTranscript = (meeting?.transcript?.length ?? 0) > 0;
+  const isRegeneratingRaw = refreshNotes.isPending || regenTriggered;
+  const showRegenOverlay = useRegeneratingOverlay(isRegeneratingRaw);
+  const activeModeName =
+    FALLBACK_MEETING_MODES.find((m) => m.id === modeId)?.name ?? modeId;
   const botActive =
     meeting?.source === "bot" &&
     (meeting.status === "bot_joining" ||
@@ -237,7 +291,27 @@ export function LibraryPage() {
   useEffect(() => {
     setRegenError(null);
     setEditingTitle(false);
+    setModeError(null);
+    setRegenTriggered(false);
   }, [selectedId]);
+
+  useEffect(() => {
+    if (meeting?.modeId) {
+      setModeId(meeting.modeId);
+      localStorage.setItem("og-mode-id", meeting.modeId);
+    }
+  }, [meeting?.id, meeting?.modeId]);
+
+  useEffect(() => {
+    if (
+      meeting?.status === "ready" &&
+      regenTriggered &&
+      !refreshNotes.isPending
+    ) {
+      setRegenTriggered(false);
+      setNotesRevealKey((k) => k + 1);
+    }
+  }, [meeting?.status, regenTriggered, refreshNotes.isPending]);
 
   useEffect(() => {
     const state = location.state as { jumpLineId?: string } | null;
@@ -284,8 +358,8 @@ export function LibraryPage() {
             {list.isError
               ? "Could not load meetings"
               : isDesktopPyaiOnly()
-              ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
-              : `${meetings.length} across Nest & PyAI`}
+                ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
+                : `${meetings.length} across Nest & PyAI`}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
@@ -296,8 +370,8 @@ export function LibraryPage() {
                 list.error instanceof Error
                   ? list.error.message
                   : isDesktopPyaiOnly()
-                  ? "Start the local PyAI gateway (port 3002), then refresh."
-                  : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
+                    ? "Start the local PyAI gateway (port 3002), then refresh."
+                    : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
               }
               compact
             />
@@ -462,16 +536,18 @@ export function LibraryPage() {
                   <button
                     type="button"
                     className="nw-library-tool inline-flex h-9 w-9 items-center justify-center rounded-xl text-[var(--nw-accent-dark)]"
-                    disabled={refreshNotes.isPending}
+                    disabled={refreshNotes.isPending || showRegenOverlay}
                     title="Regenerate with AI"
                     onClick={() => {
                       setRegenError(null);
-                      refreshNotes.mutate(meeting.id);
+                      refreshNotes.mutate({ mid: meeting.id });
                     }}
                   >
                     <Sparkles
                       className={`h-4 w-4 ${
-                        refreshNotes.isPending ? "animate-pulse" : ""
+                        refreshNotes.isPending || showRegenOverlay
+                          ? "animate-spin"
+                          : ""
                       }`}
                     />
                   </button>
@@ -524,7 +600,7 @@ export function LibraryPage() {
                                   [JSON.stringify(data, null, 2)],
                                   {
                                     type: "application/json",
-                                  }
+                                  },
                                 );
                                 const a = document.createElement("a");
                                 a.href = URL.createObjectURL(blob);
@@ -631,8 +707,8 @@ export function LibraryPage() {
                           active
                             ? "font-semibold text-[var(--nw-accent-dark)]"
                             : done
-                            ? "text-[var(--nw-success)]"
-                            : "text-[var(--nw-ink-4)]"
+                              ? "text-[var(--nw-success)]"
+                              : "text-[var(--nw-ink-4)]"
                         }`}
                       >
                         <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[0.65rem]">
@@ -655,52 +731,92 @@ export function LibraryPage() {
             />
 
             <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
-              {meeting.status === "processing" ? (
-                <div className="mb-4 space-y-2">
-                  <p className="m-0 text-xs font-semibold text-[var(--nw-accent-dark)]">
-                    Generating intelligent notes…
-                  </p>
-                  <div className="nw-skeleton w-3/4" />
-                  <div className="nw-skeleton w-full" />
-                  <div className="nw-skeleton w-1/2" />
-                </div>
-              ) : null}
-
               {/* Intelligence stack — primary product surface */}
               <div className="mb-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[var(--nw-accent-dark)]" />
-                  <h3 className="m-0 text-sm font-bold tracking-tight text-[var(--nw-ink)]">
-                    Meeting intelligence
-                  </h3>
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-[var(--nw-accent-dark)]" />
+                    <h3 className="m-0 text-sm font-bold tracking-tight text-[var(--nw-ink)]">
+                      Meeting intelligence
+                    </h3>
+                  </div>
+                </div>
+                <div
+                  className={`mb-4 rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.14)] bg-[var(--nw-glass-bg-strong)] p-3.5 transition-opacity duration-300 ${
+                    showRegenOverlay ? "opacity-80" : "opacity-100"
+                  }`}
+                >
+                  <MeetingModePicker
+                    value={modeId}
+                    pending={showRegenOverlay}
+                    onChange={(next) => {
+                      if (next === modeId) return;
+                      setModeId(next);
+                      localStorage.setItem("og-mode-id", next);
+                      setModeError(null);
+                      if (canRegenerateFromTranscript) {
+                        refreshNotes.mutate({ mid: meeting.id, modeId: next });
+                        return;
+                      }
+                      saveMeeting.mutate(
+                        { mid: meeting.id, modeId: next },
+                        {
+                          onError: (err: Error) =>
+                            setModeError(
+                              err.message || "Could not update meeting mode",
+                            ),
+                        },
+                      );
+                    }}
+                  />
+                  {modeError ? (
+                    <p
+                      className="mt-2 m-0 text-[0.72rem] text-[var(--nw-danger)]"
+                      role="alert"
+                    >
+                      {modeError}
+                    </p>
+                  ) : null}
                 </div>
                 {meeting.notes || meeting.userNotes ? (
                   <>
-                    {isRegenerating ? (
-                      <RegeneratingNotes active />
-                    ) : (
-                      <MeetingNotesIntelligence
-                        notes={meeting.notes}
-                        userNotes={persistedUserNotes.draft}
-                        userNotesEditable
-                        onUserNotesChange={persistedUserNotes.handleChange}
-                        userNotesSaveHint={persistedUserNotes.saveHint}
-                        userNotesPlacement="last"
-                        onJump={(lineId) => {
-                          setShowTranscript(true);
-                          if (!lineId) return;
-                          document
-                            .getElementById(`line-${lineId}`)
-                            ?.scrollIntoView({
-                              behavior: "smooth",
-                              block: "center",
-                            });
-                        }}
+                    {showRegenOverlay ? (
+                      <RegeneratingNotes
+                        active
+                        modeName={activeModeName}
+                        reason={regenReason}
                       />
+                    ) : (
+                      <div key={notesRevealKey} className="nw-notes-reveal">
+                        <MeetingNotesIntelligence
+                          notes={meeting.notes}
+                          userNotes={persistedUserNotes.draft}
+                          userNotesEditable
+                          onUserNotesChange={persistedUserNotes.handleChange}
+                          userNotesSaveHint={persistedUserNotes.saveHint}
+                          userNotesPlacement="last"
+                          onJump={(lineId) => {
+                            setShowTranscript(true);
+                            if (!lineId) return;
+                            document
+                              .getElementById(`line-${lineId}`)
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
+                          }}
+                        />
+                      </div>
                     )}
                   </>
-                ) : isRegenerating ? (
-                  <RegeneratingNotes active />
+                ) : showRegenOverlay ? (
+                  <RegeneratingNotes
+                    active
+                    modeName={activeModeName}
+                    reason={regenReason}
+                  />
+                ) : meeting.status === "processing" ? (
+                  <RegeneratingNotes active reason="regenerate" />
                 ) : meeting.status === "bot_joining" ||
                   meeting.status === "bot_live" ? (
                   <EmptyState
@@ -708,12 +824,12 @@ export function LibraryPage() {
                     description="Summary and actions appear as the bot captures speech."
                     compact
                   />
-                ) : meeting.status !== "processing" ? (
+                ) : (
                   <EmptyState
                     title="No notes yet"
                     description={`Status: ${meeting.status}`}
                   />
-                ) : null}
+                )}
               </div>
 
               {/* Transcript — clearly separated secondary pane */}

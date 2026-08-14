@@ -1,0 +1,88 @@
+{
+  "pack_id": "notewise_1_1",
+  "version": "1.0.0",
+  "jurisdiction": "notewise",
+  "legal_status": "product_curated",
+  "rules": [
+    {
+      "id": "notewise_1_1_evidence",
+      "name": "evidence_required",
+      "description": "Every factual claim in Recap output must cite transcript lineIds. Do not invent facts not supported by utterances.",
+      "severity": "high",
+      "category": "evidence",
+      "required": true,
+      "instruction": "You are extracting notes from a manager-report 1:1.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (concerns, blockers)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: a short recap the manager can send\n- summary: wellbeing, priorities, blockers, career\nEvery claim MUST cite transcript lineIds that prove it."
+    },
+    {
+      "id": "notewise_1_1_summary",
+      "name": "executive_summary",
+      "description": "Produce a concise executive summary (2\u20134 sentences unless mode specifies otherwise).",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "summary"
+    },
+    {
+      "id": "notewise_1_1_decisions",
+      "name": "extract_decisions",
+      "description": "Explicit decisions reached on the call.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "decisions"
+    },
+    {
+      "id": "notewise_1_1_objections",
+      "name": "extract_objections",
+      "description": "Concerns, pushback, or blockers raised by either side.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "objections"
+    },
+    {
+      "id": "notewise_1_1_actions",
+      "name": "extract_actions",
+      "description": "Action items with owner and due date when mentioned.",
+      "severity": "medium",
+      "category": "recap_field",
+      "required": true,
+      "field": "actions"
+    },
+    {
+      "id": "notewise_1_1_followUpEmail",
+      "name": "extract_followUpEmail",
+      "description": "Short follow-up email draft grounded in the call.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "followUpEmail"
+    },
+    {
+      "id": "notewise_1_1_blockers",
+      "name": "extract_blockers",
+      "description": "Blockers preventing progress.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "blockers"
+    },
+    {
+      "id": "notewise_1_1_career",
+      "name": "extract_career",
+      "description": "Career growth, wellbeing, or development topics.",
+      "severity": "low",
+      "category": "recap_field",
+      "required": true,
+      "field": "career"
+    },
+    {
+      "id": "notewise_1_1_mode_focus",
+      "name": "mode_focus",
+      "description": "Capture wellbeing, priorities, blockers, and career development alongside commitments.",
+      "severity": "low",
+      "category": "guidance",
+      "required": false
+    }
+  ]
+}
