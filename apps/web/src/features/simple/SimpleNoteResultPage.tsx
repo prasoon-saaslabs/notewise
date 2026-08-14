@@ -49,7 +49,7 @@ export function SimpleNoteResultPage() {
       isEmptyTranscriptError(sessionError)) ||
     (meeting?.status === "failed" &&
       isEmptyTranscriptError(
-        (meeting as { error?: string | null }).error ?? sessionError
+        (meeting as { error?: string | null }).error ?? sessionError,
       ));
 
   useEffect(() => {

@@ -1,15 +1,23 @@
 id: investor-call
 name: Investor call
-pack_id: sales_outbound
-prompt: |
-  You are extracting notes from a founder-investor call.
+pack_id: notewise_investor_call
+prompt: 'You are extracting notes from a founder-investor call.
+
   Return JSON with:
+
   - decisions: list of {text, lineIds}
+
   - objections: list of {text, lineIds} (dilution, traction, market, team, round timing)
+
   - actions: list of {text, owner, due, lineIds}
+
   - followUpEmail: a short draft the founder can send
+
   - summary: 2-4 sentences covering ask, interest, next step
+
   Every claim MUST cite transcript lineIds that prove it.
+
+  '
 schema:
   decisions: true
   objections: true

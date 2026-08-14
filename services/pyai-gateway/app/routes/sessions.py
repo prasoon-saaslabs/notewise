@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.auth.deps import get_optional_user
 from app.config import settings
+from app.modes import get_mode, pack_id_for_mode
 from app.pipeline import finalize_session
 from app.pyai.hear_stream import proxy_hear_stream
 from app.store.file_store import store
@@ -181,6 +182,30 @@ async def set_check_in(session_id: str, body: dict[str, Any]):
 
 class ScratchBody(BaseModel):
     userNotes: str = ""
+
+
+class SessionModeBody(BaseModel):
+    modeId: str = Field(min_length=1, max_length=64)
+
+
+@router.patch("/{session_id}/mode")
+async def set_session_mode(session_id: str, body: SessionModeBody):
+    """Update capture mode mid-session so finalize/regenerate use the right Recap pack."""
+    session = store.get_session(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    mode = get_mode(body.modeId.strip())
+    store.update_session(session_id, modeId=mode["id"])
+    store.update_meeting(session.meetingId, modeId=mode["id"])
+    pack_id = pack_id_for_mode(mode["id"])
+    log.info(
+        "session mode updated session=%s meeting=%s mode=%s pack=%s",
+        session_id,
+        session.meetingId,
+        mode["id"],
+        pack_id,
+    )
+    return {"ok": True, "modeId": mode["id"], "packId": pack_id}
 
 
 @router.post("/{session_id}/notes")

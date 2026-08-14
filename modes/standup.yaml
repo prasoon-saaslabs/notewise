@@ -1,15 +1,23 @@
 id: standup
 name: Standup
-pack_id: sales_outbound
-prompt: |
-  You are extracting notes from a team standup.
+pack_id: notewise_standup
+prompt: 'You are extracting notes from a team standup.
+
   Return JSON with:
+
   - decisions: list of {text, lineIds}
+
   - objections: list of {text, lineIds} (blockers)
+
   - actions: list of {text, owner, due, lineIds}
+
   - followUpEmail: optional Slack-style recap
+
   - summary: yesterday / today / blockers per speaker if possible
+
   Every claim MUST cite transcript lineIds that prove it.
+
+  '
 schema:
   decisions: true
   objections: true

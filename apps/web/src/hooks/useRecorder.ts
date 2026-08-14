@@ -89,6 +89,7 @@ export function useRecorder() {
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [meetingId, setMeetingId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [notes, setNotes] = useState<NotesPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +139,7 @@ export function useRecorder() {
       throttle((text: string) => {
         setInterim(text);
       }, 120),
-    []
+    [],
   );
 
   const pushMeters = useMemo(
@@ -146,7 +147,7 @@ export function useRecorder() {
       throttle((levels: { mic: number; system: number; backend: string }) => {
         setMeters(levels);
       }, 150),
-    []
+    [],
   );
 
   const setUserNotesDraft = useCallback((text: string) => {
@@ -199,7 +200,7 @@ export function useRecorder() {
       void notifyDesktop(
         "Notewise",
         "Recovered an interrupted recording — see Library.",
-        "info"
+        "info",
       );
       void qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err) {
@@ -208,7 +209,7 @@ export function useRecorder() {
       void notifyDesktop(
         "Notewise — recovery failed",
         "Could not recover a previous interrupted recording.",
-        "error"
+        "error",
       );
     } finally {
       busyRef.current = false;
@@ -275,12 +276,12 @@ export function useRecorder() {
             speaker: tr.speaker,
             kind: tr.kind === "you" ? "you" : "other",
             text: tr.text,
-          }))
+          })),
         );
       }
       if (detail.notes !== undefined) setNotes(detail.notes);
     },
-    []
+    [],
   );
 
   const stopTimer = () => {
@@ -377,7 +378,7 @@ export function useRecorder() {
       window.dispatchEvent(
         new CustomEvent("og-utterance", {
           detail: { text: cleaned, meetingId: mid },
-        })
+        }),
       );
     }
   }, []);
@@ -461,7 +462,7 @@ export function useRecorder() {
         setStatusLine(
           usePyaiLiveRef.current
             ? "Listening — browser captions (PyAI Hear unavailable)"
-            : "Listening — live transcript on"
+            : "Listening — live transcript on",
         );
       } catch {
         setStatusLine("Listening — live Whisper");
@@ -477,19 +478,19 @@ export function useRecorder() {
       const rateLimited = /rate.?limit|429|daily.?cap|usage cap/i.test(reason);
       if (rateLimited) {
         setError(
-          "PyAI daily cap reached — using browser live captions. Notes still build from your transcript after Stop."
+          "PyAI daily cap reached — using browser live captions. Notes still build from your transcript after Stop.",
         );
       }
       if (!wantSpeechRef.current) {
         setStatusLine(
           rateLimited
             ? "PyAI quota exceeded — browser live captions"
-            : `Hear unavailable — browser captions (${reason})`
+            : `Hear unavailable — browser captions (${reason})`,
         );
         startSpeech();
       }
     },
-    [startSpeech]
+    [startSpeech],
   );
 
   const startElapsedTimer = useCallback(() => {
@@ -610,6 +611,7 @@ export function useRecorder() {
     pcmChunksRef.current = [];
     seqRef.current = 0;
     sessionIdRef.current = null;
+    setSessionId(null);
     activeMeetingIdRef.current = null;
     browserSpeechOkRef.current = false;
     checkInSentRef.current = false;
@@ -641,7 +643,7 @@ export function useRecorder() {
       }
 
       const usePyai = pyaiRef.current;
-      const modeId = window.localStorage.getItem("og-mode-id") || undefined;
+      const modeId = window.localStorage.getItem("og-mode-id") || "general";
       const mixedSpeakers = !isTauriShell;
       const cap = await acquireTwoChannelCapture({
         preferSystem: isTauriShell,
@@ -688,7 +690,7 @@ export function useRecorder() {
               modeId,
               channelMode,
               calendarEventId: calendarEventId ?? undefined,
-            }
+            },
           );
       const stream = cap.recordStream;
       const liveTracks = stream
@@ -700,7 +702,7 @@ export function useRecorder() {
         captureReleaseRef.current?.();
         captureReleaseRef.current = null;
         throw new Error(
-          "Microphone opened but no live audio track. Check OS/browser mic settings."
+          "Microphone opened but no live audio track. Check OS/browser mic settings.",
         );
       }
       streamRef.current = stream;
@@ -718,6 +720,7 @@ export function useRecorder() {
 
       const created = await sessionPromise;
       sessionIdRef.current = created.sessionId;
+      setSessionId(created.sessionId);
       activeMeetingIdRef.current = created.meetingId;
       setMeetingId(created.meetingId);
       recoverySeqRef.current = 0;
@@ -805,7 +808,7 @@ export function useRecorder() {
             window.dispatchEvent(
               new CustomEvent("og-utterance", {
                 detail: { text, meetingId: created.meetingId },
-              })
+              }),
             );
           },
           onReady: () => setStatusLine("Listening — PyAI Hear live"),
@@ -839,26 +842,26 @@ export function useRecorder() {
               stereo: channelMode === "stereo",
               onMeters: (levels) =>
                 pushMeters({ ...levels, backend: cap.backend }),
-            }
+            },
           );
           hearCaptureRef.current = capture;
           if (cap.backend === "mix") {
             setStatusLine("Listening — live capture");
           } else if (cap.backend === "tab-capture") {
             setStatusLine(
-              `Listening — You + ${cap.meetingTabTitle || "meeting tab"}`
+              `Listening — You + ${cap.meetingTabTitle || "meeting tab"}`,
             );
           } else {
             setStatusLine(
               channelMode === "stereo"
                 ? "Listening — You + Them (system audio)"
-                : "Listening — mic only"
+                : "Listening — mic only",
             );
           }
         } catch (hearErr) {
           console.warn(
             "Hear live capture failed; batch upload still active",
-            hearErr
+            hearErr,
           );
           setStatusLine("Listening — mic on (live Hear unavailable)");
         }
@@ -875,6 +878,7 @@ export function useRecorder() {
       cleanupMedia();
       stopTimer();
       sessionIdRef.current = null;
+      setSessionId(null);
       activeMeetingIdRef.current = null;
       const message =
         err instanceof DOMException &&
@@ -885,13 +889,13 @@ export function useRecorder() {
               : micBlockedMessage()
             : "Microphone blocked. Allow mic access for this site, then try again."
           : err instanceof Error
-          ? err.message
-          : "Could not start recording";
+            ? err.message
+            : "Could not start recording";
       setError(message);
       void notifyDesktop(
         "Notewise — could not start recording",
         message,
-        "error"
+        "error",
       );
       setRecording(false);
       setPaused(false);
@@ -940,7 +944,7 @@ export function useRecorder() {
     setStatusLine(
       usePyaiLiveRef.current
         ? "Listening — PyAI Hear live"
-        : "Listening — live transcript on"
+        : "Listening — live transcript on",
     );
     try {
       if (mediaRef.current?.state === "paused") mediaRef.current.resume();
@@ -1049,7 +1053,7 @@ export function useRecorder() {
 
       setPhase("transcribing");
       setStatusLine(
-        usePyai ? "Transcribing with PyAI Hear…" : "Transcribing with Whisper…"
+        usePyai ? "Transcribing with PyAI Hear…" : "Transcribing with Whisper…",
       );
       const result = await api.finalizeSession(sid, {
         userNotes: userNotesRef.current,
@@ -1071,7 +1075,7 @@ export function useRecorder() {
               speaker: tr.speaker,
               kind: tr.kind === "you" ? "you" : "other",
               text: tr.text,
-            }))
+            })),
           );
         }
         setNotes(detail.notes);
@@ -1087,11 +1091,11 @@ export function useRecorder() {
             errMsg.includes("PYAI_RATE_LIMIT")
               ? "PyAI quota exceeded — try again after 00:00 UTC or use samples"
               : errMsg.includes("EMPTY_TRANSCRIPT") ||
-                /no transcript/i.test(errMsg)
-              ? liveTurns.length
-                ? "Could not build notes — retry or import samples"
-                : "No speech captured — allow mic and speak, or use browser captions"
-              : "Transcribe failed"
+                  /no transcript/i.test(errMsg)
+                ? liveTurns.length
+                  ? "Could not build notes — retry or import samples"
+                  : "No speech captured — allow mic and speak, or use browser captions"
+                : "Transcribe failed",
           );
         } else {
           setPhase("ready");
@@ -1112,7 +1116,7 @@ export function useRecorder() {
                 speaker: tr.speaker,
                 kind: tr.kind === "you" ? "you" : "other",
                 text: tr.text,
-              }))
+              })),
             );
           }
 
@@ -1121,7 +1125,7 @@ export function useRecorder() {
             setStatusLine(
               usePyai
                 ? "Writing notes with PyAI Recap…"
-                : "Writing notes & action items…"
+                : "Writing notes & action items…",
             );
           }
 
@@ -1133,7 +1137,7 @@ export function useRecorder() {
                   speaker: tr.speaker,
                   kind: tr.kind === "you" ? "you" : "other",
                   text: tr.text,
-                }))
+                })),
               );
             }
             setNotes(detail.notes);
@@ -1141,7 +1145,7 @@ export function useRecorder() {
             void qc.invalidateQueries({ queryKey: ["meetings"] });
             setPhase(detail.status === "ready" ? "ready" : "failed");
             setStatusLine(
-              detail.status === "ready" ? "Notes ready" : "Processing failed"
+              detail.status === "ready" ? "Notes ready" : "Processing failed",
             );
             break;
           }
@@ -1184,7 +1188,7 @@ export function useRecorder() {
       stopTimer();
       cleanupMedia();
     },
-    []
+    [],
   );
 
   return {
@@ -1193,6 +1197,7 @@ export function useRecorder() {
     busy,
     elapsed,
     meetingId,
+    sessionId,
     turns,
     notes,
     error,

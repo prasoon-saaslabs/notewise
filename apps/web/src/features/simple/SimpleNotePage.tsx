@@ -4,6 +4,7 @@ import { Calendar } from "lucide-react";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
 import { PageMotion } from "../../components/PageMotion";
 import { NotesEditor } from "../../components/notes/NotesEditor";
+import { AiWorkspacePopover } from "../../components/AiWorkspacePopover";
 import { api } from "../../lib/api";
 import { debounce } from "../../lib/throttle";
 import { SimpleTranscriptBar } from "./SimpleTranscriptBar";
@@ -32,6 +33,7 @@ export function SimpleNotePage() {
     busy,
     phase,
     meetingId,
+    sessionId,
     turns,
     interim,
     userNotes,
@@ -54,7 +56,8 @@ export function SimpleNotePage() {
     !processing &&
     phase === "idle" &&
     (busy || !autoStartedRef.current);
-  const showTranscriptPanel = transcriptOpen && (live || starting);
+  const showTranscriptPanel =
+    transcriptOpen && (live || starting || processing);
 
   const persistMeetingName = useMemo(
     () =>
@@ -161,22 +164,35 @@ export function SimpleNotePage() {
                   ← Back
                 </Link>
               ) : null}
-              <input
-                type="text"
-                value={meetingName}
-                onChange={(e) => onMeetingNameChange(e.target.value)}
-                onBlur={onMeetingNameBlur}
-                maxLength={200}
-                aria-label="Meeting name"
-                placeholder={DEFAULT_SIMPLE_MEETING_NAME}
-                className="m-0 w-full min-w-0 border-0 bg-transparent p-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] outline-none placeholder:text-[var(--nw-ink-4)] focus:ring-0 focus-visible:outline-none md:text-4xl"
-              />
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-1 text-xs font-medium text-[var(--nw-ink-3)]">
-                  <Calendar className="h-3 w-3" />
-                  Today
-                </span>
+              <div className="flex items-start gap-3">
+                <input
+                  type="text"
+                  value={meetingName}
+                  onChange={(e) => onMeetingNameChange(e.target.value)}
+                  onBlur={onMeetingNameBlur}
+                  maxLength={200}
+                  aria-label="Meeting name"
+                  placeholder={DEFAULT_SIMPLE_MEETING_NAME}
+                  className="nw-simple-meeting-title m-0 min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] shadow-none outline-none ring-0 placeholder:text-[var(--nw-ink-4)] focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:shadow-none focus-visible:outline-none focus-visible:ring-0 md:text-4xl"
+                />
+                <AiWorkspacePopover
+                  className="mt-1.5 md:mt-2"
+                  sessionLive={live || starting}
+                  phase={phase}
+                  hasNotes={false}
+                  meetingId={meetingId}
+                  sessionId={sessionId}
+                  userNotes={userNotes}
+                />
               </div>
+              {!(live || processing || starting) ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-1 text-xs font-medium text-[var(--nw-ink-3)]">
+                    <Calendar className="h-3 w-3" />
+                    Today
+                  </span>
+                </div>
+              ) : null}
             </header>
 
             <div className="flex min-h-0 flex-1 flex-col">
@@ -208,6 +224,7 @@ export function SimpleNotePage() {
             interim={interim}
             recording={recording}
             paused={paused}
+            processing={processing}
             onClose={() => setTranscriptOpen(false)}
           />
         ) : null}

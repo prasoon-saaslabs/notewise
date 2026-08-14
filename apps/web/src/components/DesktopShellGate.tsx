@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@notewise/ui";
-import { Mic, Monitor, Sparkles } from "lucide-react";
+import { Button, LogoMark } from "@notewise/ui";
+import { Mic, Monitor } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { isDesktopShell } from "../capture/desktopMiniWindow";
 import { setStoredApiBase } from "../lib/backend";
@@ -166,7 +166,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="grid h-full place-items-center bg-[var(--nw-paper)] p-6">
         <div className="text-center">
-          <Sparkles className="mx-auto mb-3 h-8 w-8 text-[var(--nw-accent-dark)]" />
+          <LogoMark size={32} className="mx-auto mb-3" title="Notewise" />
           <p className="m-0 text-sm font-semibold text-[var(--nw-ink)]">Starting Notewise…</p>
           <p className="m-0 mt-1 text-xs text-[var(--nw-ink-3)]">{statusLine}</p>
         </div>
@@ -281,8 +281,8 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid h-full place-items-center bg-[var(--nw-paper)] p-6">
       <div className="w-full max-w-md rounded-3xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-6 shadow-xl">
-        <div className="mb-4 flex items-center gap-2 text-[var(--nw-accent-dark)]">
-          <Sparkles className="h-5 w-5" />
+        <div className="mb-4 flex items-center gap-2.5">
+          <LogoMark size={24} title="Notewise" />
           <h1 className="m-0 text-lg font-bold text-[var(--nw-ink)]">Welcome to Notewise</h1>
         </div>
         <p className="m-0 text-sm text-[var(--nw-ink-3)]">

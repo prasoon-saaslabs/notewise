@@ -253,10 +253,10 @@ export function MeetingPrepContent({
           </Button>
         ) : null}
         <Link
-          to="/capture"
+          to="/"
           className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--nw-accent-dark)] hover:bg-[var(--nw-accent-soft)]"
         >
-          Back to capture <ArrowRight className="h-3.5 w-3.5" />
+          Back to home <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>

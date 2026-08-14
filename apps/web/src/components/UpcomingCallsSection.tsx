@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Calendar, ChevronDown, Sparkles } from "lucide-react";
+import { Calendar, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
 import { formatWhen, formatTimeUntil, isUpcoming } from "../lib/calendarFormat";
@@ -32,6 +32,8 @@ const HEADER_COPY = {
 type Props = {
   initialVisibleCount?: number;
   collapsible?: boolean;
+  /** When set, "Show N more" navigates here instead of expanding inline. */
+  showAllHref?: string;
   headerAction?: ReactNode;
   variant?: keyof typeof HEADER_COPY;
 };
@@ -39,6 +41,7 @@ type Props = {
 export function UpcomingCallsSection({
   initialVisibleCount = 2,
   collapsible = false,
+  showAllHref,
   headerAction,
   variant = "default",
 }: Props) {
@@ -59,8 +62,11 @@ export function UpcomingCallsSection({
 
   const events = (q.data?.events ?? []).filter((ev) => isUpcoming(ev.startAt));
   const hiddenCount = Math.max(0, events.length - initialVisibleCount);
+  const expandInline = collapsible && !showAllHref;
   const visibleEvents =
-    collapsible && !expanded ? events.slice(0, initialVisibleCount) : events;
+    collapsible && (showAllHref || !expanded)
+      ? events.slice(0, initialVisibleCount)
+      : events;
 
   return (
     <section className="mb-6">
@@ -145,21 +151,24 @@ export function UpcomingCallsSection({
               );
             })}
           </ul>
-          {collapsible && hiddenCount > 0 ? (
-            <button
-              type="button"
-              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-xs font-semibold text-[var(--nw-ink-2)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
-              aria-expanded={expanded}
-              onClick={() => setExpanded((v) => !v)}
-            >
-              {expanded ? "Show less" : `Show ${hiddenCount} more`}
-              <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform ${
-                  expanded ? "rotate-180" : ""
-                }`}
-                aria-hidden
-              />
-            </button>
+          {(expandInline || showAllHref) && hiddenCount > 0 ? (
+            showAllHref ? (
+              <Link
+                to={showAllHref}
+                className="mt-3 flex w-full items-center justify-center rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-xs font-semibold text-[var(--nw-ink-2)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
+              >
+                Show {hiddenCount} more
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className="mt-3 flex w-full items-center justify-center rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 text-xs font-semibold text-[var(--nw-ink-2)] transition hover:border-[var(--nw-accent)] hover:text-[var(--nw-accent-dark)]"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((v) => !v)}
+              >
+                {expanded ? "Show less" : `Show ${hiddenCount} more`}
+              </button>
+            )
           ) : null}
         </>
       )}

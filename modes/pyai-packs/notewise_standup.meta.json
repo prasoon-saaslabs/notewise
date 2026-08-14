@@ -1,0 +1,12 @@
+{
+  "notewise_mode_id": "standup",
+  "notewise_mode_name": "Standup",
+  "prompt": "You are extracting notes from a team standup.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (blockers)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: optional Slack-style recap\n- summary: yesterday / today / blockers per speaker if possible\nEvery claim MUST cite transcript lineIds that prove it.",
+  "schema": {
+    "decisions": true,
+    "objections": true,
+    "actions": true,
+    "followUpEmail": true,
+    "blockers": true
+  }
+}

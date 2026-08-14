@@ -8,16 +8,11 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
-  { label: "Features", href: "/#features" },
-  { label: "Privacy", href: "/#privacy" },
-  { label: "FAQ", href: "/#faq" },
-] as const;
-
-/** Top nav on inner pages */
-export const SITE_NAV_LINKS = [
-  { label: "Features", href: "/features" },
-  { label: "Docs", href: "/docs" },
-  { label: "Download", href: "/download" },
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Memory", href: "#memory" },
+  { label: "Privacy", href: "#privacy" },
+  { label: "FAQ", href: "#faq" },
 ] as const;
 
 export const HERO = {
@@ -67,12 +62,38 @@ export const PIPELINE_STAGES = [
 ] as const;
 
 export const HERO_DEMO = {
-  stages: ["Capture", "Transcribe", "Notes", "Memory"] as const,
+  stages: ["Prep", "Capture", "Transcribe", "Notes"] as const,
+  newMeetingTitle: "New Meeting",
+  meetingTitle: "Standup Meeting",
   transcript: [
-    { speaker: "You", kind: "you" as const, text: "Can we push the pilot until legal signs off?" },
-    { speaker: "Other", kind: "other" as const, text: "Absolutely — send the SOC 2 report by Friday." },
-    { speaker: "You", kind: "you" as const, text: "What about SAML for the enterprise tier?" },
+    {
+      speaker: "Others",
+      kind: "other" as const,
+      text: "The customer shared their experience working with engineers to gather, clean, and visualize data through Tableau, which was a strong project and a good managerial experience.",
+    },
+    {
+      speaker: "Others",
+      kind: "other" as const,
+      text: "They also discussed their weakness in prioritizing tasks when faced with multiple high-priority projects.",
+    },
   ],
+  interim: "one in that case would be one",
+  summary:
+    "The customer shared their experience working with engineers to gather, clean, and visualize data through Tableau, which was a strong project and a good managerial experience. They also discussed their weakness in prioritizing tasks when faced with multiple high-priority projects.",
+  upcomingMeetings: [
+    {
+      title: "Jira Tickets Review",
+      when: "Mon 17 Aug, 11:30",
+      until: "2 days 18 hours 32 min",
+      tag: "platform",
+    },
+    {
+      title: "Frontend Standup",
+      when: "Mon 17 Aug, 13:30",
+      until: "2 days 20 hours 32 min",
+    },
+  ],
+  todayMeetings: [{ title: "Frontend Standup", time: "16:56" }],
   citedNotes: [
     { text: "Pilot delayed pending legal sign-off", time: "14:22" },
     { text: "Meera to send SOC 2 report by Friday", time: "14:31" },
