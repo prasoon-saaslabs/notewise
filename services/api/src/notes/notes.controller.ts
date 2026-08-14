@@ -1,5 +1,6 @@
-import { Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { NotesService } from './notes.service';
+import { RegenerateNotesDto } from './dto/regenerate-notes.dto';
 
 @Controller('notes')
 export class NotesController {
@@ -13,7 +14,7 @@ export class NotesController {
   }
 
   @Post(':meetingId/regenerate')
-  regenerate(@Param('meetingId') meetingId: string) {
-    return this.notes.regenerate(meetingId);
+  regenerate(@Param('meetingId') meetingId: string, @Body() body: RegenerateNotesDto) {
+    return this.notes.regenerate(meetingId, body?.userNotes);
   }
 }

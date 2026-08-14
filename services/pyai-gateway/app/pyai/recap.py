@@ -6,6 +6,7 @@ from typing import Any
 
 from app.config import settings
 from app.pyai.client import PyAIError, pyai_request
+from app.pyai.recap_utterances import fold_user_notes_into_utterances, fresh_recap_call_id
 from app.store.models import ActionItem, NotesPayload
 
 log = logging.getLogger("pyai.recap")
@@ -49,25 +50,21 @@ async def submit_utterances(
     }
     if customer_name:
         payload["customer_name"] = customer_name
-    # Margin merge: typed notes as note_taker context with explicit extraction cues
-    if user_notes and user_notes.strip():
-        note_block = (
-            "NOTE TAKER CONTEXT — Use these live notes together with the transcript. "
-            "Produce a detailed executive summary, concrete action items with owners when "
-            "mentioned, takeaways, and open questions. Prefer action items from both the "
-            f"notes and any commitments in speech.\n\nLive notes:\n{user_notes.strip()}"
-        )
-        payload["utterances"] = [
-            {
-                "speaker_role": "note_taker",
-                "text": note_block,
-                "offset_s": 0.0,
-                "duration_s": 0.1,
-            },
-            *utterances,
-        ]
-    result = await pyai_request("POST", f"/recap/calls/{call_id}", json=payload)
-    return result if isinstance(result, dict) else {"call_id": call_id}
+    payload["utterances"] = fold_user_notes_into_utterances(utterances, user_notes)
+    if not payload["utterances"]:
+        raise PyAIError("No utterances for Recap")
+    posted_id = call_id
+    try:
+        result = await pyai_request("POST", f"/recap/calls/{posted_id}", json=payload)
+    except PyAIError as e:
+        if e.status != 409:
+            raise
+        posted_id = fresh_recap_call_id(call_id)
+        log.info("Recap 409 for existing call, retrying as %s", posted_id)
+        result = await pyai_request("POST", f"/recap/calls/{posted_id}", json=payload)
+    out = result if isinstance(result, dict) else {}
+    out["call_id"] = posted_id
+    return out
 
 
 async def get_recap(call_id: str) -> dict[str, Any]:

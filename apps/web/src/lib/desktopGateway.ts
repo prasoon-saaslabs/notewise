@@ -38,7 +38,7 @@ export async function getGatewayDiagnostics(): Promise<GatewayDiagnostics> {
   return invoke<GatewayDiagnostics>("gateway_diagnostics");
 }
 
-/** Save API key, restart bundled gateway, wait until reachable. Atomic setup step. */
+/** Save API key; attach to a healthy :3002 gateway or restart only a sidecar we spawned. */
 export async function configureDesktopGateway(apiKey: string): Promise<GatewayDiagnostics> {
   return invoke<GatewayDiagnostics>("configure_gateway", { apiKey: apiKey.trim() });
 }
@@ -55,7 +55,7 @@ export function diagnosticsReady(d: GatewayDiagnostics): boolean {
 export function diagnosticsErrorMessage(d: GatewayDiagnostics): string {
   if (d.error) return d.error;
   if (!d.reachable) {
-    return "Local AI gateway did not start. Quit Notewise, ensure port 3002 is free, and try again.";
+    return "Local AI gateway did not start. Quit other Notewise apps from the menu bar, then retry. If you use make run, leave that process running — desktop will attach to port 3002.";
   }
   if (!d.hasApiKey) {
     return "Add your PyAI API key from api.pyai.com";

@@ -262,23 +262,48 @@ pub fn gateway_diagnostics_for(app: &AppHandle) -> GatewayDiagnostics {
     }
 }
 
-fn free_gateway_port(app: &AppHandle) {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GatewayPlan {
+    Attach,
+    RestartOwned,
+    Spawn,
+    WaitForExternal,
+}
+
+/// Decide whether to attach, spawn, or wait. Never kill a process we did not start
+/// (`make run` and other Notewise instances must keep the port).
+fn plan_gateway_start(
+    reachable: bool,
+    owns_child: bool,
+    restart_owned: bool,
+    port_in_use: bool,
+) -> GatewayPlan {
+    if owns_child && (restart_owned || !reachable) {
+        return GatewayPlan::RestartOwned;
+    }
+    if reachable {
+        return GatewayPlan::Attach;
+    }
+    if port_in_use {
+        return GatewayPlan::WaitForExternal;
+    }
+    GatewayPlan::Spawn
+}
+
+fn gateway_port_in_use() -> bool {
     let Ok(output) = std::process::Command::new("/usr/sbin/lsof")
-        .args(["-ti", &format!("tcp:{GATEWAY_PORT}")])
+        .args(["-nP", &format!("-iTCP:{GATEWAY_PORT}"), "-sTCP:LISTEN", "-t"])
         .output()
     else {
-        return;
+        return false;
     };
-    let pids = String::from_utf8_lossy(&output.stdout);
-    if !pids.trim().is_empty() {
-        append_gateway_log(app, &format!("free port {GATEWAY_PORT}: pids={pids}"));
-    }
-    for pid in pids.split_whitespace() {
-        let _ = std::process::Command::new("/bin/kill")
-            .arg(pid)
-            .status();
-    }
-    std::thread::sleep(Duration::from_millis(500));
+    !String::from_utf8_lossy(&output.stdout).trim().is_empty()
+}
+
+fn port_busy_message() -> String {
+    format!(
+        "Port {GATEWAY_PORT} is in use but /health is not responding. Quit other Notewise apps from the menu bar (Quit Notewise). Do not kill `make run` if that is the process you want to attach to."
+    )
 }
 
 #[cfg(debug_assertions)]
@@ -388,16 +413,7 @@ pub fn start_gateway(app: &AppHandle) -> Result<GatewayDiagnostics, String> {
     start_gateway_inner(app, false)
 }
 
-fn start_gateway_inner(app: &AppHandle, force: bool) -> Result<GatewayDiagnostics, String> {
-    *LAST_SPAWN_ERROR.lock().unwrap() = None;
-
-    if !force && curl_health_raw().is_some() {
-        return Ok(gateway_diagnostics_for(app));
-    }
-
-    stop_gateway();
-    free_gateway_port(app);
-
+fn spawn_local_gateway(app: &AppHandle) -> Result<GatewayDiagnostics, String> {
     #[cfg(debug_assertions)]
     {
         if dev_gateway_root().is_some() {
@@ -420,6 +436,44 @@ fn start_gateway_inner(app: &AppHandle, force: bool) -> Result<GatewayDiagnostic
         *LAST_SPAWN_ERROR.lock().unwrap() = Some(e.clone());
         e
     })
+}
+
+fn start_gateway_inner(app: &AppHandle, restart_owned: bool) -> Result<GatewayDiagnostics, String> {
+    *LAST_SPAWN_ERROR.lock().unwrap() = None;
+
+    let reachable = curl_health_raw().is_some();
+    let owns = sidecar_is_running();
+    let busy = gateway_port_in_use();
+    let plan = plan_gateway_start(reachable, owns, restart_owned, busy);
+    append_gateway_log(
+        app,
+        &format!(
+            "gateway plan={plan:?} reachable={reachable} owns={owns} busy={busy} restart_owned={restart_owned}"
+        ),
+    );
+
+    match plan {
+        GatewayPlan::Attach => {
+            append_gateway_log(app, "attaching to existing gateway on 127.0.0.1:3002");
+            return Ok(gateway_diagnostics_for(app));
+        }
+        GatewayPlan::WaitForExternal => {
+            append_gateway_log(app, "port in use; waiting for /health (will not kill foreign PIDs)");
+            return wait_for_reachable(app, Duration::from_secs(15)).map_err(|_| {
+                let msg = port_busy_message();
+                *LAST_SPAWN_ERROR.lock().unwrap() = Some(msg.clone());
+                msg
+            });
+        }
+        GatewayPlan::RestartOwned => {
+            append_gateway_log(app, "restarting gateway process we spawned");
+            stop_gateway();
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        GatewayPlan::Spawn => {}
+    }
+
+    spawn_local_gateway(app)
 }
 
 pub fn stop_gateway() {
@@ -645,14 +699,12 @@ pub fn gateway_fetch(
 #[tauri::command]
 pub fn configure_gateway(app: AppHandle, api_key: String) -> Result<GatewayDiagnostics, String> {
     write_gateway_env(&app, &api_key)?;
-    append_gateway_log(&app, "configure_gateway: key saved, restarting");
-    stop_gateway();
-    free_gateway_port(&app);
+    append_gateway_log(&app, "configure_gateway: key saved");
     let diag = start_gateway_inner(&app, true)?;
     if !diag.reachable {
         return Err(diag
             .error
-            .unwrap_or_else(|| "Gateway not reachable after restart".into()));
+            .unwrap_or_else(|| "Gateway not reachable after configure".into()));
     }
     Ok(diag)
 }
@@ -665,4 +717,57 @@ pub fn save_pyai_api_key(app: AppHandle, api_key: String) -> Result<GatewayDiagn
 #[tauri::command]
 pub fn has_pyai_api_key(app: AppHandle) -> bool {
     gateway_has_api_key(&app)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{plan_gateway_start, GatewayPlan};
+
+    #[test]
+    fn attach_to_healthy_make_run_even_when_saving_key() {
+        assert_eq!(
+            plan_gateway_start(true, false, true, true),
+            GatewayPlan::Attach
+        );
+    }
+
+    #[test]
+    fn restart_only_the_child_we_spawned() {
+        assert_eq!(
+            plan_gateway_start(true, true, true, true),
+            GatewayPlan::RestartOwned
+        );
+    }
+
+    #[test]
+    fn ensure_attaches_when_our_sidecar_is_already_healthy() {
+        assert_eq!(
+            plan_gateway_start(true, true, false, true),
+            GatewayPlan::Attach
+        );
+    }
+
+    #[test]
+    fn wait_when_foreign_process_holds_port() {
+        assert_eq!(
+            plan_gateway_start(false, false, false, true),
+            GatewayPlan::WaitForExternal
+        );
+    }
+
+    #[test]
+    fn spawn_when_port_is_free() {
+        assert_eq!(
+            plan_gateway_start(false, false, false, false),
+            GatewayPlan::Spawn
+        );
+    }
+
+    #[test]
+    fn recycle_dead_owned_child_instead_of_killing_strangers() {
+        assert_eq!(
+            plan_gateway_start(false, true, false, true),
+            GatewayPlan::RestartOwned
+        );
+    }
 }
