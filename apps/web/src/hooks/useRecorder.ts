@@ -665,11 +665,13 @@ export function useRecorder() {
       });
       const calendarEventId = getPendingCalendarEventId();
       const simpleCapture = isSimpleCaptureSession();
+      const initialUserNotes = userNotesRef.current.trim();
       const sessionPromise = simpleCapture
         ? api.createLocalSession(undefined, {
             ...(isEditedSimpleMeetingName()
               ? { name: getSimpleMeetingName().trim() }
               : {}),
+            ...(initialUserNotes ? { userNotes: initialUserNotes } : {}),
             modeId,
             channelMode,
             calendarEventId: calendarEventId ?? undefined,
@@ -681,7 +683,12 @@ export function useRecorder() {
               hour: "numeric",
               minute: "2-digit",
             })}`,
-            { modeId, channelMode, calendarEventId: calendarEventId ?? undefined }
+            {
+              ...(initialUserNotes ? { userNotes: initialUserNotes } : {}),
+              modeId,
+              channelMode,
+              calendarEventId: calendarEventId ?? undefined,
+            }
           );
       const stream = cap.recordStream;
       const liveTracks = stream

@@ -4,7 +4,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Calendar, Plus, Sparkles } from "lucide-react";
 import type { MeetingBackend } from "@notewise/api-client";
 import { PageMotion } from "../../components/PageMotion";
-import { NotesEditor } from "../../components/notes/NotesEditor";
+import { MeetingNotesIntelligence } from "../../components/MeetingNotesIntelligence";
 import { clientForBackend, getCatalogMeeting } from "../../lib/meetingsCatalog";
 import { useCaptureSession } from "../../capture/CaptureSessionContext";
 import { isEmptyTranscriptError, SIMPLE_NOTE_PATH } from "./simpleCapture";
@@ -155,70 +155,34 @@ export function SimpleNoteResultPage() {
                 </span>
               </div>
 
-              <article className="mt-6 min-w-0 space-y-4 break-words text-sm leading-relaxed text-[var(--nw-ink-2)]">
+              <div className="mt-8 min-w-0">
                 {emptyTranscript ? (
-                  <section>
-                    <p className="m-0 text-[var(--nw-ink-3)]">
+                  <section className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-4 py-3 text-sm leading-relaxed text-[var(--nw-ink-3)]">
+                    <p className="m-0 font-medium text-[var(--nw-ink-2)]">
                       No transcription generated.
                     </p>
-                    <p className="m-0 mt-2 text-sm text-[var(--nw-ink-4)]">
+                    <p className="m-0 mt-2 text-[var(--nw-ink-4)]">
                       We didn&apos;t pick up any speech. Check your mic and try
                       recording again.
                     </p>
                   </section>
-                ) : notes?.executiveSummary ? (
-                  <section>
-                    <p className="m-0 break-words whitespace-pre-wrap">
-                      {notes.executiveSummary}
-                    </p>
-                  </section>
-                ) : (
-                  <p className="m-0 text-[var(--nw-ink-4)]">
-                    Notes are still processing or unavailable for this capture.
-                  </p>
-                )}
-
-                {(notes?.takeaways ?? []).length > 0 ? (
-                  <section>
-                    <h2 className="m-0 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
-                      Key points
-                    </h2>
-                    <ul className="m-0 min-w-0 list-disc space-y-1 break-words pl-5">
-                      {notes!.takeaways!.map((t, i) => (
-                        <li key={`${t}-${i}`} className="break-words [overflow-wrap:anywhere]">
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
                 ) : null}
 
-                <section>
-                  <div className="mb-2 flex items-baseline justify-between gap-2">
-                    <h2 className="m-0 text-xs font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
-                      Your notes
-                    </h2>
-                    {saveHint === "saving" ? (
-                      <span className="text-[0.65rem] text-[var(--nw-ink-4)]">
-                        Saving…
-                      </span>
-                    ) : saveHint === "error" ? (
-                      <span className="text-[0.65rem] text-[var(--nw-danger)]">
-                        Could not save
-                      </span>
-                    ) : null}
-                  </div>
-                  <NotesEditor
-                    id="simple-result-notes"
-                    variant="field"
-                    minHeight={120}
-                    placeholder="Add your notes…"
-                    value={draftNotes}
-                    onChange={handleNotesChange}
-                    aria-label="Your notes"
-                  />
-                </section>
-              </article>
+                <MeetingNotesIntelligence
+                  notes={notes}
+                  userNotes={draftNotes}
+                  userNotesEditable
+                  onUserNotesChange={handleNotesChange}
+                  userNotesSaveHint={saveHint}
+                  userNotesPlacement="last"
+                  layout="document"
+                  emptySummaryMessage={
+                    notes
+                      ? "Summary will appear after processing."
+                      : "Notes are still processing or unavailable for this capture."
+                  }
+                />
+              </div>
             </>
           )}
         </div>

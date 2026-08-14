@@ -624,7 +624,7 @@ export function RecordPage() {
               )}
             </div>
             {showScratchpad ? (
-              <div className="flex min-h-0 flex-col border-t border-[var(--nw-border)] px-4 pb-4 pt-3 md:px-5">
+              <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--nw-border)] px-4 pb-4 pt-3 md:px-5">
                 <div className="mb-1.5 flex shrink-0 items-baseline justify-between gap-2">
                   <span className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
                     {notes ? "Your notes" : "Your scratchpad"}

@@ -436,8 +436,20 @@ a {
   border-radius: 2px;
 }
 
-.nw-simple-transcript-pill .nw-wave {
+.nw-simple-page .nw-simple-transcript-pill .nw-wave,
+.nw-simple-page .nw-simple-transcript-wave .nw-wave {
+  height: 2rem;
+  min-width: 5.5rem;
+  max-width: 7rem;
+  gap: 2px;
   justify-content: center;
+}
+
+.nw-simple-page .nw-simple-transcript-pill .nw-wave-bar,
+.nw-simple-page .nw-simple-transcript-wave .nw-wave-bar {
+  width: 2.5px;
+  min-width: 2.5px;
+  border-radius: 999px;
 }
 
 .nw-mini-panel {
@@ -1292,17 +1304,22 @@ a {
 }
 
 .nw-notes-editor-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-height: 0;
   overflow-y: auto;
 }
 
 .nw-notes-editor-body .tiptap,
 .nw-notes-editor-content {
-  min-height: inherit;
+  flex: 1;
+  min-height: 100%;
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
   line-height: 1.625;
   color: var(--nw-ink);
+  cursor: text;
 }
 
 .nw-notes-editor--page .nw-notes-editor-body .tiptap,

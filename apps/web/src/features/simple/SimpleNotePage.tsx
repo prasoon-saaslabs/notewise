@@ -169,7 +169,7 @@ export function SimpleNotePage() {
                 maxLength={200}
                 aria-label="Meeting name"
                 placeholder={DEFAULT_SIMPLE_MEETING_NAME}
-                className="m-0 w-full min-w-0 border-0 bg-transparent p-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] outline-none placeholder:text-[var(--nw-ink-4)] focus:ring-0 md:text-4xl"
+                className="m-0 w-full min-w-0 border-0 bg-transparent p-0 font-[var(--nw-font-display)] text-3xl font-normal tracking-tight text-[var(--nw-ink)] outline-none placeholder:text-[var(--nw-ink-4)] focus:ring-0 focus-visible:outline-none md:text-4xl"
               />
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2.5 py-1 text-xs font-medium text-[var(--nw-ink-3)]">
@@ -179,15 +179,15 @@ export function SimpleNotePage() {
               </div>
             </header>
 
-            <div className="min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 flex-col">
               <NotesEditor
                 id="simple-note-body"
                 variant="page"
+                className="min-h-0 flex-1"
                 placeholder="Write notes"
                 value={userNotes}
                 onChange={setUserNotesDraft}
                 aria-label="Write notes"
-                height="100%"
               />
             </div>
 

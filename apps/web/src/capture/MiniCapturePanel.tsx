@@ -199,6 +199,7 @@ export function MiniCapturePanel({
             <NotesEditor
               variant="compact"
               minHeight={88}
+              className="min-h-0 flex-1"
               placeholder="Jot notes while you talk…"
               value={userNotes}
               onChange={setUserNotesDraft}

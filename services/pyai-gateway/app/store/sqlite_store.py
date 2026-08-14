@@ -186,6 +186,7 @@ class SqliteStore:
         capture_backend: str | None = None,
         user_id: str | None = None,
         calendar_event_id: str | None = None,
+        user_notes_draft: str | None = None,
     ) -> tuple[Session, Meeting]:
         with self._lock:
             sid = str(uuid4())
@@ -204,6 +205,7 @@ class SqliteStore:
                 modeId=mode_id,
                 captureBackend=capture_backend,
                 calendarEventId=calendar_event_id,
+                userNotesDraft=user_notes_draft,
             )
             session = Session(
                 id=sid,

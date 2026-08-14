@@ -95,9 +95,9 @@ export function SimpleTranscriptBar({
             transcriptOpen && !panelLayout ? "inline-flex" : "w-full min-w-0"
           }`}
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center text-[var(--nw-success)]">
-            <Waveform active={recording && !paused} bars={3} />
-          </span>
+          <div className="nw-simple-transcript-wave flex h-8 shrink-0 items-center overflow-hidden px-1">
+            <Waveform active={recording && !paused} bars={14} />
+          </div>
           <button
             type="button"
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
