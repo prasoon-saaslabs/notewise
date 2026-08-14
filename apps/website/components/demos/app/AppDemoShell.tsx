@@ -22,7 +22,7 @@ export function AppDemoShell({
     >
       <div className="nw-app-demo-glow pointer-events-none absolute inset-0" aria-hidden />
       {chrome ? (
-        <div className="relative flex items-center gap-2 border-b border-border/80 bg-white/55 px-4 py-2 backdrop-blur-sm">
+        <div className="relative flex items-center gap-2 border-b border-border/80 bg-paper-elevated/80 px-4 py-2 backdrop-blur-sm">
           <span className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-ink-muted">
             {title}
           </span>
