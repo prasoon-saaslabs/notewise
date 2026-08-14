@@ -93,7 +93,7 @@ See [apps/desktop/README.md](apps/desktop/README.md) and [docs/USAGE.md](docs/US
 
 ## Host the product site
 
-The marketing site (`apps/website`) is a static Vite SPA. Host it on **Vercel Hobby** and serve the macOS installer from **GitHub Releases**. Do not put the DMG on Vercel (file-size limits), and do **not** deploy pyai-gateway to the cloud — the DMG already bundles a local sidecar on `127.0.0.1:3002`.
+The marketing site (`apps/website`) is a Next.js app. Host it on **Vercel Hobby** and serve the macOS installer from **GitHub Releases**. Do not put the DMG on Vercel (file-size limits), and do **not** deploy pyai-gateway to the cloud — the DMG already bundles a local sidecar on `127.0.0.1:3002`.
 
 End users: open the site → download the DMG → paste their own PyAI key. No Python or hosted backend.
 
@@ -116,11 +116,11 @@ Until the app is signed and notarized, macOS Gatekeeper may block the first open
 
    | Variable | Purpose |
    |----------|---------|
-   | `VITE_DMG_URL` | Apple Silicon (or universal) GitHub Release asset URL |
-   | `VITE_DMG_URL_INTEL` | Optional Intel DMG asset URL |
-   | `VITE_GITHUB_URL` | `https://github.com/prasoon-saaslabs/notewise` |
+   | `NEXT_PUBLIC_DMG_URL` | Apple Silicon (or universal) GitHub Release asset URL |
+   | `NEXT_PUBLIC_DMG_URL_INTEL` | Optional Intel DMG asset URL |
+   | `NEXT_PUBLIC_GITHUB_URL` | `https://github.com/prasoon-saaslabs/notewise` |
 
-3. Deploy. Routes like `/download` rewrite to `index.html`.
+3. Deploy. Next.js handles routing for `/`, `/download`, `/docs`, and other pages.
 
 **Preview locally before Vercel** (no Vercel account needed):
 
@@ -129,7 +129,7 @@ make website
 # → http://localhost:5174
 ```
 
-Copy [`apps/website/.env.example`](apps/website/.env.example) to `apps/website/.env.local` if you want to test a real DMG URL. GitHub links default to [prasoon-saaslabs/notewise](https://github.com/prasoon-saaslabs/notewise). Without `VITE_DMG_URL`, `/download` shows “Release coming soon”.
+Copy [`apps/website/.env.example`](apps/website/.env.example) to `apps/website/.env.local` if you want to test a real DMG URL. GitHub links default to [prasoon-saaslabs/notewise](https://github.com/prasoon-saaslabs/notewise). Without `NEXT_PUBLIC_DMG_URL`, `/download` shows “Release coming soon”.
 
 Do not deploy [`docker-compose.yml`](docker-compose.yml) (legacy Nest + Postgres + Redis). That stack is unused by the PyAI desktop path.
 
