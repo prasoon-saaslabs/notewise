@@ -308,4 +308,11 @@
   --nw-guest-bg: rgb(120 53 15 / 0.35);
   --nw-guest-text: #fdba74;
   --nw-guest-border: rgb(217 119 6 / 0.35);
+  --gsi-bg: var(--nw-glass-bg-strong);
+  --gsi-border: var(--nw-glass-border);
+  --gsi-text: var(--nw-ink);
+  --gsi-state: #ffffff;
+  --gsi-shadow: 0 1px 2px rgb(0 0 0 / 0.24);
+  --gsi-shadow-hover: 0 6px 20px rgb(0 0 0 / 0.32);
+  --gsi-backdrop: blur(12px);
 }

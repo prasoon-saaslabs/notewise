@@ -7,17 +7,20 @@ type Props = Readonly<
   }
 >;
 
-/** Official Google Sign-In button styling (Identity branding guidelines). */
+/** Google Sign-In button — official G logo + theme-aware glass styling. */
 export function GoogleSignInButton({
   children,
   fullWidth = true,
   className = "",
   type = "button",
+  disabled,
   ...props
 }: Props) {
   return (
     <button
       type={type}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
       className={`gsi-material-button ${fullWidth ? "gsi-material-button--block" : ""} ${className}`.trim()}
       {...props}
     >
