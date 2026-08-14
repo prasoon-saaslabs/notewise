@@ -44,9 +44,18 @@
       "hardenedRuntime": true,
       "minimumSystemVersion": "13.0",
       "dmg": {
+        "background": "icons/dmg-background.png",
         "windowSize": {
           "width": 540,
           "height": 380
+        },
+        "appPosition": {
+          "x": 130,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 410,
+          "y": 170
         }
       }
     }

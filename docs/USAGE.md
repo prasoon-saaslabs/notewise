@@ -487,7 +487,7 @@ AUTH_JWT_SECRET=generate-a-random-string
 
 7. Restart the gateway and sign in with Google.
 
-> **Desktop app (Mac):** Google sign-in opens the system browser, then returns to Notewise via `http://127.0.0.1:17654/auth/callback`. Copy the same `GOOGLE_*` and `AUTH_JWT_SECRET` values into `~/Library/Application Support/com.notewise.app/data/gateway.env` for installed builds.
+> **Desktop DMG:** `make build-dmg` copies `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` from `services/pyai-gateway/.env` into the bundled sidecar (`oauth.env`). It does **not** copy your PyAI key. Saving a PyAI key in the app no longer wipes Google settings in `gateway.env`. Rebuild the DMG after changing OAuth credentials.
 
 > **Use `127.0.0.1` consistently** — not `localhost` — to avoid OAuth redirect mismatches.
 

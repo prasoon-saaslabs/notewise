@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@notewise/ui";
+import { Button, BrandIcon } from "@notewise/ui";
 import { useNavigate } from "react-router-dom";
-import { Mic, Sparkles } from "lucide-react";
+import { Mic } from "lucide-react";
 import { api } from "../../lib/api";
 import { createAudioRecorder } from "../../lib/audio";
 import { AmbientBackdrop } from "../../components/AmbientBackdrop";
@@ -81,9 +81,10 @@ export function EnrollmentPage() {
     <div className="nw-enroll relative grid min-h-full place-items-center overflow-hidden p-6">
       <AmbientBackdrop />
       <div className="nw-page-card nw-rise relative z-10 w-full max-w-md p-8 text-center">
-        <div className="nw-brand-mark mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl shadow-[0_10px_24px_rgb(var(--nw-accent-rgb)_/_0.28)]">
-          <Sparkles className="h-5 w-5 text-white" />
-        </div>
+        <BrandIcon
+          size={48}
+          className="mx-auto mb-4 drop-shadow-[0_10px_24px_rgba(14,116,144,0.28)]"
+        />
         <p className="m-0 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-4)]">
           Voice imprint
         </p>

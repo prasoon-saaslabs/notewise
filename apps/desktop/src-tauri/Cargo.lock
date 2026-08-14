@@ -1919,6 +1919,7 @@ name = "notewise-desktop"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "cc",
  "serde",
  "serde_json",
  "tauri",

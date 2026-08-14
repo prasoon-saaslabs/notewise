@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@notewise/ui";
 import { Mic, Monitor, Sparkles } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
 import { isDesktopShell } from "../capture/desktopMiniWindow";
 import { setStoredApiBase } from "../lib/backend";
 import { DESKTOP_API_BASE } from "../lib/desktopMode";
@@ -25,6 +26,7 @@ import {
 type Phase = "boot" | "onboard" | "permissions" | "ready";
 
 export function DesktopShellGate({ children }: { children: React.ReactNode }) {
+  const { refreshProviders } = useAuth();
   const [phase, setPhase] = useState<Phase>("boot");
   const [apiKey, setApiKey] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
         }
 
         if (ready && ensured.snapshot.readyToRecord) {
+          void refreshProviders();
           setPhase("ready");
           return;
         }
@@ -79,7 +82,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
         setError(e instanceof Error ? e.message : "Could not start gateway");
       }
     })();
-  }, []);
+  }, [refreshProviders]);
 
   async function requestMic() {
     setError(null);
@@ -126,6 +129,7 @@ export function DesktopShellGate({ children }: { children: React.ReactNode }) {
         throw new Error(diagnosticsErrorMessage(diag));
       }
       setGatewayReady(true);
+      void refreshProviders();
       if (micOk) {
         setPhase("ready");
       } else {

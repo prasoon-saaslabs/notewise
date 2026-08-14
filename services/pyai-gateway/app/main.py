@@ -9,8 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load .env before Settings is used by routers
-_env = Path(__file__).resolve().parents[1] / ".env"
-load_dotenv(_env)
+_gw_root = Path(__file__).resolve().parents[1]
+load_dotenv(_gw_root / ".env")
+load_dotenv(_gw_root / "oauth.env")
 
 from app.config import settings  # noqa: E402
 from app.routes import (  # noqa: E402
