@@ -27,11 +27,11 @@ export function PhaseStepperDemo({
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold",
               active && "bg-teal-muted text-teal-hover",
-              done && !active && "bg-emerald-50 text-emerald-600",
-              !done && !active && "bg-white text-ink-muted",
+              done && !active && "bg-emerald-500/15 text-emerald-400",
+              !done && !active && "bg-paper-elevated text-ink-muted",
             )}
           >
-            <span className="grid h-4 w-4 place-items-center rounded-full bg-white/80 text-[0.55rem] font-bold">
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-paper-muted text-[0.55rem] font-bold">
               {done && !active ? "✓" : i + 1}
             </span>
             {label}

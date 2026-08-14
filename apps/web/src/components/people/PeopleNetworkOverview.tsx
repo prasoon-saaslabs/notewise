@@ -27,7 +27,7 @@ export function PeopleNetworkOverview({ entities }: { entities: EntityRecord[] }
         />
         <Link
           to="/library"
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--nw-accent-dark)] px-4 py-2.5 text-sm font-semibold text-white"
+          className="nw-btn nw-btn--primary mt-4 inline-flex items-center gap-2"
         >
           <Upload className="h-4 w-4" />
           Go to Library

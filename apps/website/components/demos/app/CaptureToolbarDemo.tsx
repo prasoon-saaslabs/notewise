@@ -24,7 +24,7 @@ export function CaptureToolbarDemo({
   return (
     <header
       className={cn(
-        "relative z-10 border-b border-white/45 bg-white/42 px-4 py-3 backdrop-blur-md",
+        "relative z-10 border-b border-border bg-paper-elevated/80 px-4 py-3 backdrop-blur-md",
         className,
       )}
     >

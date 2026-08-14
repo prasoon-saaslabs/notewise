@@ -28,7 +28,7 @@ export function ProfileSnapshotDemo({
             key={stat.label}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: p > i * 0.12 ? 1 : 0, y: p > i * 0.12 ? 0 : 8 }}
-            className="rounded-2xl border border-border bg-white/80 px-3 py-2.5"
+            className="rounded-2xl border border-border bg-paper-elevated px-3 py-2.5"
           >
             <p className="m-0 text-[0.58rem] font-bold uppercase tracking-wider text-ink-muted">
               {stat.label}
@@ -41,7 +41,7 @@ export function ProfileSnapshotDemo({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: p > 0.45 ? 1 : 0, y: p > 0.45 ? 0 : 10 }}
-        className="overflow-hidden rounded-2xl border border-teal/15 bg-gradient-to-br from-teal-subtle/70 to-white"
+        className="overflow-hidden rounded-2xl border border-teal/15 bg-gradient-to-br from-teal-subtle to-paper-elevated"
       >
         <div className="flex items-center justify-between gap-2 border-b border-teal/10 px-3 py-2.5">
           <div className="flex items-center gap-2">
