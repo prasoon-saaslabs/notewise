@@ -538,6 +538,8 @@ export function LibraryPage() {
                     title="Regenerate with AI"
                     onClick={() => {
                       setRegenError(null);
+                      setRegenTriggered(true);
+                      setRegenReason("regenerate");
                       refreshNotes.mutate({ mid: meeting.id });
                     }}
                   >
@@ -753,6 +755,8 @@ export function LibraryPage() {
                       localStorage.setItem("og-mode-id", next);
                       setModeError(null);
                       if (canRegenerateFromTranscript) {
+                        setRegenTriggered(true);
+                        setRegenReason("mode-change");
                         refreshNotes.mutate({ mid: meeting.id, modeId: next });
                         return;
                       }

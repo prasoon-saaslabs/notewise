@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import { UserAvatar } from "./UserAvatar";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
@@ -20,7 +21,6 @@ export function UserMenu() {
 
   if (!user) return null;
 
-  const initial = (user.name || user.email || "?").charAt(0).toUpperCase();
   const providerLabel =
     user.provider === "google" ? "Google" : user.provider === "guest" ? "Guest" : user.provider;
 
@@ -38,17 +38,13 @@ export function UserMenu() {
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        {user.picture ? (
-          <img
-            src={user.picture}
-            alt=""
-            className="h-7 w-7 rounded-lg object-cover"
-          />
-        ) : (
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-[var(--nw-accent-soft)] text-xs font-bold text-[var(--nw-accent-dark)]">
-            {initial}
-          </span>
-        )}
+        <UserAvatar
+          name={user.name}
+          email={user.email}
+          picture={user.picture}
+          className="h-7 w-7 rounded-lg object-cover"
+          initialsClassName="text-xs"
+        />
         <span className="hidden max-w-[7rem] truncate text-xs font-semibold text-[var(--nw-ink-2)] sm:inline">
           {user.name}
         </span>

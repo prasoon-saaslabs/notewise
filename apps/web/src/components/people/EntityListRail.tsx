@@ -74,7 +74,6 @@ export function EntityListRail({
         {sorted.map((e) => {
           const active = selectedId === e.id;
           const Icon = e.kind === "company" ? Building2 : UserRound;
-          const meetings = e.meetingIds?.length ?? 0;
           const open = e.openItemCount ?? 0;
 
           return (
@@ -105,11 +104,6 @@ export function EntityListRail({
                       <span className="text-[0.58rem] uppercase tracking-wide text-[var(--nw-ink-4)]">
                         {e.kind}
                       </span>
-                      {meetings > 0 ? (
-                        <span className="rounded-full bg-[var(--nw-surface-solid)] px-1.5 py-px text-[0.58rem] font-semibold text-[var(--nw-ink-3)] ring-1 ring-[var(--nw-border)]">
-                          {meetings} mtg{meetings === 1 ? "" : "s"}
-                        </span>
-                      ) : null}
                       {open > 0 ? (
                         <span className="rounded-full bg-[rgb(254_243_199)] px-1.5 py-px text-[0.58rem] font-semibold text-[rgb(146_64_14)] ring-1 ring-[rgb(251_191_36_/_0.35)]">
                           {open} open
