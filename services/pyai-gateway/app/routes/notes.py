@@ -11,6 +11,7 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 
 class RegenerateBody(BaseModel):
     userNotes: str | None = None
+    modeId: str | None = None
 
 
 @router.get("/{meeting_id}")
@@ -30,6 +31,7 @@ async def regenerate(meeting_id: str, body: RegenerateBody | None = None):
         result = await regenerate_notes(
             meeting_id,
             user_notes=body.userNotes if body else None,
+            mode_id=body.modeId if body else None,
         )
         return result
     except Exception as e:

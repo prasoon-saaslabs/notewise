@@ -5,8 +5,9 @@ import logging
 from typing import Any
 
 from app.config import settings
+from app.modes import pack_id_for_mode
 from app.pyai.client import PyAIError, pyai_request
-from app.pyai.recap_utterances import fold_user_notes_into_utterances, fresh_recap_call_id
+from app.pyai.recap_utterances import fold_user_notes_into_utterances
 from app.store.models import ActionItem, NotesPayload
 
 log = logging.getLogger("pyai.recap")
@@ -41,30 +42,31 @@ async def submit_utterances(
     customer_name: str | None = None,
     user_notes: str | None = None,
     pack_id: str | None = None,
+    mode_id: str | None = None,
 ) -> dict[str, Any]:
     await ensure_recap_config()
+    if pack_id is not None:
+        resolved_pack = pack_id.strip() or None
+    else:
+        resolved_pack = pack_id_for_mode(mode_id)
+    payload_utterances = fold_user_notes_into_utterances(utterances, user_notes)
     payload: dict[str, Any] = {
         "call_direction": "inbound",
-        "pack_id": pack_id or settings.recap_pack_id,
-        "utterances": utterances,
+        "utterances": payload_utterances,
     }
+    if resolved_pack:
+        payload["pack_id"] = resolved_pack
     if customer_name:
         payload["customer_name"] = customer_name
-    payload["utterances"] = fold_user_notes_into_utterances(utterances, user_notes)
-    if not payload["utterances"]:
-        raise PyAIError("No utterances for Recap")
-    posted_id = call_id
-    try:
-        result = await pyai_request("POST", f"/recap/calls/{posted_id}", json=payload)
-    except PyAIError as e:
-        if e.status != 409:
-            raise
-        posted_id = fresh_recap_call_id(call_id)
-        log.info("Recap 409 for existing call, retrying as %s", posted_id)
-        result = await pyai_request("POST", f"/recap/calls/{posted_id}", json=payload)
-    out = result if isinstance(result, dict) else {}
-    out["call_id"] = posted_id
-    return out
+    log.info(
+        "Recap submit call_id=%s pack_id=%s mode_id=%s utterances=%d",
+        call_id,
+        resolved_pack or "(pyai-default)",
+        mode_id,
+        len(payload_utterances),
+    )
+    result = await pyai_request("POST", f"/recap/calls/{call_id}", json=payload)
+    return result if isinstance(result, dict) else {"call_id": call_id}
 
 
 async def get_recap(call_id: str) -> dict[str, Any]:

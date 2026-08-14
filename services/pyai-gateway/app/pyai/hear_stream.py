@@ -11,28 +11,29 @@ import websockets
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
 from app.config import settings
+from app.modes import pack_id_for_mode
 from app.pyai.client import require_api_key
 from app.store.file_store import store
 
 log = logging.getLogger("pyai.hear_stream")
 
 
-def hear_stream_url(*, call_id: str, language: str = "en", channels: int = 1) -> str:
+def hear_stream_url(*, call_id: str, language: str = "en", channels: int = 1, pack_id: str | None = None) -> str:
     base = settings.pyai_base_url.replace("https://", "wss://").replace("http://", "ws://")
-    qs = urlencode(
-        {
-            "protocol": "pyai-hear-v1",
-            "model": "pyai-hear",
-            "language": language,
-            "sample_rate": "16000",
-            "encoding": "pcm16",
-            "channels": str(2 if channels == 2 else 1),
-            "interim_results": "true",
-            "endpointing_ms": "800",
-            "call_id": call_id,
-            "pack_id": settings.recap_pack_id,
-        }
-    )
+    params: dict[str, str] = {
+        "protocol": "pyai-hear-v1",
+        "model": "pyai-hear",
+        "language": language,
+        "sample_rate": "16000",
+        "encoding": "pcm16",
+        "channels": str(2 if channels == 2 else 1),
+        "interim_results": "true",
+        "endpointing_ms": "800",
+        "call_id": call_id,
+    }
+    if pack_id:
+        params["pack_id"] = pack_id
+    qs = urlencode(params)
     return f"{base}/audio/transcriptions/stream?{qs}"
 
 
@@ -51,6 +52,8 @@ async def proxy_hear_stream(client_ws: WebSocket, session_id: str) -> None:
 
     meeting = store.get_meeting(session.meetingId)
     call_id = (meeting.callId if meeting else None) or session.meetingId
+    mode_id = session.modeId or (meeting.modeId if meeting else None)
+    recap_pack_id = pack_id_for_mode(mode_id)
 
     try:
         api_key = require_api_key()
@@ -61,8 +64,14 @@ async def proxy_hear_stream(client_ws: WebSocket, session_id: str) -> None:
 
     # Auth via Authorization header only — never put the key in the URL (logs/exceptions).
     channels = 2 if session.channelMode == "stereo" else 1
-    url = hear_stream_url(call_id=call_id, channels=channels)
-    log.info("Hear stream connect session=%s call_id=%s channels=%s", session_id, call_id, channels)
+    url = hear_stream_url(call_id=call_id, channels=channels, pack_id=recap_pack_id)
+    log.info(
+        "Hear stream connect session=%s call_id=%s channels=%s pack_id=%s",
+        session_id,
+        call_id,
+        channels,
+        recap_pack_id or "(pyai-default)",
+    )
 
     try:
         async with websockets.connect(

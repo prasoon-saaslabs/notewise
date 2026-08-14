@@ -59,15 +59,18 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
   const { openBrain } = useMeetingBrain();
   const briefQ = useEntityBrief(entityId);
   const detailQ = useEntityDetail(entityId);
-  const narrativeQ = useEntityNarrative(entityId, briefQ.isSuccess);
   const [quickAnswer, setQuickAnswer] = useState<AskResponse | null>(null);
   const [quickBusy, setQuickBusy] = useState(false);
 
   const brief = briefQ.data;
   const detail = detailQ.data;
   const name = detail?.name || brief?.entity.name || "Contact";
+  const meetingCount = brief?.meetingCount ?? detail?.timeline?.length ?? 0;
+
+  const narrativeQ = useEntityNarrative(entityId, meetingCount);
 
   async function runQuickAsk(question: string) {
+    if (meetingCount === 0) return;
     setQuickBusy(true);
     try {
       const res = await api.ask(question, entityId);
@@ -115,7 +118,13 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
         title="Relationship brief"
         subtitle="Synthesized from transcripts, notes, and commitments across your meetings"
       >
-        {narrativeQ.isLoading ? <AiShimmer rows={4} /> : <NarrativeBody narrative={narrativeQ.data} />}
+        {meetingCount === 0 ? (
+          <NarrativeBody narrative={undefined} />
+        ) : narrativeQ.isLoading ? (
+          <AiShimmer rows={4} />
+        ) : (
+          <NarrativeBody narrative={narrativeQ.data} />
+        )}
       </AiSurface>
 
       {brief?.lastMeeting?.recap ? (
@@ -167,7 +176,7 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
               <button
                 key={q}
                 type="button"
-                disabled={quickBusy}
+                disabled={quickBusy || meetingCount === 0}
                 onClick={() => void runQuickAsk(q)}
                 className="rounded-full bg-[var(--nw-surface-solid)] px-3 py-1.5 text-xs font-semibold text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] transition hover:bg-[var(--nw-accent-soft)] hover:text-[var(--nw-accent-dark)] disabled:opacity-60"
               >
@@ -182,6 +191,10 @@ export function EntityIntelligencePanel({ entityId }: { entityId: string }) {
           <AiShimmer rows={2} />
         ) : quickAnswer?.answer?.length ? (
           <AiBulletList items={quickAnswer.answer.map((a) => a.text)} />
+        ) : meetingCount === 0 ? (
+          <p className="m-0 text-sm text-[var(--nw-ink-3)]">
+            Record a meeting with this contact to unlock quick intelligence.
+          </p>
         ) : (
           <p className="m-0 text-sm text-[var(--nw-ink-3)]">
             Pick a question above to generate a focused answer from your meeting brain.

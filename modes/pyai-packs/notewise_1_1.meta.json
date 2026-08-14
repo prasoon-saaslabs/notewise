@@ -1,0 +1,13 @@
+{
+  "notewise_mode_id": "1-1",
+  "notewise_mode_name": "1:1",
+  "prompt": "You are extracting notes from a manager-report 1:1.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (concerns, blockers)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: a short recap the manager can send\n- summary: wellbeing, priorities, blockers, career\nEvery claim MUST cite transcript lineIds that prove it.",
+  "schema": {
+    "decisions": true,
+    "objections": true,
+    "actions": true,
+    "followUpEmail": true,
+    "blockers": true,
+    "career": true
+  }
+}

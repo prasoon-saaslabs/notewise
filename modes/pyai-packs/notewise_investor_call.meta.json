@@ -1,0 +1,13 @@
+{
+  "notewise_mode_id": "investor-call",
+  "notewise_mode_name": "Investor call",
+  "prompt": "You are extracting notes from a founder-investor call.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (dilution, traction, market, team, round timing)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: a short draft the founder can send\n- summary: 2-4 sentences covering ask, interest, next step\nEvery claim MUST cite transcript lineIds that prove it.",
+  "schema": {
+    "decisions": true,
+    "objections": true,
+    "actions": true,
+    "followUpEmail": true,
+    "ask": true,
+    "interest": true
+  }
+}

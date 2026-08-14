@@ -1,46 +1,87 @@
-import { useEffect, useState } from "react";
-import { Briefcase, ChevronDown, Plus, Sparkles, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ChevronDown, Plus, Sparkles, Users } from "lucide-react";
 import { api } from "../lib/api";
-import type { EntityRecord, MeetingMode } from "@notewise/api-client";
+import type { EntityRecord, NotesPayload } from "@notewise/api-client";
 import type { ProcessPhase } from "../hooks/useRecorder";
 import { PreCallBriefCard } from "./PreCallBriefCard";
 import { CreateEntityModal } from "./people/CreateEntityModal";
+import { MeetingModePicker } from "./MeetingModePicker";
+import { RegeneratingNotes } from "./RegeneratingNotes";
+import { modeHint, FALLBACK_MEETING_MODES, DEFAULT_MEETING_MODE_ID } from "../lib/meetingModes";
+import { useRegeneratingOverlay } from "../hooks/useRegeneratingOverlay";
 
-const MODE_HINTS: Record<string, string> = {
-  "sales-discovery": "Objections, budget, next steps",
-  "1-1": "Blockers, career, manager recap",
-  standup: "Yesterday / today / blockers",
-  "investor-call": "Ask, traction, round timing",
-};
+async function pollMeetingNotes(
+  meetingId: string,
+  onUpdate: (detail: {
+    transcript?: Array<{
+      id: string;
+      speaker: string;
+      kind: string;
+      text: string;
+    }>;
+    notes?: NotesPayload | null;
+  }) => void,
+) {
+  for (let i = 0; i < 120; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const detail = await api.getMeeting(meetingId);
+    if (detail.status === "ready" || detail.status === "failed") {
+      onUpdate(detail);
+      return detail;
+    }
+  }
+  throw new Error("Regeneration timed out — check Library");
+}
 
 export function RecordIntelligencePanel({
   sessionLive,
   phase,
   hasNotes,
+  meetingId,
+  sessionId,
+  userNotes,
+  onNotesUpdated,
+  onRegeneratingChange,
 }: {
   sessionLive: boolean;
   phase: ProcessPhase;
   hasNotes: boolean;
   meetingId?: string | null;
+  sessionId?: string | null;
+  userNotes?: string;
+  onNotesUpdated?: (detail: {
+    transcript?: Array<{
+      id: string;
+      speaker: string;
+      kind: string;
+      text: string;
+    }>;
+    notes?: NotesPayload | null;
+  }) => void;
+  onRegeneratingChange?: (active: boolean) => void;
 }) {
   const [open, setOpen] = useState(true);
-  const [modes, setModes] = useState<MeetingMode[]>([]);
   const [modeId, setModeId] = useState(
-    () => localStorage.getItem("og-mode-id") || "sales-discovery"
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID,
   );
+  const [modePending, setModePending] = useState(false);
+  const showRegenOverlay = useRegeneratingOverlay(modePending);
+  const activeModeName =
+    FALLBACK_MEETING_MODES.find((m) => m.id === modeId)?.name ?? modeId;
+
+  useEffect(() => {
+    onRegeneratingChange?.(showRegenOverlay);
+  }, [showRegenOverlay, onRegeneratingChange]);
+  const [modeError, setModeError] = useState<string | null>(null);
   const [entities, setEntities] = useState<EntityRecord[]>([]);
   const [entityId, setEntityId] = useState(
-    () => localStorage.getItem("og-entity-id") || ""
+    () => localStorage.getItem("og-entity-id") || "",
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [createPending, setCreatePending] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
-    void api
-      .listModes()
-      .then(setModes)
-      .catch(() => undefined);
     void api
       .listEntities()
       .then(setEntities)
@@ -54,16 +95,72 @@ export function RecordIntelligencePanel({
   }, [sessionLive]);
 
   useEffect(() => {
-    if (phase === "ready" || hasNotes) {
-      setOpen(false);
-    }
-  }, [phase, hasNotes]);
+    if (!meetingId) return;
+    void api
+      .getMeeting(meetingId)
+      .then((m) => {
+        if (m.modeId) {
+          setModeId(m.modeId);
+          localStorage.setItem("og-mode-id", m.modeId);
+        }
+      })
+      .catch(() => undefined);
+  }, [meetingId]);
 
-  const modeList = modes.length
-    ? modes
-    : [{ id: "sales-discovery", name: "Sales discovery" }];
-  const activeMode = modeList.find((m) => m.id === modeId) ?? modeList[0];
-  const optionsLocked = sessionLive;
+  const canRegenerate =
+    Boolean(meetingId) &&
+    (phase === "ready" || hasNotes) &&
+    !sessionLive;
+
+  const handleModeChange = useCallback(
+    async (nextModeId: string) => {
+      if (nextModeId === modeId || modePending) return;
+      setModeId(nextModeId);
+      localStorage.setItem("og-mode-id", nextModeId);
+      setModeError(null);
+
+      try {
+        if (sessionLive && sessionId) {
+          await api.updateSessionMode(sessionId, nextModeId);
+          return;
+        }
+
+        if (!meetingId) return;
+
+        if (canRegenerate) {
+          setModePending(true);
+          await api.regenerateNotes(meetingId, {
+            modeId: nextModeId,
+            userNotes: userNotes ?? undefined,
+          });
+          await pollMeetingNotes(meetingId, (detail) => {
+            onNotesUpdated?.(detail);
+          });
+          return;
+        }
+
+        await api.updateMeeting(meetingId, { modeId: nextModeId });
+      } catch (err) {
+        setModeError(
+          err instanceof Error ? err.message : "Could not update meeting mode",
+        );
+      } finally {
+        setModePending(false);
+      }
+    },
+    [
+      modeId,
+      modePending,
+      sessionLive,
+      sessionId,
+      meetingId,
+      canRegenerate,
+      userNotes,
+      onNotesUpdated,
+    ],
+  );
+
+  const optionsLocked = false;
 
   const pillClass = (active: boolean) =>
     `rounded-full px-3 py-1.5 text-xs font-semibold transition backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-55 ${
@@ -72,7 +169,7 @@ export function RecordIntelligencePanel({
         : "bg-[var(--nw-glass-bg)] text-[var(--nw-ink-2)] ring-1 ring-[var(--nw-border)] hover:bg-[rgb(var(--nw-accent-rgb)_/_0.08)] disabled:hover:bg-[var(--nw-glass-bg)]"
     }`;
 
-  const collapsedSubtitle = `${activeMode?.name ?? "Meeting mode"}${
+  const collapsedSubtitle = `${modeHint(modeId)}${
     entityId
       ? ` · ${entities.find((e) => e.id === entityId)?.name ?? "Contact"}`
       : ""
@@ -122,7 +219,13 @@ export function RecordIntelligencePanel({
             AI workspace
           </p>
           <p className="m-0 text-[0.68rem] text-[var(--nw-ink-3)]">
-            {open ? "Set context before you record" : collapsedSubtitle}
+            {open
+              ? sessionLive
+                ? "Mode applies to this capture"
+                : hasNotes
+                  ? "Change mode to regenerate notes"
+                  : "Set context before you record"
+              : collapsedSubtitle}
           </p>
         </div>
         <ChevronDown
@@ -135,38 +238,26 @@ export function RecordIntelligencePanel({
 
       {open ? (
         <div className="flex flex-col gap-4 p-4">
-          <div>
-            <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
-              <Briefcase className="h-3.5 w-3.5" />
-              Meeting mode
+          <MeetingModePicker
+            value={modeId}
+            onChange={(next) => void handleModeChange(next)}
+            disabled={optionsLocked}
+            pending={showRegenOverlay}
+          />
+          {showRegenOverlay && canRegenerate ? (
+            <div className="mt-3">
+              <RegeneratingNotes
+                active
+                modeName={activeModeName}
+                reason="mode-change"
+              />
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {modeList.map((m) => {
-                const active = m.id === modeId;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    disabled={optionsLocked}
-                    onClick={() => {
-                      setModeId(m.id);
-                      localStorage.setItem("og-mode-id", m.id);
-                    }}
-                    className={pillClass(active)}
-                  >
-                    {m.name}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-2 m-0 text-[0.72rem] leading-relaxed text-[var(--nw-ink-3)]">
-              Shapes PyAI Recap after Stop —{" "}
-              <span className="font-medium text-[var(--nw-ink-2)]">
-                {MODE_HINTS[activeMode?.id ?? ""] ||
-                  "Summary, actions, objections"}
-              </span>
+          ) : null}
+          {modeError ? (
+            <p className="m-0 text-[0.72rem] text-[var(--nw-danger)]" role="alert">
+              {modeError}
             </p>
-          </div>
+          ) : null}
 
           <div>
             <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
@@ -176,7 +267,7 @@ export function RecordIntelligencePanel({
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
-                disabled={optionsLocked}
+                disabled={sessionLive}
                 onClick={() => {
                   setEntityId("");
                   localStorage.removeItem("og-entity-id");
@@ -191,7 +282,7 @@ export function RecordIntelligencePanel({
                   <button
                     key={e.id}
                     type="button"
-                    disabled={optionsLocked}
+                    disabled={sessionLive}
                     onClick={() => {
                       setEntityId(e.id);
                       localStorage.setItem("og-entity-id", e.id);
@@ -204,7 +295,7 @@ export function RecordIntelligencePanel({
               })}
               <button
                 type="button"
-                disabled={optionsLocked}
+                disabled={sessionLive}
                 onClick={() => {
                   setCreateError(null);
                   setCreateOpen(true);
