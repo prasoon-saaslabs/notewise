@@ -19,9 +19,7 @@ import {
 } from "../../lib/meetingsCatalog";
 import { MeetingNotesIntelligence } from "../../components/MeetingNotesIntelligence";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
-import {
-  usePersistedUserNotes,
-} from "../../components/notes/usePersistedUserNotes";
+import { usePersistedUserNotes } from "../../components/notes/usePersistedUserNotes";
 import { api } from "../../lib/api";
 import { formatMeetingListWhen, formatWhen } from "../../lib/calendarFormat";
 import { ensureDesktopGateway } from "../../lib/desktopGateway";
@@ -89,12 +87,12 @@ export function LibraryPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [q, setQ] = useState("");
   const [modeId, setModeId] = useState(
-    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID,
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID
   );
   const [modeError, setModeError] = useState<string | null>(null);
   const [regenTriggered, setRegenTriggered] = useState(false);
   const [regenReason, setRegenReason] = useState<"regenerate" | "mode-change">(
-    "regenerate",
+    "regenerate"
   );
   const [notesRevealKey, setNotesRevealKey] = useState(0);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
@@ -106,7 +104,7 @@ export function LibraryPage() {
         const diag = await ensureDesktopGateway();
         if (!diag.reachable) {
           throw new Error(
-            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support.",
+            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support."
           );
         }
       }
@@ -147,7 +145,7 @@ export function LibraryPage() {
   const meetingBackend: MeetingBackend =
     meeting?.backend === "pyai" || meeting?.backend === "nest"
       ? meeting.backend
-      : (selectedBackend ?? "nest");
+      : selectedBackend ?? "nest";
 
   const remove = useMutation({
     mutationFn: (mid: string) =>
@@ -199,7 +197,7 @@ export function LibraryPage() {
       void qc.setQueryData(
         ["meeting", meetingBackend, selectedId],
         (prev: typeof detail.data | undefined) =>
-          prev ? { ...prev, status: "processing" as const } : prev,
+          prev ? { ...prev, status: "processing" as const } : prev
       );
     },
     onSuccess: (data) => {
@@ -219,7 +217,7 @@ export function LibraryPage() {
                 notes: data.notes ?? prev.notes,
                 snippet: snippet ?? prev.snippet,
               }
-            : prev,
+            : prev
       );
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
@@ -274,7 +272,7 @@ export function LibraryPage() {
 
   const canRegenerate = meetingCanRegenerate(
     meeting?.status,
-    meeting?.transcript?.length ?? 0,
+    meeting?.transcript?.length ?? 0
   );
   const canRegenerateFromTranscript = (meeting?.transcript?.length ?? 0) > 0;
   const isRegeneratingRaw = refreshNotes.isPending || regenTriggered;
@@ -358,8 +356,8 @@ export function LibraryPage() {
             {list.isError
               ? "Could not load meetings"
               : isDesktopPyaiOnly()
-                ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
-                : `${meetings.length} across Nest & PyAI`}
+              ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
+              : `${meetings.length} across Nest & PyAI`}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
@@ -370,8 +368,8 @@ export function LibraryPage() {
                 list.error instanceof Error
                   ? list.error.message
                   : isDesktopPyaiOnly()
-                    ? "Start the local PyAI gateway (port 3002), then refresh."
-                    : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
+                  ? "Start the local PyAI gateway (port 3002), then refresh."
+                  : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
               }
               compact
             />
@@ -466,7 +464,7 @@ export function LibraryPage() {
                     className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 text-left transition hover:bg-[var(--nw-surface-2)]"
                     onClick={() => {
                       setTitleDraft(
-                        meeting.title || displayMeetingTitle(meeting),
+                        meeting.title || displayMeetingTitle(meeting)
                       );
                       setEditingTitle(true);
                     }}
@@ -600,7 +598,7 @@ export function LibraryPage() {
                                   [JSON.stringify(data, null, 2)],
                                   {
                                     type: "application/json",
-                                  },
+                                  }
                                 );
                                 const a = document.createElement("a");
                                 a.href = URL.createObjectURL(blob);
@@ -707,8 +705,8 @@ export function LibraryPage() {
                           active
                             ? "font-semibold text-[var(--nw-accent-dark)]"
                             : done
-                              ? "text-[var(--nw-success)]"
-                              : "text-[var(--nw-ink-4)]"
+                            ? "text-[var(--nw-success)]"
+                            : "text-[var(--nw-ink-4)]"
                         }`}
                       >
                         <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[0.65rem]">
@@ -763,9 +761,9 @@ export function LibraryPage() {
                         {
                           onError: (err: Error) =>
                             setModeError(
-                              err.message || "Could not update meeting mode",
+                              err.message || "Could not update meeting mode"
                             ),
-                        },
+                        }
                       );
                     }}
                   />
