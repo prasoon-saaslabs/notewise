@@ -8,6 +8,15 @@ def _expand(path: str) -> Path:
     return Path(os.path.expanduser(path)).resolve()
 
 
+def _sqlite_path(data_dir: Path) -> Path:
+    """Notewise SQLite file. Keep using a leftover opengranola.sqlite if that is all that exists."""
+    current = data_dir / "notewise.sqlite"
+    legacy = data_dir / "opengranola.sqlite"
+    if current.exists() or not legacy.exists():
+        return current
+    return legacy
+
+
 class Settings:
     def __init__(self) -> None:
         self.pyai_api_key: str = (os.getenv("PYAI_API_KEY") or "").strip()
@@ -41,7 +50,7 @@ class Settings:
         self.data_dir: Path = _expand(data)
         self.uploads_dir: Path = self.data_dir / "uploads"
         self.store_path: Path = self.data_dir / "store.json"
-        self.sqlite_path: Path = self.data_dir / "opengranola.sqlite"
+        self.sqlite_path: Path = _sqlite_path(self.data_dir)
 
         margin = os.getenv("MARGIN_DIR") or str(Path.home() / "Margin")
         self.margin_dir: Path = _expand(margin)

@@ -1,4 +1,5 @@
 import { Github, Heart, Scale } from "lucide-react";
+import { GITHUB_URL } from "../lib/siteConfig";
 
 export function OpenSourcePage() {
   return (
@@ -47,7 +48,7 @@ export function OpenSourcePage() {
 
       <div className="mt-10 flex flex-wrap gap-3">
         <a
-          href="https://github.com"
+          href={GITHUB_URL}
           className="inline-flex items-center gap-2 rounded-xl bg-[var(--nw-ink)] px-5 py-3 text-sm font-semibold text-white"
           target="_blank"
           rel="noreferrer"

@@ -1,6 +1,6 @@
 //! Native mic/system capture for macOS desktop.
 //!
-//! System audio uses ScreenCaptureKit via a Swift bridge (no browser share picker).
+//! System audio uses ScreenCaptureKit via an Objective-C bridge (no browser share picker).
 //! Mic stays in the webview via getUserMedia; system PCM streams over Tauri events.
 
 use serde::Serialize;
