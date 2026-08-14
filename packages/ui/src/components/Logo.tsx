@@ -1,7 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import clsx from "clsx";
+import { BrandIcon } from "./BrandIcon";
 
 export type LogoMarkProps = {
   className?: string;
@@ -10,33 +10,17 @@ export type LogoMarkProps = {
   title?: string;
 };
 
-/** Teal gradient tile + sparkles — matches AppShell brand mark */
+/** Notewise brand mark — scalable app-icon SVG. */
 export function LogoMark({ className, size = 36, title }: LogoMarkProps) {
-  const iconSize = Math.max(14, Math.round(size * 0.44));
-  const radius = Math.max(10, Math.round(size * 0.28));
-
   return (
-    <span
+    <BrandIcon
+      size={size}
+      title={title}
       className={clsx(
-        "nw-brand-mark grid shrink-0 place-items-center shadow-[0_6px_16px_rgb(14_116_144_/_0.25)]",
+        "drop-shadow-[0_6px_14px_rgba(14,116,144,0.28)]",
         className,
       )}
-      style={{
-        width: size,
-        height: size,
-        minWidth: size,
-        minHeight: size,
-        borderRadius: radius,
-      }}
-      title={title}
-      aria-hidden={title ? undefined : true}
-    >
-      <Sparkles
-        className="shrink-0 text-white"
-        style={{ width: iconSize, height: iconSize }}
-        strokeWidth={2}
-      />
-    </span>
+    />
   );
 }
 

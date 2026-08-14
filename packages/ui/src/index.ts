@@ -2,6 +2,8 @@ export { Button } from "./components/Button";
 export type { ButtonProps } from "./components/Button";
 export { Logo, LogoMark } from "./components/Logo";
 export type { LogoProps, LogoMarkProps } from "./components/Logo";
+export { BrandIcon } from "./components/BrandIcon";
+export type { BrandIconProps } from "./components/BrandIcon";
 export { SpeakerChip } from "./components/SpeakerChip";
 export type { SpeakerChipProps } from "./components/SpeakerChip";
 export { EmptyState } from "./components/EmptyState";

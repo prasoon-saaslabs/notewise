@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
-import { Github, Menu, Sparkles, X } from "lucide-react";
+import { Github, Menu, X } from "lucide-react";
+import { BrandIcon } from "@notewise/ui";
 import { GITHUB_URL } from "../lib/siteConfig";
 
 const NAV = [
@@ -19,9 +20,10 @@ export function SiteShell() {
       <header className="sticky top-0 z-50 border-b border-[var(--nw-border)] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--nw-accent)] text-white shadow-[0_6px_16px_rgb(14_116_144_/_0.25)]">
-              <Sparkles className="h-4 w-4" />
-            </span>
+            <BrandIcon
+              size={36}
+              className="drop-shadow-[0_6px_16px_rgba(14,116,144,0.25)]"
+            />
             <span className="text-sm font-bold tracking-tight">Notewise</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
