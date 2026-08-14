@@ -4,6 +4,7 @@ import { Button } from "@notewise/ui";
 import { Brain, Calendar, FileText, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { AppBrand } from "../../components/AppBrand";
+import { GoogleSignInButton } from "../../components/GoogleSignInButton";
 import { ThemePicker } from "../../components/ThemePicker";
 import { consumeAuthReturnPath, setAuthReturnPath } from "../../lib/authFlow";
 import { isDesktopShell } from "../../capture/desktopMiniWindow";
@@ -102,22 +103,18 @@ export function LoginPage() {
           </ul>
 
           <div className="flex flex-col gap-3">
-            <Button
-              variant="primary"
-              size="lg"
+            <GoogleSignInButton
               disabled={
                 busy || browserAuthPending || googleUnknown || !googleEnabled
               }
               onClick={() => void continueGoogle()}
-              className="justify-center"
             >
-              <Calendar className="h-4 w-4" />
               {browserAuthPending
                 ? "Waiting for browser…"
                 : googleUnknown
-                ? "Checking Google…"
-                : "Continue with Google"}
-            </Button>
+                  ? "Checking Google…"
+                  : "Sign in with Google"}
+            </GoogleSignInButton>
             {browserAuthPending ? (
               <p className="m-0 text-xs text-[var(--nw-accent-dark)]">
                 Finish sign-in in your default browser, then return here —
