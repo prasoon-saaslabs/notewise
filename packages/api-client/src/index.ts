@@ -338,17 +338,28 @@ export class NotewiseApiClient {
 
   createLocalSession(
     title?: string,
-    opts?: { modeId?: string; channelMode?: string; calendarEventId?: string }
+    opts?: {
+      name?: string;
+      userNotes?: string;
+      modeId?: string;
+      channelMode?: string;
+      calendarEventId?: string;
+    }
   ) {
+    const body: Record<string, string | undefined> = {
+      source: "local",
+      name: opts?.name,
+      title,
+      modeId: opts?.modeId,
+      channelMode: opts?.channelMode,
+      calendarEventId: opts?.calendarEventId,
+    };
+    if (opts?.userNotes != null && opts.userNotes.trim()) {
+      body.userNotes = opts.userNotes;
+    }
     return this.request<CreateSessionResponse>("/sessions", {
       method: "POST",
-      body: JSON.stringify({
-        source: "local",
-        title,
-        modeId: opts?.modeId,
-        channelMode: opts?.channelMode,
-        calendarEventId: opts?.calendarEventId,
-      }),
+      body: JSON.stringify(body),
     });
   }
 
@@ -570,6 +581,29 @@ export class NotewiseApiClient {
 
   listEntities() {
     return this.request<EntityRecord[]>("/entities");
+  }
+
+  createEntity(body: {
+    name: string;
+    kind?: EntityRecord["kind"];
+    company?: string | null;
+  }) {
+    const name = body.name.trim();
+    if (!name) return Promise.reject(new Error("Name is required"));
+    return this.request<EntityRecord>("/entities", {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        kind: body.kind ?? "person",
+        company: body.company?.trim() || null,
+      }),
+    });
+  }
+
+  deleteEntity(id: string) {
+    return this.request<void>(`/entities/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   }
 
   getEntity(id: string) {

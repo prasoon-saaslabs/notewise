@@ -186,6 +186,7 @@ class SqliteStore:
         capture_backend: str | None = None,
         user_id: str | None = None,
         calendar_event_id: str | None = None,
+        user_notes_draft: str | None = None,
     ) -> tuple[Session, Meeting]:
         with self._lock:
             sid = str(uuid4())
@@ -204,6 +205,7 @@ class SqliteStore:
                 modeId=mode_id,
                 captureBackend=capture_backend,
                 calendarEventId=calendar_event_id,
+                userNotesDraft=user_notes_draft,
             )
             session = Session(
                 id=sid,
@@ -401,6 +403,23 @@ class SqliteStore:
                 "SELECT payload FROM entities ORDER BY name COLLATE NOCASE"
             ).fetchall()
             return [Entity.model_validate_json(r["payload"]) for r in rows]
+
+    def delete_entity(self, entity_id: str) -> bool:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT 1 FROM entities WHERE id = ?", (entity_id,)
+            ).fetchone()
+            if not row:
+                return False
+            self._conn.execute(
+                "DELETE FROM entity_mentions WHERE entity_id = ?", (entity_id,)
+            )
+            self._conn.execute(
+                "DELETE FROM commitments WHERE entity_id = ?", (entity_id,)
+            )
+            self._conn.execute("DELETE FROM entities WHERE id = ?", (entity_id,))
+            self._conn.commit()
+            return True
 
     def find_entity(self, *, name: str, company: str | None = None) -> Entity | None:
         name_l = name.strip().lower()

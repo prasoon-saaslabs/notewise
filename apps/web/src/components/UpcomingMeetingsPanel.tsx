@@ -5,7 +5,7 @@ import { ArrowRight, Calendar, Sparkles } from "lucide-react";
 import type { CalendarEventSummary } from "@notewise/api-client";
 import { api } from "../lib/api";
 import { useAuth } from "../auth/AuthContext";
-import { formatWhen, isUpcoming, minsUntil } from "../lib/calendarFormat";
+import { formatWhen, formatTimeUntil, isUpcoming } from "../lib/calendarFormat";
 
 export function UpcomingMeetingsPanel() {
   const { user } = useAuth();
@@ -73,7 +73,7 @@ export function UpcomingMeetingsPanel() {
 }
 
 function NextMeetingCard({ event }: { event: CalendarEventSummary }) {
-  const mins = minsUntil(event.startAt);
+  const until = formatTimeUntil(event.startAt);
 
   return (
     <div className="rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] px-3 py-2.5">
@@ -81,7 +81,7 @@ function NextMeetingCard({ event }: { event: CalendarEventSummary }) {
       <p className="m-0 mt-0.5 flex items-center gap-1 text-xs text-[var(--nw-ink-3)]">
         <Calendar className="h-3 w-3" />
         {formatWhen(event.startAt)}
-        {mins > 0 ? ` · in ${mins} min` : " · soon"}
+        {until ? ` · in ${until}` : " · soon"}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Link

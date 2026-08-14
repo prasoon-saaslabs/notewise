@@ -1,0 +1,47 @@
+/* Theme palettes — applied via data-theme on <html> (matches apps/web) */
+
+[data-theme="ocean-mist"] {
+  color-scheme: light;
+}
+
+[data-theme="carbon-blue"] {
+  color-scheme: dark;
+  --nw-ink: #e8eef8;
+  --nw-ink-2: #b8c8de;
+  --nw-ink-3: #8fa8c4;
+  --nw-ink-4: #6888a8;
+  --nw-paper: #0a0f18;
+  --nw-surface: #111827;
+  --nw-surface-solid: #111827;
+  --nw-surface-2: #172033;
+  --nw-surface-3: #1e2940;
+  --nw-border: rgba(255, 255, 255, 0.08);
+  --nw-border-strong: rgba(255, 255, 255, 0.12);
+  --nw-accent: #60a5fa;
+  --nw-accent-dark: #93c5fd;
+  --nw-accent-soft: rgba(96, 165, 250, 0.14);
+  --nw-accent-subtle: rgba(96, 165, 250, 0.08);
+  --nw-accent-2: #3b82f6;
+  --nw-accent-glow: rgba(96, 165, 250, 0.18);
+  --nw-accent-rgb: 96 165 250;
+  --nw-highlight: rgba(96, 165, 250, 0.22);
+  --nw-dark-room: #1e3a5f;
+  --nw-mint: #60a5fa;
+  --nw-you: #60a5fa;
+  --nw-other: #b8c8de;
+  --nw-glass-bg: rgb(255 255 255 / 0.06);
+  --nw-glass-bg-strong: rgb(255 255 255 / 0.1);
+  --nw-glass-border: rgb(255 255 255 / 0.1);
+  --nw-glass-highlight: rgb(255 255 255 / 0.08);
+  --nw-glass-shadow: rgb(0 0 0 / 0.35);
+  --nw-shell-glow-2: rgb(96 165 250 / 0.08);
+  --nw-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --nw-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --nw-scratch-bg: rgb(120 53 15 / 0.35);
+  --nw-scratch-border: rgb(217 119 6 / 0.35);
+  --nw-scratch-bg-box: rgb(120 53 15 / 0.25);
+  --nw-modal-backdrop: rgb(0 0 0 / 0.65);
+  --nw-guest-bg: rgb(120 53 15 / 0.35);
+  --nw-guest-text: #fdba74;
+  --nw-guest-border: rgb(217 119 6 / 0.35);
+}

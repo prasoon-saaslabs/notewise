@@ -47,7 +47,8 @@ export class SessionsService {
   }
 
   create(dto: CreateSessionDto) {
-    const { session, meeting } = this.store.createSession(dto.source, dto.title);
+    const title = dto.name?.trim() || dto.title?.trim();
+    const { session, meeting } = this.store.createSession(dto.source, title);
     return { sessionId: session.id, meetingId: meeting.id };
   }
 
@@ -232,6 +233,8 @@ export class SessionsService {
       if (nextTitle) {
         meeting.title = nextTitle;
         meeting.notes = { ...notes, title: nextTitle };
+      } else if (meeting.title && notes) {
+        meeting.notes = { ...notes, title: meeting.title };
       }
     } catch (err) {
       this.logger.warn(
@@ -255,12 +258,15 @@ export class SessionsService {
     this.store.saveMeeting(meeting);
   }
 
-  /** 2–3 word topic from summary / notes / transcript. */
+  /** 2–3 word topic from summary / notes / transcript. Returns null to keep a user-set title. */
   private pickMeetingTitle(
     current: string | undefined,
     notes: NotesPayload | null | undefined,
     transcript: TranscriptTurn[],
   ): string | null {
+    if (current?.trim() && !PLACEHOLDER_TITLE.test(current.trim())) {
+      return null;
+    }
     const sources = [
       notes?.title,
       notes?.executiveSummary,

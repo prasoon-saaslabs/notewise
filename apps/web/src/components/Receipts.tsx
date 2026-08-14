@@ -1,4 +1,4 @@
-import type { CitedClaim, RunStatus } from "@notewise/api-client";
+import type { CitedClaim } from "@notewise/api-client";
 
 export function formatMs(ms?: number | null) {
   if (ms == null || !Number.isFinite(ms)) return "";
@@ -48,22 +48,6 @@ export function ClaimLine({
         onJump={() => onJump?.(claim.lineIds?.[0], claim.startMs)}
       />
     </li>
-  );
-}
-
-export function RunStatusCard({ status, dropped }: { status?: RunStatus | null; dropped?: number }) {
-  if (!status) return null;
-  return (
-    <div className="rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-2)] p-3 text-xs text-[var(--nw-ink-2)]">
-      <p className="m-0 font-bold uppercase tracking-wider text-[var(--nw-ink-3)]">Run status</p>
-      <p className="mt-1 m-0">
-        Exit <b>{status.exit}</b> · {status.claimsCited} cited · {status.claimsBlocked} blocked
-        {dropped ? ` · ${dropped} dropped` : ""}
-      </p>
-      <p className="mt-1 m-0 text-[var(--nw-ink-4)]">
-        {status.tokens} tokens · ${status.costUsd.toFixed(4)} · {status.elapsedMs}ms
-      </p>
-    </div>
   );
 }
 

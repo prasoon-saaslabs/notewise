@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -129,6 +129,21 @@ export function NotesEditor({
     editor.commands.setContent(plainTextToHtml(value), { emitUpdate: false });
   }, [editor, value]);
 
+  const focusEditor = useCallback(() => {
+    if (disabled || !editor) return;
+    editor.chain().focus("end").run();
+  }, [disabled, editor]);
+
+  const onBodyMouseDown = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (disabled || !editor) return;
+      if ((event.target as HTMLElement).closest(".ProseMirror")) return;
+      event.preventDefault();
+      focusEditor();
+    },
+    [disabled, editor, focusEditor],
+  );
+
   const shellStyle =
     minHeight != null || height != null
       ? {
@@ -172,6 +187,7 @@ export function NotesEditor({
       <EditorContent
         editor={editor}
         className="nw-notes-editor-body min-h-0 flex-1"
+        onMouseDown={onBodyMouseDown}
       />
     </div>
   );
