@@ -26,7 +26,15 @@ import {
   listAllMeetings,
 } from "../../lib/meetingsCatalog";
 import { ClaimLine, RunStatusCard } from "../../components/Receipts";
+import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
+import { NotesEditor } from "../../components/notes/NotesEditor";
+import { NotesDisplay } from "../../components/notes/NotesDisplay";
+import {
+  usePersistedUserNotes,
+  type UserNotesSaveHint,
+} from "../../components/notes/usePersistedUserNotes";
 import { api } from "../../lib/api";
+import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
@@ -49,7 +57,9 @@ function BackendTag({ backend }: { backend?: MeetingBackend | string | null }) {
           ? "bg-[rgb(var(--nw-accent-rgb)_/_0.14)] text-[var(--nw-accent-dark)] ring-1 ring-[rgb(var(--nw-accent-rgb)_/_0.2)]"
           : "bg-[rgb(100_116_139_/_0.1)] text-[var(--nw-ink-3)] ring-1 ring-[rgb(100_116_139_/_0.15)]"
       }`}
-      title={pyai ? "Captured via PyAI gateway" : "Captured via Nest + ai-worker"}
+      title={
+        pyai ? "Captured via PyAI gateway" : "Captured via Nest + ai-worker"
+      }
     >
       {pyai ? "PyAI" : "Nest"}
     </span>
@@ -95,10 +105,13 @@ function SectionCard({
 }) {
   const accents: Record<string, string> = {
     teal: "from-[rgb(var(--nw-accent-rgb)_/_0.12)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(var(--nw-accent-rgb)_/_0.18)]",
-    amber: "from-[rgb(217_119_6_/_0.1)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(217_119_6_/_0.2)]",
+    amber:
+      "from-[rgb(217_119_6_/_0.1)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(217_119_6_/_0.2)]",
     rose: "from-[rgb(225_29_72_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(225_29_72_/_0.16)]",
-    slate: "from-[rgb(100_116_139_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[var(--nw-border)]",
-    violet: "from-[rgb(79_70_229_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(79_70_229_/_0.16)]",
+    slate:
+      "from-[rgb(100_116_139_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[var(--nw-border)]",
+    violet:
+      "from-[rgb(79_70_229_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(79_70_229_/_0.16)]",
   };
   const iconBg: Record<string, string> = {
     teal: "bg-[rgb(var(--nw-accent-rgb)_/_0.12)] text-[var(--nw-accent-dark)]",
@@ -109,13 +122,17 @@ function SectionCard({
   };
   return (
     <section
-      className={`nw-intel-card rounded-2xl border bg-gradient-to-br p-4 shadow-[0_1px_0_rgb(15_23_42_/_0.03)] ${accents[accent]} ${
-        empty ? "opacity-80" : ""
-      }`}
+      className={`nw-intel-card rounded-2xl border bg-gradient-to-br p-4 shadow-[0_1px_0_rgb(15_23_42_/_0.03)] ${
+        accents[accent]
+      } ${empty ? "opacity-80" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <header className="mb-3 flex items-center gap-2">
-        <span className={`grid h-8 w-8 place-items-center rounded-xl ${iconBg[accent]}`}>{icon}</span>
+        <span
+          className={`grid h-8 w-8 place-items-center rounded-xl ${iconBg[accent]}`}
+        >
+          {icon}
+        </span>
         <h3 className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
           {title}
         </h3>
@@ -128,10 +145,16 @@ function SectionCard({
 function NotesIntelligence({
   notes,
   userNotes,
+  userNotesEditable = false,
+  onUserNotesChange,
+  userNotesSaveHint,
   onJump,
 }: {
   notes: NotesPayload | null;
   userNotes?: string | null;
+  userNotesEditable?: boolean;
+  onUserNotesChange?: (value: string) => void;
+  userNotesSaveHint?: UserNotesSaveHint;
   onJump?: (lineId?: string, startMs?: number | null) => void;
 }) {
   const actions = notes?.actions ?? [];
@@ -144,16 +167,43 @@ function NotesIntelligence({
   return (
     <div className="flex flex-col gap-3">
       <RunStatusCard status={notes?.runStatus} dropped={notes?.droppedCount} />
-      {userNotes?.trim() ? (
+      {userNotesEditable ? (
         <SectionCard
           icon={<StickyNote className="h-4 w-4" />}
           title="Your notes"
           accent="amber"
           delay={40}
         >
-          <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-[var(--nw-ink-2)]">
-            {userNotes.trim()}
-          </p>
+          {userNotesSaveHint === "saving" ? (
+            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
+              Saving…
+            </p>
+          ) : userNotesSaveHint === "saved" ? (
+            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
+              Saved
+            </p>
+          ) : userNotesSaveHint === "error" ? (
+            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-danger)]">
+              Could not save
+            </p>
+          ) : null}
+          <NotesEditor
+            variant="field"
+            minHeight={120}
+            placeholder="Add your notes…"
+            value={userNotes ?? ""}
+            onChange={onUserNotesChange!}
+            aria-label="Your notes"
+          />
+        </SectionCard>
+      ) : userNotes?.trim() ? (
+        <SectionCard
+          icon={<StickyNote className="h-4 w-4" />}
+          title="Your notes"
+          accent="amber"
+          delay={40}
+        >
+          <NotesDisplay value={userNotes.trim()} />
         </SectionCard>
       ) : null}
 
@@ -174,12 +224,19 @@ function NotesIntelligence({
             {notes.executiveSummary}
           </p>
         ) : (
-          <p className="m-0 text-sm text-[var(--nw-ink-4)]">Summary will appear after processing.</p>
+          <p className="m-0 text-sm text-[var(--nw-ink-4)]">
+            Summary will appear after processing.
+          </p>
         )}
       </SectionCard>
 
       {objections.length > 0 ? (
-        <SectionCard icon={<FileText className="h-4 w-4" />} title="Objections" accent="rose" delay={100}>
+        <SectionCard
+          icon={<FileText className="h-4 w-4" />}
+          title="Objections"
+          accent="rose"
+          delay={100}
+        >
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {objections.map((o) => (
               <ClaimLine key={o.id} claim={o} onJump={onJump} />
@@ -189,7 +246,12 @@ function NotesIntelligence({
       ) : null}
 
       {decisions.length > 0 ? (
-        <SectionCard icon={<ListChecks className="h-4 w-4" />} title="Decisions" accent="violet" delay={110}>
+        <SectionCard
+          icon={<ListChecks className="h-4 w-4" />}
+          title="Decisions"
+          accent="violet"
+          delay={110}
+        >
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {decisions.map((d) => (
               <ClaimLine key={d.id} claim={d} onJump={onJump} />
@@ -206,7 +268,9 @@ function NotesIntelligence({
         empty={actions.length === 0}
       >
         {actions.length === 0 ? (
-          <p className="m-0 text-sm text-[var(--nw-ink-4)]">No action items detected yet.</p>
+          <p className="m-0 text-sm text-[var(--nw-ink-4)]">
+            No action items detected yet.
+          </p>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {actions.map((a, i) => (
@@ -218,7 +282,9 @@ function NotesIntelligence({
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="m-0 text-sm font-medium leading-snug text-[var(--nw-ink)]">{a.text}</p>
+                  <p className="m-0 text-sm font-medium leading-snug text-[var(--nw-ink)]">
+                    {a.text}
+                  </p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {a.owner ? (
                       <span className="rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.1)] px-2 py-0.5 text-[0.6rem] font-bold uppercase text-[var(--nw-accent-dark)]">
@@ -241,13 +307,25 @@ function NotesIntelligence({
       </SectionCard>
 
       {notes?.followUpEmail ? (
-        <SectionCard icon={<FileText className="h-4 w-4" />} title="Follow-up email" accent="slate" delay={140}>
-          <p className="m-0 whitespace-pre-wrap text-sm">{notes.followUpEmail}</p>
+        <SectionCard
+          icon={<FileText className="h-4 w-4" />}
+          title="Follow-up email"
+          accent="slate"
+          delay={140}
+        >
+          <p className="m-0 whitespace-pre-wrap text-sm">
+            {notes.followUpEmail}
+          </p>
         </SectionCard>
       ) : null}
 
       {takeaways.length > 0 ? (
-        <SectionCard icon={<ListChecks className="h-4 w-4" />} title="Takeaways" accent="violet" delay={160}>
+        <SectionCard
+          icon={<ListChecks className="h-4 w-4" />}
+          title="Takeaways"
+          accent="violet"
+          delay={160}
+        >
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {takeaways.map((t) => (
               <li
@@ -262,10 +340,18 @@ function NotesIntelligence({
       ) : null}
 
       {questions.length > 0 ? (
-        <SectionCard icon={<FileText className="h-4 w-4" />} title="Open questions" accent="slate" delay={200}>
+        <SectionCard
+          icon={<FileText className="h-4 w-4" />}
+          title="Open questions"
+          accent="slate"
+          delay={200}
+        >
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
             {questions.map((q) => (
-              <li key={q} className="rounded-lg bg-[var(--nw-glass-bg)] px-3 py-2 text-sm text-[var(--nw-ink-2)]">
+              <li
+                key={q}
+                className="rounded-lg bg-[var(--nw-glass-bg)] px-3 py-2 text-sm text-[var(--nw-ink-2)]"
+              >
                 {q}
               </li>
             ))}
@@ -299,8 +385,18 @@ export function LibraryPage() {
 
   const list = useQuery({
     queryKey: ["meetings", "catalog"],
-    queryFn: () => listAllMeetings(),
-    refetchInterval: 30_000,
+    queryFn: async () => {
+      if (isDesktopPyaiOnly()) {
+        const diag = await ensureDesktopGateway();
+        if (!diag.reachable) {
+          throw new Error(
+            "Local AI gateway is not running. Restart Notewise or check gateway.log in Application Support."
+          );
+        }
+      }
+      return listAllMeetings();
+    },
+    refetchInterval: 4000,
   });
   const fts = useQuery({
     queryKey: ["meetings", "search", q],
@@ -308,15 +404,14 @@ export function LibraryPage() {
     enabled: q.trim().length >= 2,
   });
 
-  const meetings = (
+  const meetings =
     q.trim().length >= 2 && fts.data
       ? fts.data
       : (list.data ?? []).filter((m) => {
           if (!q.trim()) return true;
           const hay = `${m.title} ${m.snippet || ""}`.toLowerCase();
           return hay.includes(q.trim().toLowerCase());
-        })
-  );
+        });
   const selectedId = id ?? meetings[0]?.id;
   const selectedBackend = meetings.find((m) => m.id === selectedId)?.backend;
 
@@ -326,7 +421,8 @@ export function LibraryPage() {
     enabled: Boolean(selectedId),
     refetchInterval: (q) => {
       const s = q.state.data?.status;
-      if (s === "processing" || s === "bot_live" || s === "bot_joining") return 1200;
+      if (s === "processing" || s === "bot_live" || s === "bot_joining")
+        return 1200;
       return false;
     },
   });
@@ -338,7 +434,8 @@ export function LibraryPage() {
       : selectedBackend ?? "nest";
 
   const remove = useMutation({
-    mutationFn: (mid: string) => clientForBackend(meetingBackend).deleteMeeting(mid),
+    mutationFn: (mid: string) =>
+      clientForBackend(meetingBackend).deleteMeeting(mid),
     onSuccess: () => {
       setDeleteOpen(false);
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
@@ -349,15 +446,20 @@ export function LibraryPage() {
   const stopBot = useMutation({
     mutationFn: (mid: string) => clientForBackend(meetingBackend).stopBot(mid),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["meeting", meetingBackend, selectedId] });
+      void qc.invalidateQueries({
+        queryKey: ["meeting", meetingBackend, selectedId],
+      });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
     },
   });
 
   const syncBot = useMutation({
-    mutationFn: (mid: string) => clientForBackend(meetingBackend).syncBotMeeting(mid),
+    mutationFn: (mid: string) =>
+      clientForBackend(meetingBackend).syncBotMeeting(mid),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["meeting", meetingBackend, selectedId] });
+      void qc.invalidateQueries({
+        queryKey: ["meeting", meetingBackend, selectedId],
+      });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
     },
   });
@@ -372,15 +474,18 @@ export function LibraryPage() {
       void qc.setQueryData(
         ["meeting", meetingBackend, selectedId],
         (prev: typeof detail.data | undefined) =>
-          prev ? { ...prev, status: "processing" as const } : prev,
+          prev ? { ...prev, status: "processing" as const } : prev
       );
     },
     onSuccess: () => {
       setRegenError(null);
-      void qc.invalidateQueries({ queryKey: ["meeting", meetingBackend, selectedId] });
+      void qc.invalidateQueries({
+        queryKey: ["meeting", meetingBackend, selectedId],
+      });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
     },
-    onError: (err: Error) => setRegenError(err.message || "Could not regenerate notes"),
+    onError: (err: Error) =>
+      setRegenError(err.message || "Could not regenerate notes"),
   });
 
   const saveMeeting = useMutation({
@@ -392,24 +497,41 @@ export function LibraryPage() {
       mid: string;
       title?: string;
       userNotes?: string;
-    }) => clientForBackend(meetingBackend).updateMeeting(mid, { title, userNotes }),
+    }) =>
+      clientForBackend(meetingBackend).updateMeeting(mid, { title, userNotes }),
     onSuccess: () => {
       setEditingTitle(false);
       setEditOpen(false);
       setDownloadOpen(false);
-      void qc.invalidateQueries({ queryKey: ["meeting", meetingBackend, selectedId] });
+      void qc.invalidateQueries({
+        queryKey: ["meeting", meetingBackend, selectedId],
+      });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
     },
   });
 
   const rename = saveMeeting;
 
-  const canRegenerate = meetingCanRegenerate(meeting?.status, meeting?.transcript?.length ?? 0);
+  const persistedUserNotes = usePersistedUserNotes({
+    meetingId: meeting?.id,
+    backend: meetingBackend,
+    sourceValue: meeting?.userNotes ?? "",
+    queryKey: ["meeting", meetingBackend, selectedId],
+    enabled: Boolean(meeting?.id),
+  });
+
+  const canRegenerate = meetingCanRegenerate(
+    meeting?.status,
+    meeting?.transcript?.length ?? 0
+  );
   const isRegenerating =
-    refreshNotes.isPending || (meeting?.status === "processing" && Boolean(meeting?.transcript?.length));
+    refreshNotes.isPending ||
+    (meeting?.status === "processing" && Boolean(meeting?.transcript?.length));
   const botActive =
     meeting?.source === "bot" &&
-    (meeting.status === "bot_joining" || meeting.status === "bot_live" || meeting.status === "processing");
+    (meeting.status === "bot_joining" ||
+      meeting.status === "bot_live" ||
+      meeting.status === "processing");
   const stepIdx = meeting ? botStepIndex(meeting.status) : 0;
 
   useEffect(() => {
@@ -443,7 +565,10 @@ export function LibraryPage() {
 
   useEffect(() => {
     if (meeting?.status === "bot_live" || meeting?.status === "bot_joining") {
-      transcriptEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      transcriptEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
     }
   }, [meeting?.transcript?.length, meeting?.status]);
 
@@ -481,8 +606,8 @@ export function LibraryPage() {
             {list.isError
               ? "Could not load meetings"
               : isDesktopPyaiOnly()
-                ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
-                : `${meetings.length} across Nest & PyAI`}
+              ? `${meetings.length} meeting${meetings.length === 1 ? "" : "s"}`
+              : `${meetings.length} across Nest & PyAI`}
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-auto p-2">
@@ -493,13 +618,17 @@ export function LibraryPage() {
                 list.error instanceof Error
                   ? list.error.message
                   : isDesktopPyaiOnly()
-                    ? "Start the local PyAI gateway (port 3002), then refresh."
-                    : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
+                  ? "Start the local PyAI gateway (port 3002), then refresh."
+                  : "Start Nest (:3001) and/or PyAI (:3002), then refresh."
               }
               compact
             />
           ) : meetings.length === 0 ? (
-            <EmptyState title="No meetings yet" description="Capture or Join to fill this list." compact />
+            <EmptyState
+              title="No meetings yet"
+              description="Capture or Join to fill this list."
+              compact
+            />
           ) : (
             meetings.map((m, i) => (
               <Link
@@ -532,7 +661,10 @@ export function LibraryPage() {
 
       <section className="flex min-h-0 flex-col nw-surface-gradient">
         {!meeting ? (
-          <EmptyState title="Select a meeting" description="Pick one from the list." />
+          <EmptyState
+            title="Select a meeting"
+            description="Pick one from the list."
+          />
         ) : (
           <>
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--nw-border)] px-5 py-4">
@@ -561,7 +693,11 @@ export function LibraryPage() {
                       className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
                       aria-label="Meeting title"
                     />
-                    <Button size="sm" type="submit" disabled={rename.isPending || !titleDraft.trim()}>
+                    <Button
+                      size="sm"
+                      type="submit"
+                      disabled={rename.isPending || !titleDraft.trim()}
+                    >
                       {rename.isPending ? "Saving…" : "Save"}
                     </Button>
                     <Button
@@ -574,7 +710,9 @@ export function LibraryPage() {
                     </Button>
                   </form>
                 ) : (
-                  <h2 className="nw-page-title nw-title-shimmer m-0">{displayMeetingTitle(meeting)}</h2>
+                  <h2 className="nw-page-title nw-title-shimmer m-0">
+                    {displayMeetingTitle(meeting)}
+                  </h2>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <BackendTag backend={meeting.backend} />
@@ -606,12 +744,15 @@ export function LibraryPage() {
                   </a>
                 ) : null}
                 {meeting.botMessage ? (
-                  <p className="m-0 mt-1 max-w-prose text-xs text-[var(--nw-ink-3)]">{meeting.botMessage}</p>
+                  <p className="m-0 mt-1 max-w-prose text-xs text-[var(--nw-ink-3)]">
+                    {meeting.botMessage}
+                  </p>
                 ) : null}
               </div>
               <div className="nw-library-toolbar relative flex shrink-0 items-center gap-0.5 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] p-1 shadow-sm">
                 {meeting.source === "bot" &&
-                (meeting.status === "bot_joining" || meeting.status === "bot_live") ? (
+                (meeting.status === "bot_joining" ||
+                  meeting.status === "bot_live") ? (
                   <button
                     type="button"
                     className="nw-library-tool danger inline-flex h-9 w-9 items-center justify-center rounded-xl"
@@ -633,7 +774,11 @@ export function LibraryPage() {
                       refreshNotes.mutate(meeting.id);
                     }}
                   >
-                    <Sparkles className={`h-4 w-4 ${refreshNotes.isPending ? "animate-pulse" : ""}`} />
+                    <Sparkles
+                      className={`h-4 w-4 ${
+                        refreshNotes.isPending ? "animate-pulse" : ""
+                      }`}
+                    />
                   </button>
                 ) : null}
                 <div className="relative">
@@ -660,7 +805,9 @@ export function LibraryPage() {
                           className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
                             void api.exportMeetingMd(meeting.id).then((md) => {
-                              const blob = new Blob([md], { type: "text/markdown" });
+                              const blob = new Blob([md], {
+                                type: "text/markdown",
+                              });
                               const a = document.createElement("a");
                               a.href = URL.createObjectURL(blob);
                               a.download = `${meeting.title || "meeting"}.md`;
@@ -675,16 +822,23 @@ export function LibraryPage() {
                           type="button"
                           className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
-                            void api.exportMeetingJson(meeting.id).then((data) => {
-                              const blob = new Blob([JSON.stringify(data, null, 2)], {
-                                type: "application/json",
+                            void api
+                              .exportMeetingJson(meeting.id)
+                              .then((data) => {
+                                const blob = new Blob(
+                                  [JSON.stringify(data, null, 2)],
+                                  {
+                                    type: "application/json",
+                                  }
+                                );
+                                const a = document.createElement("a");
+                                a.href = URL.createObjectURL(blob);
+                                a.download = `${
+                                  meeting.title || "meeting"
+                                }.json`;
+                                a.click();
+                                setDownloadOpen(false);
                               });
-                              const a = document.createElement("a");
-                              a.href = URL.createObjectURL(blob);
-                              a.download = `${meeting.title || "meeting"}.json`;
-                              a.click();
-                              setDownloadOpen(false);
-                            });
                           }}
                         >
                           JSON (.json)
@@ -693,12 +847,16 @@ export function LibraryPage() {
                           type="button"
                           className="flex w-full px-3.5 py-2 text-left text-sm text-[var(--nw-ink-2)] hover:bg-[var(--nw-surface-2)]"
                           onClick={() => {
-                            void api.exportMeetingHtml(meeting.id).then((html) => {
-                              const blob = new Blob([html], { type: "text/html" });
-                              const url = URL.createObjectURL(blob);
-                              window.open(url, "_blank", "noopener");
-                              setDownloadOpen(false);
-                            });
+                            void api
+                              .exportMeetingHtml(meeting.id)
+                              .then((html) => {
+                                const blob = new Blob([html], {
+                                  type: "text/html",
+                                });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, "_blank", "noopener");
+                                setDownloadOpen(false);
+                              });
                           }}
                         >
                           Share (HTML)
@@ -730,7 +888,8 @@ export function LibraryPage() {
                 {meeting.source === "bot" &&
                 (meeting.status === "failed" ||
                   meeting.status === "processing" ||
-                  (meeting.status === "ready" && meeting.transcript.length === 0) ||
+                  (meeting.status === "ready" &&
+                    meeting.transcript.length === 0) ||
                   meeting.status === "bot_live" ||
                   meeting.status === "bot_joining") ? (
                   <button
@@ -740,7 +899,11 @@ export function LibraryPage() {
                     disabled={syncBot.isPending}
                     onClick={() => syncBot.mutate(meeting.id)}
                   >
-                    <RefreshCw className={`h-4 w-4 ${syncBot.isPending ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        syncBot.isPending ? "animate-spin" : ""
+                      }`}
+                    />
                   </button>
                 ) : null}
               </div>
@@ -770,147 +933,100 @@ export function LibraryPage() {
                       aria-labelledby="edit-meeting-title"
                       onClick={(e) => e.stopPropagation()}
                     >
-                  <div className="mb-4 flex items-center justify-between gap-2">
-                    <h3 id="edit-meeting-title" className="m-0 text-base font-semibold text-[var(--nw-ink)]">
-                      Edit meeting
-                    </h3>
-                    <button
-                      type="button"
-                      className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
-                      onClick={() => setEditOpen(false)}
-                      aria-label="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <form
-                    className="flex flex-col gap-3"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const title = editTitle.trim();
-                      if (!title) return;
-                      saveMeeting.mutate({
-                        mid: meeting.id,
-                        title,
-                        userNotes: editNotes,
-                      });
-                    }}
-                  >
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">Title</span>
-                      <input
-                        value={editTitle}
-                        maxLength={200}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-                      />
-                    </label>
-                    <label className="block text-sm">
-                      <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                        Your notes (scratchpad)
-                      </span>
-                      <textarea
-                        value={editNotes}
-                        rows={6}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                        className="w-full resize-y rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-                        placeholder="Pricing pushback, follow-ups, context…"
-                      />
-                    </label>
-                    <div className="flex justify-end gap-2 pt-1">
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" size="sm" disabled={saveMeeting.isPending || !editTitle.trim()}>
-                        {saveMeeting.isPending ? "Saving…" : "Save"}
-                      </Button>
-                    </div>
-                  </form>
-                    </div>
-                  </div>,
-                  document.body,
-                )
-              : null}
-
-            {deleteOpen
-              ? createPortal(
-                  <div
-                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
-                    role="presentation"
-                    onClick={() => !remove.isPending && setDeleteOpen(false)}
-                  >
-                    <div
-                      className="nw-modal-dialog w-full max-w-md rounded-2xl p-5"
-                      role="alertdialog"
-                      aria-modal="true"
-                      aria-labelledby="delete-meeting-title"
-                      aria-describedby="delete-meeting-desc"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-start gap-3">
-                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--nw-danger-soft)] text-[var(--nw-danger)]">
-                            <Trash2 className="h-5 w-5" />
-                          </span>
-                          <div className="min-w-0">
-                            <h3
-                              id="delete-meeting-title"
-                              className="m-0 text-base font-semibold text-[var(--nw-ink)]"
-                            >
-                              Delete meeting?
-                            </h3>
-                            <p
-                              id="delete-meeting-desc"
-                              className="m-0 mt-1 text-sm leading-relaxed text-[var(--nw-ink-3)]"
-                            >
-                              This permanently removes{" "}
-                              <span className="font-medium text-[var(--nw-ink-2)]">
-                                {meeting.title || displayMeetingTitle(meeting)}
-                              </span>
-                              , including its transcript, notes, and audio. This cannot be undone.
-                            </p>
-                          </div>
-                        </div>
+                      <div className="mb-4 flex items-center justify-between gap-2">
+                        <h3
+                          id="edit-meeting-title"
+                          className="m-0 text-base font-semibold text-[var(--nw-ink)]"
+                        >
+                          Edit meeting
+                        </h3>
                         <button
                           type="button"
-                          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
-                          onClick={() => setDeleteOpen(false)}
-                          disabled={remove.isPending}
+                          className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
+                          onClick={() => setEditOpen(false)}
                           aria-label="Close"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
-                      {remove.isError ? (
-                        <p className="nw-alert mb-3 w-full max-w-none" role="alert">
-                          {(remove.error as Error)?.message || "Could not delete meeting"}
-                        </p>
-                      ) : null}
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={remove.isPending}
-                          onClick={() => setDeleteOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          disabled={remove.isPending}
-                          onClick={() => remove.mutate(meeting.id)}
-                        >
-                          {remove.isPending ? "Deleting…" : "Delete permanently"}
-                        </Button>
-                      </div>
+                      <form
+                        className="flex flex-col gap-3"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const title = editTitle.trim();
+                          if (!title) return;
+                          saveMeeting.mutate({
+                            mid: meeting.id,
+                            title,
+                            userNotes: editNotes,
+                          });
+                        }}
+                      >
+                        <label className="block text-sm">
+                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
+                            Title
+                          </span>
+                          <input
+                            value={editTitle}
+                            maxLength={200}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="w-full rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
+                          />
+                        </label>
+                        <div className="block text-sm">
+                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
+                            Your notes (scratchpad)
+                          </span>
+                          <NotesEditor
+                            variant="field"
+                            minHeight={144}
+                            value={editNotes}
+                            onChange={setEditNotes}
+                            placeholder="Pricing pushback, follow-ups, context…"
+                            aria-label="Your notes scratchpad"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={
+                              saveMeeting.isPending || !editTitle.trim()
+                            }
+                          >
+                            {saveMeeting.isPending ? "Saving…" : "Save"}
+                          </Button>
+                        </div>
+                      </form>
                     </div>
                   </div>,
-                  document.body,
+                  document.body
                 )
               : null}
+
+            {deleteOpen ? (
+              <DeleteMeetingModal
+                open={deleteOpen}
+                title={meeting.title || displayMeetingTitle(meeting)}
+                onClose={() => setDeleteOpen(false)}
+                onConfirm={() => remove.mutate(meeting.id)}
+                pending={remove.isPending}
+                error={
+                  remove.isError
+                    ? (remove.error as Error)?.message ||
+                      "Could not delete meeting"
+                    : null
+                }
+              />
+            ) : null}
 
             {botActive || meeting.source === "bot" ? (
               <div className="mx-5 mt-3 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-glass-bg-strong)] px-3 py-2.5">
@@ -925,8 +1041,8 @@ export function LibraryPage() {
                           active
                             ? "font-semibold text-[var(--nw-accent-dark)]"
                             : done
-                              ? "text-[var(--nw-success)]"
-                              : "text-[var(--nw-ink-4)]"
+                            ? "text-[var(--nw-success)]"
+                            : "text-[var(--nw-ink-4)]"
                         }`}
                       >
                         <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[0.65rem]">
@@ -949,14 +1065,22 @@ export function LibraryPage() {
                 disabled={!meeting.audioUrl}
                 onClick={() => void togglePlay()}
               >
-                {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                {playing ? (
+                  <Pause className="h-3.5 w-3.5" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" />
+                )}
               </button>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">{formatTime(current)}</span>
+              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
+                {formatTime(current)}
+              </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--nw-surface-3)]">
                 <i
                   className="nw-progress-fill block h-full rounded-full bg-[linear-gradient(90deg,var(--nw-accent),#0ea5e9)] not-italic"
                   style={{
-                    width: `${duration ? Math.min(100, (current / duration) * 100) : 0}%`,
+                    width: `${
+                      duration ? Math.min(100, (current / duration) * 100) : 0
+                    }%`,
                   }}
                 />
               </div>
@@ -968,14 +1092,21 @@ export function LibraryPage() {
                   ref={audioRef}
                   src={meeting.audioUrl}
                   preload="metadata"
-                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
-                  onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime || 0)}
+                  onLoadedMetadata={(e) =>
+                    setDuration(e.currentTarget.duration || 0)
+                  }
+                  onTimeUpdate={(e) =>
+                    setCurrent(e.currentTarget.currentTime || 0)
+                  }
                   onEnded={() => setPlaying(false)}
                   onPause={() => setPlaying(false)}
                   onPlay={() => setPlaying(true)}
                 />
               ) : (
-                <span className="nw-muted text-xs" title="Record a new meeting to enable playback">
+                <span
+                  className="nw-muted text-xs"
+                  title="Record a new meeting to enable playback"
+                >
                   No audio (record again)
                 </span>
               )}
@@ -1008,28 +1139,37 @@ export function LibraryPage() {
                     ) : (
                       <NotesIntelligence
                         notes={meeting.notes}
-                        userNotes={meeting.userNotes}
+                        userNotes={persistedUserNotes.draft}
+                        userNotesEditable
+                        onUserNotesChange={persistedUserNotes.handleChange}
+                        userNotesSaveHint={persistedUserNotes.saveHint}
                         onJump={(lineId) => {
                           setShowTranscript(true);
                           if (!lineId) return;
-                          document.getElementById(`line-${lineId}`)?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
+                          document
+                            .getElementById(`line-${lineId}`)
+                            ?.scrollIntoView({
+                              behavior: "smooth",
+                              block: "center",
+                            });
                         }}
                       />
                     )}
                   </>
                 ) : isRegenerating ? (
                   <RegeneratingNotes active />
-                ) : meeting.status === "bot_joining" || meeting.status === "bot_live" ? (
+                ) : meeting.status === "bot_joining" ||
+                  meeting.status === "bot_live" ? (
                   <EmptyState
                     title="Live notes building…"
                     description="Summary and actions appear as the bot captures speech."
                     compact
                   />
                 ) : meeting.status !== "processing" ? (
-                  <EmptyState title="No notes yet" description={`Status: ${meeting.status}`} />
+                  <EmptyState
+                    title="No notes yet"
+                    description={`Status: ${meeting.status}`}
+                  />
                 ) : null}
               </div>
 
@@ -1042,7 +1182,8 @@ export function LibraryPage() {
                 >
                   <span className="flex items-center gap-2 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
                     <FileText className="h-3.5 w-3.5" />
-                    {meeting.status === "bot_live" || meeting.status === "bot_joining"
+                    {meeting.status === "bot_live" ||
+                    meeting.status === "bot_joining"
                       ? "Live transcript"
                       : "Full transcript"}
                     <span className="rounded-full bg-[var(--nw-surface-solid)] px-2 py-0.5 text-[0.6rem] font-semibold normal-case tracking-normal text-[var(--nw-ink-4)]">
@@ -1056,7 +1197,9 @@ export function LibraryPage() {
                 {showTranscript ? (
                   <div className="flex max-h-[42vh] flex-col gap-2 overflow-auto p-3">
                     {meeting.transcript.length === 0 ? (
-                      <p className="m-0 px-1 text-sm text-[var(--nw-ink-4)]">Waiting for speech…</p>
+                      <p className="m-0 px-1 text-sm text-[var(--nw-ink-4)]">
+                        Waiting for speech…
+                      </p>
                     ) : (
                       meeting.transcript.map((t, i) => (
                         <article
@@ -1072,7 +1215,9 @@ export function LibraryPage() {
                           <div className="mb-1">
                             <SpeakerChip label={t.speaker} kind={t.kind} />
                           </div>
-                          <p className="m-0 text-sm leading-relaxed text-[var(--nw-ink-2)]">{t.text}</p>
+                          <p className="m-0 text-sm leading-relaxed text-[var(--nw-ink-2)]">
+                            {t.text}
+                          </p>
                         </article>
                       ))
                     )}

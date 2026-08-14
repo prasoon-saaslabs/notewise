@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 import type { AskResponse } from "@notewise/api-client";
 import type { BrainCitation } from "./MeetingBrain";

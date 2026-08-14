@@ -4,6 +4,7 @@ import { Mic, Sparkles, X } from "lucide-react";
 import type { CalendarEventPrep } from "@notewise/api-client";
 import type { CalendarFlowModal } from "../hooks/useCalendarFlow";
 import { api } from "../lib/api";
+import { NotesEditor } from "./notes/NotesEditor";
 
 export function MeetingFlowModal({
   modal,
@@ -20,7 +21,8 @@ export function MeetingFlowModal({
 
   useEffect(() => {
     if (!modal) return;
-    const prepNotes = modal.event.prep?.manualNotes || modal.event.manualNotes || "";
+    const prepNotes =
+      modal.event.prep?.manualNotes || modal.event.manualNotes || "";
     setNotes(prepNotes);
   }, [modal]);
 
@@ -78,22 +80,23 @@ export function MeetingFlowModal({
 
         {isReminder ? (
           <p className="m-0 mb-3 text-xs text-[var(--nw-ink-3)]">
-            Open the full prep brief to review people context, past notes, and add your own before the
-            call starts.
+            Open the full prep brief to review people context, past notes, and
+            add your own before the call starts.
           </p>
         ) : (
-          <label className="block">
+          <div className="block">
             <span className="mb-1 block text-[0.62rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
               Quick notes before recording
             </span>
-            <textarea
-              className="w-full resize-none rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-              rows={3}
+            <NotesEditor
+              variant="field"
+              minHeight={80}
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={setNotes}
               placeholder="Objectives, questions, context…"
+              aria-label="Quick notes before recording"
             />
-          </label>
+          </div>
         )}
 
         <div className="mt-4 flex flex-wrap justify-end gap-2">
@@ -103,7 +106,9 @@ export function MeetingFlowModal({
           {ev.meetUrl ? (
             <Button
               variant="ghost"
-              onClick={() => window.open(ev.meetUrl!, "_blank", "noopener,noreferrer")}
+              onClick={() =>
+                window.open(ev.meetUrl!, "_blank", "noopener,noreferrer")
+              }
             >
               Join call
             </Button>
