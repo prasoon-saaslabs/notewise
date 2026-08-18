@@ -37,26 +37,131 @@ MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage g
 
 ---
 
-## Get started
+## Setup
 
-**You need:** macOS (recommended), Node 20+, Python 3.9+, pnpm, and a [PyAI API key](https://api.pyai.com).
+### 1. Web Setup (Development)
+
+Run Notewise in your browser with the local AI gateway.
+
+**Requirements:**
+- macOS (recommended)
+- Node 20+
+- Python 3.9+
+- pnpm
+- [PyAI API key](https://api.pyai.com)
+
+**Installation:**
 
 ```bash
-make setup    # once — Python venv, dependencies, .env template
-make dev      # gateway + web app
+# Install dependencies and create .env files
+make setup
+
+# Start gateway + web app
+make dev
 ```
 
 Open **http://127.0.0.1:5173**, sign in, accept recording consent, and start a capture.
 
+**Verify setup:**
 ```bash
-make doctor   # verify Python, Node, API key, and permissions
+make doctor   # Check Python, Node, API key, and permissions
 ```
 
-**Try without recording:** Library → **Import 5 sample calls**.
+**Try without recording:** Library → **Import 5 sample calls**
+
+**Alternative commands:**
+```bash
+# Two terminals (optional)
+make run    # Terminal A — AI gateway (http://127.0.0.1:3002)
+make web    # Terminal B — Web app (http://127.0.0.1:5173)
+
+# Or use pnpm directly
+pnpm dev          # Both gateway + web
+pnpm dev:gateway  # Gateway only
+pnpm dev:web      # Web only
+```
 
 ---
 
-## What you can do
+### 2. Desktop Setup (Production)
+
+For daily use, install the native macOS app with menu bar tray and system-audio capture.
+
+#### Option A: Download Pre-built DMG
+
+**1. Install the Desktop App:**
+
+Download the latest DMG: **[Notewise_0.1.0_aarch64.dmg](apps/website/public/Notewise_0.1.0_aarch64.dmg)**
+
+```bash
+# Open the DMG and drag Notewise.app to Applications
+# Then remove quarantine attribute (required for unsigned builds)
+xattr -cr /Applications/Notewise.app
+```
+
+Launch Notewise from Applications or Spotlight (Cmd+Space → "Notewise")
+
+**2. Run the Backend Gateway:**
+
+The desktop app needs the AI gateway running in the background.
+
+```bash
+# Install dependencies (first time only)
+make setup
+
+# Start the gateway
+make run
+```
+
+Gateway will run at http://127.0.0.1:3002
+
+**Note:** The desktop app will auto-connect to the local gateway. Keep the terminal running while using Notewise.
+
+---
+
+#### Option B: Build DMG from Source
+
+**1. Build the DMG:**
+
+```bash
+# Install dependencies (first time only)
+make setup
+
+# Build DMG installer
+make build-dmg
+```
+
+DMG will be created at: `apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64.dmg`
+
+**2. Install and Remove Quarantine:**
+
+```bash
+# Install from the built DMG
+# Then remove quarantine attribute
+xattr -cr /Applications/Notewise.app
+```
+
+**3. Run the Backend Gateway:**
+
+```bash
+# Start the gateway
+make run
+```
+
+Gateway will run at http://127.0.0.1:3002
+
+---
+
+**Development mode** (no DMG needed):
+```bash
+make desktop  # Runs app + gateway together
+```
+
+→ [Desktop Documentation](apps/desktop/README.md)
+
+---
+
+## Features
 
 |              |                                                                                                  |
 | ------------ | ------------------------------------------------------------------------------------------------ |
@@ -69,66 +174,33 @@ make doctor   # verify Python, Node, API key, and permissions
 
 ---
 
-## Run locally
-
-| What           | URL                   | Command                             |
-| -------------- | --------------------- | ----------------------------------- |
-| Web app        | http://127.0.0.1:5173 | `make dev` or `make web`            |
-| AI gateway     | http://127.0.0.1:3002 | `make run` (included in `make dev`) |
-| Desktop (dev)  | native window         | `make desktop`                      |
-| Marketing site | http://127.0.0.1:5174 | `make website`                      |
-
-**Two terminals** (optional):
-
-```bash
-make run    # Terminal A — gateway
-make web    # Terminal B — web UI
-```
-
-Equivalent pnpm scripts: `pnpm setup`, `pnpm dev`, `pnpm dev:gateway`, `pnpm dev:web`.
-
----
-
-## Desktop app
-
-For daily use, run the native macOS app — same gateway, menu bar tray, and system-audio capture.
-
-```bash
-make setup
-make desktop      # development
-make build-dmg    # release installer → apps/desktop/src-tauri/target/release/bundle/dmg/
-```
-
-Dev uses the repo gateway (`services/pyai-gateway/.venv`). The DMG bundles a portable sidecar so end users only need a PyAI key — no Python setup.
-
-→ [Desktop README](apps/desktop/README.md)
-
----
-
 ## Configuration
 
-Copy `.env.example` files and add your keys. Never commit secrets.
+`make setup` creates `.env` files from templates. Add your API keys before running.
 
-| File                         | Purpose                                        |
-| ---------------------------- | ---------------------------------------------- |
-| `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT                    |
-| `apps/web/.env`              | Gateway proxy target                           |
-| `apps/website/.env.local`    | Public DMG + GitHub URLs (marketing site only) |
+**Required:**
+- `services/pyai-gateway/.env` — PyAI API key, Google OAuth credentials, JWT secret
 
-Custom meeting modes live in `modes/*.yaml`. Upload PyAI packs with `make upload-packs` when you change them.
+**Optional:**
+- `apps/web/.env` — Gateway proxy target (defaults work for local dev)
+- `apps/website/.env.local` — DMG/GitHub URLs (marketing site only)
+
+**Custom meeting modes:** Edit `modes/*.yaml` then run `make upload-packs`
+
+⚠️ Never commit `.env` files or secrets to version control.
 
 ---
 
 ## Documentation
 
-| Doc                                                                | Contents                                                          |
+| Document                                                           | Description                                                       |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
 | **[docs/USAGE.md](docs/USAGE.md)**                                 | Complete guide — every screen, shortcut, and troubleshooting step |
 | [services/pyai-gateway/README.md](services/pyai-gateway/README.md) | Gateway API and pipeline                                          |
-| [apps/desktop/README.md](apps/desktop/README.md)                   | Tauri app, DMG build, first launch                                |
+| [apps/desktop/README.md](apps/desktop/README.md)                   | Tauri app, DMG build, installation                                |
 | [apps/website/README.md](apps/website/README.md)                   | Marketing site and Vercel deploy                                  |
 
-Product docs (when the site is running): http://localhost:5174/docs
+**Marketing site:** Run `make website` then visit http://localhost:5174
 
 ---
 
