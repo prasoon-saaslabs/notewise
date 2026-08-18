@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
+import { UserAvatar } from "../../components/UserAvatar";
 import { PageMotion } from "../../components/PageMotion";
 import { AiMetric, AiSurface } from "../../components/ai/AiPrimitives";
 import { api } from "../../lib/api";
@@ -61,17 +62,13 @@ export function ProfilePage() {
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            {user.picture ? (
-              <img
-                src={user.picture}
-                alt=""
-                className="h-16 w-16 rounded-2xl object-cover ring-2 ring-[var(--nw-border)]"
-              />
-            ) : (
-              <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--nw-accent-soft)] text-xl font-bold text-[var(--nw-accent-dark)]">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
-            )}
+            <UserAvatar
+              name={user.name}
+              email={user.email}
+              picture={user.picture}
+              className="h-16 w-16 rounded-2xl object-cover ring-2 ring-[var(--nw-border)]"
+              initialsClassName="text-xl ring-2 ring-[var(--nw-border)]"
+            />
             <div>
               <p className="m-0 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-accent-dark)]">
                 Your profile
