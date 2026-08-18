@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { acquireTwoChannelCapture, createAudioRecorder } from "../lib/audio";
 import { getPendingCalendarEventId } from "../lib/authSession";
-import { isMixedSpeakersEnabled } from "../lib/mixedCapture";
 import { api } from "../lib/api";
 import { hearWsUrl, isPyaiBackend } from "../lib/backend";
 import {
@@ -11,9 +10,15 @@ import {
   type HearStreamClient,
 } from "../lib/hearCapture";
 import type { NotesPayload, TranscriptTurn } from "@notewise/api-client";
-import { ensureReadyToRecord, micBlockedMessage } from "../lib/desktopPermissions";
+import {
+  ensureReadyToRecord,
+  micBlockedMessage,
+} from "../lib/desktopPermissions";
 import { notifyDesktop } from "../lib/desktopNotify";
-import { startNativeSystemAudioCapture, stopNativeSystemAudioCapture } from "../lib/nativeSystemAudio";
+import {
+  startNativeSystemAudioCapture,
+  stopNativeSystemAudioCapture,
+} from "../lib/nativeSystemAudio";
 import { syncDesktopTrayRecording } from "../lib/desktopTray";
 import {
   appendRecoveryChunk,
@@ -25,6 +30,11 @@ import {
 } from "../lib/recordingRecovery";
 import { throttle } from "../lib/throttle";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  getSimpleMeetingName,
+  isEditedSimpleMeetingName,
+  isSimpleCaptureSession,
+} from "../features/simple/simpleCapture";
 
 type Turn = {
   id: string;
@@ -79,11 +89,13 @@ export function useRecorder() {
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [meetingId, setMeetingId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [notes, setNotes] = useState<NotesPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusLine, setStatusLine] = useState("Ready to capture");
   const [phase, setPhase] = useState<ProcessPhase>("idle");
+  const phaseRef = useRef<ProcessPhase>("idle");
   const [interim, setInterim] = useState("");
   const [liveSupported, setLiveSupported] = useState(true);
   const [userNotes, setUserNotes] = useState("");
@@ -156,8 +168,19 @@ export function useRecorder() {
     turnsRef.current = turns;
   }, [turns]);
 
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  const syncUserNotesFromMeeting = useCallback((value?: string | null) => {
+    const next = value ?? "";
+    userNotesRef.current = next;
+    setUserNotes(next);
+  }, []);
+
   const tryRecoverOrphanedRecording = useCallback(async () => {
-    if (recoveryAttemptedRef.current || recordingRef.current || busyRef.current) return;
+    if (recoveryAttemptedRef.current || recordingRef.current || busyRef.current)
+      return;
     const meta = readRecordingRecoveryMeta();
     if (!meta?.sessionId) return;
     recoveryAttemptedRef.current = true;
@@ -174,7 +197,11 @@ export function useRecorder() {
       await api.finalizeSession(meta.sessionId, { userNotes: meta.userNotes });
       await clearAllRecovery(meta.sessionId);
       setStatusLine("Recovered previous recording — see Library");
-      void notifyDesktop("Notewise", "Recovered an interrupted recording — see Library.", "info");
+      void notifyDesktop(
+        "Notewise",
+        "Recovered an interrupted recording — see Library.",
+        "info",
+      );
       void qc.invalidateQueries({ queryKey: ["meetings"] });
     } catch (err) {
       console.warn("Recording recovery failed", err);
@@ -320,7 +347,10 @@ export function useRecorder() {
     captureReleaseRef.current?.();
     captureReleaseRef.current = null;
     setMeters({ mic: 0, system: 0, backend: "mic" });
-    if (typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)) {
+    if (
+      typeof window !== "undefined" &&
+      ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
+    ) {
       void stopNativeSystemAudioCapture();
     }
   };
@@ -346,7 +376,9 @@ export function useRecorder() {
     const mid = activeMeetingIdRef.current;
     if (mid) {
       window.dispatchEvent(
-        new CustomEvent("og-utterance", { detail: { text: cleaned, meetingId: mid } }),
+        new CustomEvent("og-utterance", {
+          detail: { text: cleaned, meetingId: mid },
+        }),
       );
     }
   }, []);
@@ -367,7 +399,9 @@ export function useRecorder() {
       speechRef.current = rec;
       rec.continuous = true;
       rec.interimResults = true;
-      rec.lang = navigator.language?.startsWith("en") ? navigator.language : "en-US";
+      rec.lang = navigator.language?.startsWith("en")
+        ? navigator.language
+        : "en-US";
 
       rec.onresult = (event) => {
         let interimText = "";
@@ -473,7 +507,9 @@ export function useRecorder() {
           sessionIdRef.current
         ) {
           checkInSentRef.current = true;
-          void api.setSessionCheckIn(sessionIdRef.current, 5000).catch(() => undefined);
+          void api
+            .setSessionCheckIn(sessionIdRef.current, 5000)
+            .catch(() => undefined);
         }
         return next;
       });
@@ -491,7 +527,8 @@ export function useRecorder() {
   const tickLiveWhisperRef = useRef<() => Promise<void>>(async () => undefined);
 
   const tickLiveWhisper = useCallback(async () => {
-    if (!recordingRef.current || pausedRef.current || liveInFlightRef.current) return;
+    if (!recordingRef.current || pausedRef.current || liveInFlightRef.current)
+      return;
     const sid = sessionIdRef.current;
     if (!sid) return;
     if (chunksRef.current.length === 0) return;
@@ -530,9 +567,10 @@ export function useRecorder() {
 
       setTurns((prev) => {
         const browser = prev.filter((t) => t.id.startsWith("live-br-"));
-        const whisper = (segments.length
-          ? segments
-          : [{ text: result.text, startMs: 0, endMs: 0 }]
+        const whisper = (
+          segments.length
+            ? segments
+            : [{ text: result.text, startMs: 0, endMs: 0 }]
         ).map((s, i) => ({
           id: `live-wh-${i}-${s.startMs}`,
           speaker: "You",
@@ -553,19 +591,27 @@ export function useRecorder() {
   tickLiveWhisperRef.current = tickLiveWhisper;
 
   const start = useCallback(async (): Promise<boolean> => {
-    if (busyRef.current || mediaRef.current || recordingRef.current || pausedRef.current) return false;
+    if (
+      busyRef.current ||
+      mediaRef.current ||
+      recordingRef.current ||
+      pausedRef.current
+    )
+      return false;
     busyRef.current = true;
     setBusy(true);
     setError(null);
     setNotes(null);
     setMeetingId(null);
     setInterim("");
-    setUserNotes("");
-    userNotesRef.current = "";
+    if (phaseRef.current === "ready") {
+      syncUserNotesFromMeeting("");
+    }
     chunksRef.current = [];
     pcmChunksRef.current = [];
     seqRef.current = 0;
     sessionIdRef.current = null;
+    setSessionId(null);
     activeMeetingIdRef.current = null;
     browserSpeechOkRef.current = false;
     checkInSentRef.current = false;
@@ -597,8 +643,8 @@ export function useRecorder() {
       }
 
       const usePyai = pyaiRef.current;
-      const modeId = window.localStorage.getItem("og-mode-id") || undefined;
-      const mixedSpeakers = isTauriShell ? false : isMixedSpeakersEnabled();
+      const modeId = window.localStorage.getItem("og-mode-id") || "general";
+      const mixedSpeakers = !isTauriShell;
       const cap = await acquireTwoChannelCapture({
         preferSystem: isTauriShell,
         mixedSpeakers,
@@ -614,25 +660,50 @@ export function useRecorder() {
       channelModeRef.current = channelMode;
       window.localStorage.setItem("og-channel-mode", channelMode);
       captureReleaseRef.current = cap.release ?? null;
-      setMeters({ mic: 0, system: 0, backend: nativeSystemActive ? cap.backend : "mic" });
+      setMeters({
+        mic: 0,
+        system: 0,
+        backend: nativeSystemActive ? cap.backend : "mic",
+      });
       const calendarEventId = getPendingCalendarEventId();
-      const sessionPromise = api.createLocalSession(
-        `Capture · ${new Date().toLocaleString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })}`,
-        { modeId, channelMode, calendarEventId: calendarEventId ?? undefined },
-      );
+      const simpleCapture = isSimpleCaptureSession();
+      const initialUserNotes = userNotesRef.current.trim();
+      const sessionPromise = simpleCapture
+        ? api.createLocalSession(undefined, {
+            ...(isEditedSimpleMeetingName()
+              ? { name: getSimpleMeetingName().trim() }
+              : {}),
+            ...(initialUserNotes ? { userNotes: initialUserNotes } : {}),
+            modeId,
+            channelMode,
+            calendarEventId: calendarEventId ?? undefined,
+          })
+        : api.createLocalSession(
+            `Capture · ${new Date().toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}`,
+            {
+              ...(initialUserNotes ? { userNotes: initialUserNotes } : {}),
+              modeId,
+              channelMode,
+              calendarEventId: calendarEventId ?? undefined,
+            },
+          );
       const stream = cap.recordStream;
-      const liveTracks = stream.getAudioTracks().filter((t) => t.readyState === "live");
+      const liveTracks = stream
+        .getAudioTracks()
+        .filter((t) => t.readyState === "live");
       if (!liveTracks.length) {
         stream.getTracks().forEach((t) => t.stop());
         cap.systemStream?.getTracks().forEach((t) => t.stop());
         captureReleaseRef.current?.();
         captureReleaseRef.current = null;
-        throw new Error("Microphone opened but no live audio track. Check OS/browser mic settings.");
+        throw new Error(
+          "Microphone opened but no live audio track. Check OS/browser mic settings.",
+        );
       }
       streamRef.current = stream;
       systemStreamRef.current = cap.systemStream;
@@ -649,6 +720,7 @@ export function useRecorder() {
 
       const created = await sessionPromise;
       sessionIdRef.current = created.sessionId;
+      setSessionId(created.sessionId);
       activeMeetingIdRef.current = created.meetingId;
       setMeetingId(created.meetingId);
       recoverySeqRef.current = 0;
@@ -690,7 +762,8 @@ export function useRecorder() {
       if (!usePyai) startSpeech();
       startElapsedTimer();
 
-      if (backupUploadRef.current) window.clearInterval(backupUploadRef.current);
+      if (backupUploadRef.current)
+        window.clearInterval(backupUploadRef.current);
       backupUploadRef.current = window.setInterval(() => {
         if (!recordingRef.current || pausedRef.current) return;
         const sid = sessionIdRef.current;
@@ -700,7 +773,9 @@ export function useRecorder() {
         lastBackupCountRef.current = chunksRef.current.length;
         const blob = new Blob(pending, { type: mimeRef.current });
         if (blob.size < 4096) return;
-        void api.uploadAudioChunk(sid, blob, seqRef.current++).catch(() => undefined);
+        void api
+          .uploadAudioChunk(sid, blob, seqRef.current++)
+          .catch(() => undefined);
       }, 20_000);
 
       if (usePyai) {
@@ -720,9 +795,11 @@ export function useRecorder() {
               return [
                 ...prev,
                 {
-                  id: `live-hear-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                  speaker: cap.channelMode === "mix" ? "Speaker" : "Speaking…",
-                  kind: "you",
+                  id: `live-hear-${Date.now()}-${Math.random()
+                    .toString(36)
+                    .slice(2, 7)}`,
+                  speaker: cap.channelMode === "mix" ? "Others" : "You",
+                  kind: cap.channelMode === "mix" ? "other" : "you",
                   text: cleaned,
                   live: true,
                 },
@@ -742,7 +819,11 @@ export function useRecorder() {
         hearStreamRef.current = client;
 
         client.ws.onclose = () => {
-          if (recordingRef.current && !browserSpeechOkRef.current && !wantSpeechRef.current) {
+          if (
+            recordingRef.current &&
+            !browserSpeechOkRef.current &&
+            !wantSpeechRef.current
+          ) {
             startBrowserFallback("Hear connection closed");
           }
         };
@@ -759,12 +840,13 @@ export function useRecorder() {
               systemStream: cap.systemStream,
               nativeSystemAudio: nativeSystemActive,
               stereo: channelMode === "stereo",
-              onMeters: (levels) => pushMeters({ ...levels, backend: cap.backend }),
+              onMeters: (levels) =>
+                pushMeters({ ...levels, backend: cap.backend }),
             },
           );
           hearCaptureRef.current = capture;
           if (cap.backend === "mix") {
-            setStatusLine("Listening — mixed capture (you + room audio)");
+            setStatusLine("Listening — live capture");
           } else if (cap.backend === "tab-capture") {
             setStatusLine(
               `Listening — You + ${cap.meetingTabTitle || "meeting tab"}`,
@@ -777,7 +859,10 @@ export function useRecorder() {
             );
           }
         } catch (hearErr) {
-          console.warn("Hear live capture failed; batch upload still active", hearErr);
+          console.warn(
+            "Hear live capture failed; batch upload still active",
+            hearErr,
+          );
           setStatusLine("Listening — mic on (live Hear unavailable)");
         }
       } else {
@@ -793,9 +878,11 @@ export function useRecorder() {
       cleanupMedia();
       stopTimer();
       sessionIdRef.current = null;
-    activeMeetingIdRef.current = null;
+      setSessionId(null);
+      activeMeetingIdRef.current = null;
       const message =
-        err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "PermissionDeniedError")
           ? isTauriShell
             ? err.message && err.message !== "Microphone access denied"
               ? err.message
@@ -805,7 +892,11 @@ export function useRecorder() {
             ? err.message
             : "Could not start recording";
       setError(message);
-      void notifyDesktop("Notewise — could not start recording", message, "error");
+      void notifyDesktop(
+        "Notewise — could not start recording",
+        message,
+        "error",
+      );
       setRecording(false);
       setPaused(false);
       setPhase("idle");
@@ -815,7 +906,14 @@ export function useRecorder() {
       busyRef.current = false;
       setBusy(false);
     }
-  }, [startSpeech, tickLiveWhisper, startElapsedTimer, startLiveWhisperTimer, startBrowserFallback]);
+  }, [
+    startSpeech,
+    syncUserNotesFromMeeting,
+    tickLiveWhisper,
+    startElapsedTimer,
+    startLiveWhisperTimer,
+    startBrowserFallback,
+  ]);
 
   const pause = useCallback(() => {
     if (!recordingRef.current || pausedRef.current || busyRef.current) return;
@@ -844,7 +942,9 @@ export function useRecorder() {
     recordingRef.current = true;
     setRecording(true);
     setStatusLine(
-      usePyaiLiveRef.current ? "Listening — PyAI Hear live" : "Listening — live transcript on",
+      usePyaiLiveRef.current
+        ? "Listening — PyAI Hear live"
+        : "Listening — live transcript on",
     );
     try {
       if (mediaRef.current?.state === "paused") mediaRef.current.resume();
@@ -861,7 +961,8 @@ export function useRecorder() {
 
   const stop = useCallback(async () => {
     if (busyRef.current) return;
-    if (!recordingRef.current && !pausedRef.current && !mediaRef.current) return;
+    if (!recordingRef.current && !pausedRef.current && !mediaRef.current)
+      return;
     busyRef.current = true;
     setBusy(true);
     setError(null);
@@ -929,11 +1030,15 @@ export function useRecorder() {
       }
       await clearAllRecovery(sid);
       if (usePyai && pcmChunksRef.current.length > 0) {
-        const pcmBlob = new Blob(pcmChunksRef.current, { type: "application/octet-stream" });
+        const pcmBlob = new Blob(pcmChunksRef.current, {
+          type: "application/octet-stream",
+        });
         await api.uploadPcm(sid, pcmBlob).catch(() => undefined);
       }
       if (usePyai && !checkInSentRef.current) {
-        await api.setSessionCheckIn(sid, Math.min(elapsed * 1000, 5000)).catch(() => undefined);
+        await api
+          .setSessionCheckIn(sid, Math.min(elapsed * 1000, 5000))
+          .catch(() => undefined);
       }
 
       // Snapshot live captions before finalize (last-resort if batch/Hear empty)
@@ -947,16 +1052,21 @@ export function useRecorder() {
         }));
 
       setPhase("transcribing");
-      setStatusLine(usePyai ? "Transcribing with PyAI Hear…" : "Transcribing with Whisper…");
+      setStatusLine(
+        usePyai ? "Transcribing with PyAI Hear…" : "Transcribing with Whisper…",
+      );
       const result = await api.finalizeSession(sid, {
-        userNotes: userNotesRef.current || undefined,
+        userNotes: userNotesRef.current,
         liveTurns: liveTurns.length ? liveTurns : undefined,
       });
       setMeetingId(result.meetingId);
       void qc.invalidateQueries({ queryKey: ["meetings"] });
 
       // PyAI finalize is synchronous (awaits jobs+Recap); Nest polls worker.
-      if (usePyai && (result.status === "ready" || result.status === "failed")) {
+      if (
+        usePyai &&
+        (result.status === "ready" || result.status === "failed")
+      ) {
         const detail = await api.getMeeting(result.meetingId);
         if (detail.transcript?.length) {
           setTurns(
@@ -969,6 +1079,7 @@ export function useRecorder() {
           );
         }
         setNotes(detail.notes);
+        syncUserNotesFromMeeting(detail.userNotes);
         if (result.status === "failed") {
           const errMsg =
             (result as { error?: string }).error ||
@@ -979,7 +1090,8 @@ export function useRecorder() {
           setStatusLine(
             errMsg.includes("PYAI_RATE_LIMIT")
               ? "PyAI quota exceeded — try again after 00:00 UTC or use samples"
-              : errMsg.includes("EMPTY_TRANSCRIPT") || /no transcript/i.test(errMsg)
+              : errMsg.includes("EMPTY_TRANSCRIPT") ||
+                  /no transcript/i.test(errMsg)
                 ? liveTurns.length
                   ? "Could not build notes — retry or import samples"
                   : "No speech captured — allow mic and speak, or use browser captions"
@@ -1011,7 +1123,9 @@ export function useRecorder() {
           if (detail.status === "processing" && i > 8) {
             setPhase("notes");
             setStatusLine(
-              usePyai ? "Writing notes with PyAI Recap…" : "Writing notes & action items…",
+              usePyai
+                ? "Writing notes with PyAI Recap…"
+                : "Writing notes & action items…",
             );
           }
 
@@ -1027,9 +1141,12 @@ export function useRecorder() {
               );
             }
             setNotes(detail.notes);
+            syncUserNotesFromMeeting(detail.userNotes);
             void qc.invalidateQueries({ queryKey: ["meetings"] });
             setPhase(detail.status === "ready" ? "ready" : "failed");
-            setStatusLine(detail.status === "ready" ? "Notes ready" : "Processing failed");
+            setStatusLine(
+              detail.status === "ready" ? "Notes ready" : "Processing failed",
+            );
             break;
           }
         }
@@ -1047,7 +1164,7 @@ export function useRecorder() {
       busyRef.current = false;
       setBusy(false);
     }
-  }, [qc, elapsed]); // turns read via turnsRef
+  }, [qc, elapsed, syncUserNotesFromMeeting]); // turns read via turnsRef
 
   stopRef.current = () => {
     void stop();
@@ -1080,6 +1197,7 @@ export function useRecorder() {
     busy,
     elapsed,
     meetingId,
+    sessionId,
     turns,
     notes,
     error,

@@ -126,8 +126,8 @@ export function MiniCapturePanel({
         <button
           type="button"
           className="nw-mini-icon-btn"
-          title="Back to full Capture"
-          aria-label="Back to full Capture"
+          title="Open full meeting view"
+          aria-label="Open full meeting view"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -199,6 +199,7 @@ export function MiniCapturePanel({
             <NotesEditor
               variant="compact"
               minHeight={88}
+              className="min-h-0 flex-1"
               placeholder="Jot notes while you talk…"
               value={userNotes}
               onChange={setUserNotesDraft}

@@ -4,6 +4,7 @@ import { Button } from "@notewise/ui";
 import { Brain, Calendar, FileText, UserRound } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { AppBrand } from "../../components/AppBrand";
+import { GoogleSignInButton } from "../../components/GoogleSignInButton";
 import { ThemePicker } from "../../components/ThemePicker";
 import { consumeAuthReturnPath, setAuthReturnPath } from "../../lib/authFlow";
 import { isDesktopShell } from "../../capture/desktopMiniWindow";
@@ -11,11 +12,15 @@ import { isDesktopShell } from "../../capture/desktopMiniWindow";
 const AI_FEATURES = [
   { icon: Calendar, text: "Calendar-driven prep briefs before every call" },
   { icon: Brain, text: "Relationship memory across people & companies" },
-  { icon: FileText, text: "Notes with receipts — every claim linked to transcript" },
+  {
+    icon: FileText,
+    text: "Notes with receipts — every claim linked to transcript",
+  },
 ] as const;
 
 export function LoginPage() {
-  const { providers, signInGuest, signInGoogle, browserAuthPending } = useAuth();
+  const { providers, signInGuest, signInGoogle, browserAuthPending } =
+    useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [guestName, setGuestName] = useState("");
@@ -25,7 +30,8 @@ export function LoginPage() {
   const googleEnabled = providers?.google.enabled === true;
   const googleUnknown = providers === null;
   const returnPath =
-    (location.state as { from?: string } | null)?.from && (location.state as { from: string }).from !== "/login"
+    (location.state as { from?: string } | null)?.from &&
+    (location.state as { from: string }).from !== "/login"
       ? (location.state as { from: string }).from
       : "/";
 
@@ -61,15 +67,21 @@ export function LoginPage() {
       <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
         <ThemePicker />
       </div>
-      <div className="nw-editorial-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden />
-      <div className="nw-paper-grain pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+      <div
+        className="nw-editorial-grid pointer-events-none absolute inset-0 opacity-50"
+        aria-hidden
+      />
+      <div
+        className="nw-paper-grain pointer-events-none absolute inset-0 opacity-40"
+        aria-hidden
+      />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-[60%] bg-[radial-gradient(ellipse_at_top,_var(--nw-accent-glow),transparent_55%)]"
         aria-hidden
       />
 
       <div className="relative w-full max-w-[420px]">
-        <AppBrand size="lg" className="mb-8" />
+        <AppBrand size="lg" layout="row" showTagline={false} className="mb-8" />
 
         <div className="nw-glass-panel rounded-[28px] p-6 sm:p-8">
           <p className="m-0 mb-5 text-sm font-medium text-[var(--nw-accent)]">
@@ -91,28 +103,28 @@ export function LoginPage() {
           </ul>
 
           <div className="flex flex-col gap-3">
-            <Button
-              variant="primary"
-              size="lg"
-              disabled={busy || browserAuthPending || googleUnknown || !googleEnabled}
+            <GoogleSignInButton
+              disabled={
+                busy || browserAuthPending || googleUnknown || !googleEnabled
+              }
               onClick={() => void continueGoogle()}
-              className="justify-center"
             >
-              <Calendar className="h-4 w-4" />
               {browserAuthPending
                 ? "Waiting for browser…"
                 : googleUnknown
                   ? "Checking Google…"
-                  : "Continue with Google"}
-            </Button>
+                  : "Sign in with Google"}
+            </GoogleSignInButton>
             {browserAuthPending ? (
               <p className="m-0 text-xs text-[var(--nw-accent-dark)]">
-                Finish sign-in in your default browser, then return here — Notewise will log you in
-                automatically.
+                Finish sign-in in your default browser, then return here —
+                Notewise will log you in automatically.
               </p>
             ) : null}
             {googleUnknown ? (
-              <p className="m-0 text-xs text-[var(--nw-ink-3)]">Checking whether Google sign-in is available…</p>
+              <p className="m-0 text-xs text-[var(--nw-ink-3)]">
+                Checking whether Google sign-in is available…
+              </p>
             ) : !googleEnabled ? (
               <p className="m-0 text-xs text-[var(--nw-ink-3)]">
                 {isDesktopShell()
@@ -122,13 +134,10 @@ export function LoginPage() {
             ) : (
               <p className="m-0 text-xs text-[var(--nw-ink-3)]">
                 Read-only calendar access for prep reminders. Add yourself as a{" "}
-                <strong>Test user</strong> in Google Cloud if you see access_denied.
+                <strong>Test user</strong> in Google Cloud if you see
+                access_denied.
               </p>
             )}
-
-            <Button variant="secondary" disabled className="justify-center opacity-60">
-              Microsoft — coming soon
-            </Button>
 
             <div className="my-1 border-t border-[var(--nw-border)]" />
 
@@ -156,7 +165,10 @@ export function LoginPage() {
           </div>
 
           {error ? (
-            <p className="mt-4 m-0 text-sm text-[var(--nw-danger)]" role="alert">
+            <p
+              className="mt-4 m-0 text-sm text-[var(--nw-danger)]"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}

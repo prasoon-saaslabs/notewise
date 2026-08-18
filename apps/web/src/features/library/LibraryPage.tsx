@@ -1,43 +1,38 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Button, EmptyState, SpeakerChip } from "@notewise/ui";
+import { EmptyState, SpeakerChip } from "@notewise/ui";
 import {
-  CheckSquare,
   Download,
   FileText,
-  ListChecks,
-  Pause,
-  Pencil,
-  Play,
   RefreshCw,
   Sparkles,
   Square,
-  StickyNote,
   Trash2,
-  X,
 } from "lucide-react";
-import type { MeetingBackend, NotesPayload } from "@notewise/api-client";
+import type { MeetingBackend } from "@notewise/api-client";
 import {
   clientForBackend,
   displayMeetingTitle,
   getCatalogMeeting,
   listAllMeetings,
 } from "../../lib/meetingsCatalog";
-import { ClaimLine, RunStatusCard } from "../../components/Receipts";
+import { MeetingNotesIntelligence } from "../../components/MeetingNotesIntelligence";
 import { DeleteMeetingModal } from "../../components/DeleteMeetingModal";
-import { NotesEditor } from "../../components/notes/NotesEditor";
-import { NotesDisplay } from "../../components/notes/NotesDisplay";
-import {
-  usePersistedUserNotes,
-  type UserNotesSaveHint,
-} from "../../components/notes/usePersistedUserNotes";
+import { usePersistedUserNotes } from "../../components/notes/usePersistedUserNotes";
 import { api } from "../../lib/api";
+import { formatMeetingListWhen, formatWhen } from "../../lib/calendarFormat";
 import { ensureDesktopGateway } from "../../lib/desktopGateway";
 import { isDesktopPyaiOnly } from "../../lib/desktopMode";
 import { RegeneratingNotes } from "../../components/RegeneratingNotes";
 import { PageMotion } from "../../components/PageMotion";
+import { MeetingAudioPlayer } from "../../components/MeetingAudioPlayer";
+import { MeetingModePicker } from "../../components/MeetingModePicker";
+import { useRegeneratingOverlay } from "../../hooks/useRegeneratingOverlay";
+import {
+  FALLBACK_MEETING_MODES,
+  DEFAULT_MEETING_MODE_ID,
+} from "../../lib/meetingModes";
 
 /** Ready meetings always; failed ones if they have transcript to rebuild from. */
 function meetingCanRegenerate(status?: string, transcriptLen = 0) {
@@ -66,15 +61,6 @@ function BackendTag({ backend }: { backend?: MeetingBackend | string | null }) {
   );
 }
 
-function formatTime(sec: number) {
-  if (!Number.isFinite(sec) || sec < 0) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60)
-    .toString()
-    .padStart(2, "0");
-  return `${m}:${s}`;
-}
-
 const BOT_STEPS = [
   { id: "bot_joining", label: "Bot joining lobby" },
   { id: "bot_live", label: "Live capture in call" },
@@ -88,299 +74,27 @@ function botStepIndex(status: string) {
   return i < 0 ? (status === "failed" ? -1 : 0) : i;
 }
 
-function SectionCard({
-  icon,
-  title,
-  accent,
-  delay = 0,
-  children,
-  empty,
-}: {
-  icon: ReactNode;
-  title: string;
-  accent: "teal" | "amber" | "rose" | "slate" | "violet";
-  delay?: number;
-  children: React.ReactNode;
-  empty?: boolean;
-}) {
-  const accents: Record<string, string> = {
-    teal: "from-[rgb(var(--nw-accent-rgb)_/_0.12)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(var(--nw-accent-rgb)_/_0.18)]",
-    amber:
-      "from-[rgb(217_119_6_/_0.1)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(217_119_6_/_0.2)]",
-    rose: "from-[rgb(225_29_72_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(225_29_72_/_0.16)]",
-    slate:
-      "from-[rgb(100_116_139_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[var(--nw-border)]",
-    violet:
-      "from-[rgb(79_70_229_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] border-[rgb(79_70_229_/_0.16)]",
-  };
-  const iconBg: Record<string, string> = {
-    teal: "bg-[rgb(var(--nw-accent-rgb)_/_0.12)] text-[var(--nw-accent-dark)]",
-    amber: "bg-[rgb(217_119_6_/_0.12)] text-[rgb(180_83_9)]",
-    rose: "bg-[rgb(225_29_72_/_0.1)] text-[rgb(190_18_60)]",
-    slate: "bg-[var(--nw-surface-2)] text-[var(--nw-ink-3)]",
-    violet: "bg-[rgb(79_70_229_/_0.1)] text-[rgb(67_56_202)]",
-  };
-  return (
-    <section
-      className={`nw-intel-card rounded-2xl border bg-gradient-to-br p-4 shadow-[0_1px_0_rgb(15_23_42_/_0.03)] ${
-        accents[accent]
-      } ${empty ? "opacity-80" : ""}`}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <header className="mb-3 flex items-center gap-2">
-        <span
-          className={`grid h-8 w-8 place-items-center rounded-xl ${iconBg[accent]}`}
-        >
-          {icon}
-        </span>
-        <h3 className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-[var(--nw-ink-3)]">
-          {title}
-        </h3>
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function NotesIntelligence({
-  notes,
-  userNotes,
-  userNotesEditable = false,
-  onUserNotesChange,
-  userNotesSaveHint,
-  onJump,
-}: {
-  notes: NotesPayload | null;
-  userNotes?: string | null;
-  userNotesEditable?: boolean;
-  onUserNotesChange?: (value: string) => void;
-  userNotesSaveHint?: UserNotesSaveHint;
-  onJump?: (lineId?: string, startMs?: number | null) => void;
-}) {
-  const actions = notes?.actions ?? [];
-  const takeaways = notes?.takeaways ?? [];
-  const questions = notes?.openQuestions ?? [];
-  const decisions = notes?.decisions ?? [];
-  const objections = notes?.objections ?? [];
-  const hasSummary = Boolean(notes?.executiveSummary || notes?.title);
-
-  return (
-    <div className="flex flex-col gap-3">
-      <RunStatusCard status={notes?.runStatus} dropped={notes?.droppedCount} />
-      {userNotesEditable ? (
-        <SectionCard
-          icon={<StickyNote className="h-4 w-4" />}
-          title="Your notes"
-          accent="amber"
-          delay={40}
-        >
-          {userNotesSaveHint === "saving" ? (
-            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
-              Saving…
-            </p>
-          ) : userNotesSaveHint === "saved" ? (
-            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-ink-4)]">
-              Saved
-            </p>
-          ) : userNotesSaveHint === "error" ? (
-            <p className="m-0 mb-2 text-[0.65rem] text-[var(--nw-danger)]">
-              Could not save
-            </p>
-          ) : null}
-          <NotesEditor
-            variant="field"
-            minHeight={120}
-            placeholder="Add your notes…"
-            value={userNotes ?? ""}
-            onChange={onUserNotesChange!}
-            aria-label="Your notes"
-          />
-        </SectionCard>
-      ) : userNotes?.trim() ? (
-        <SectionCard
-          icon={<StickyNote className="h-4 w-4" />}
-          title="Your notes"
-          accent="amber"
-          delay={40}
-        >
-          <NotesDisplay value={userNotes.trim()} />
-        </SectionCard>
-      ) : null}
-
-      <SectionCard
-        icon={<Sparkles className="h-4 w-4" />}
-        title="Call summary"
-        accent="teal"
-        delay={80}
-        empty={!hasSummary}
-      >
-        {notes?.title ? (
-          <p className="mb-2 mt-0 text-base font-semibold tracking-tight text-[var(--nw-ink)]">
-            {notes.title}
-          </p>
-        ) : null}
-        {notes?.executiveSummary ? (
-          <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed text-[var(--nw-ink-2)]">
-            {notes.executiveSummary}
-          </p>
-        ) : (
-          <p className="m-0 text-sm text-[var(--nw-ink-4)]">
-            Summary will appear after processing.
-          </p>
-        )}
-      </SectionCard>
-
-      {objections.length > 0 ? (
-        <SectionCard
-          icon={<FileText className="h-4 w-4" />}
-          title="Objections"
-          accent="rose"
-          delay={100}
-        >
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {objections.map((o) => (
-              <ClaimLine key={o.id} claim={o} onJump={onJump} />
-            ))}
-          </ul>
-        </SectionCard>
-      ) : null}
-
-      {decisions.length > 0 ? (
-        <SectionCard
-          icon={<ListChecks className="h-4 w-4" />}
-          title="Decisions"
-          accent="violet"
-          delay={110}
-        >
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {decisions.map((d) => (
-              <ClaimLine key={d.id} claim={d} onJump={onJump} />
-            ))}
-          </ul>
-        </SectionCard>
-      ) : null}
-
-      <SectionCard
-        icon={<CheckSquare className="h-4 w-4" />}
-        title="Action items"
-        accent="rose"
-        delay={120}
-        empty={actions.length === 0}
-      >
-        {actions.length === 0 ? (
-          <p className="m-0 text-sm text-[var(--nw-ink-4)]">
-            No action items detected yet.
-          </p>
-        ) : (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {actions.map((a, i) => (
-              <li
-                key={`${a.text}-${i}`}
-                className="nw-action-row flex items-start gap-3 rounded-xl border border-[rgb(225_29_72_/_0.12)] bg-[var(--nw-glass-bg-strong)] px-3 py-2.5"
-              >
-                <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md bg-[rgb(225_29_72_/_0.1)] text-[0.65rem] font-bold text-[rgb(190_18_60)]">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="m-0 text-sm font-medium leading-snug text-[var(--nw-ink)]">
-                    {a.text}
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {a.owner ? (
-                      <span className="rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.1)] px-2 py-0.5 text-[0.6rem] font-bold uppercase text-[var(--nw-accent-dark)]">
-                        {a.owner}
-                      </span>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="rounded-full bg-[rgb(var(--nw-accent-rgb)_/_0.12)] px-1.5 py-0.5 text-[0.6rem] font-bold text-[var(--nw-accent-dark)]"
-                      onClick={() => onJump?.(a.lineIds?.[0], a.startMs)}
-                    >
-                      receipt
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
-
-      {notes?.followUpEmail ? (
-        <SectionCard
-          icon={<FileText className="h-4 w-4" />}
-          title="Follow-up email"
-          accent="slate"
-          delay={140}
-        >
-          <p className="m-0 whitespace-pre-wrap text-sm">
-            {notes.followUpEmail}
-          </p>
-        </SectionCard>
-      ) : null}
-
-      {takeaways.length > 0 ? (
-        <SectionCard
-          icon={<ListChecks className="h-4 w-4" />}
-          title="Takeaways"
-          accent="violet"
-          delay={160}
-        >
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {takeaways.map((t) => (
-              <li
-                key={t}
-                className="relative pl-4 text-sm leading-relaxed text-[var(--nw-ink-2)] before:absolute before:left-0 before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-[rgb(79_70_229)]"
-              >
-                {t}
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      ) : null}
-
-      {questions.length > 0 ? (
-        <SectionCard
-          icon={<FileText className="h-4 w-4" />}
-          title="Open questions"
-          accent="slate"
-          delay={200}
-        >
-          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-            {questions.map((q) => (
-              <li
-                key={q}
-                className="rounded-lg bg-[var(--nw-glass-bg)] px-3 py-2 text-sm text-[var(--nw-ink-2)]"
-              >
-                {q}
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      ) : null}
-    </div>
-  );
-}
-
 export function LibraryPage() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [showTranscript, setShowTranscript] = useState(true);
   const [regenError, setRegenError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [downloadOpen, setDownloadOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editNotes, setEditNotes] = useState("");
   const [q, setQ] = useState("");
+  const [modeId, setModeId] = useState(
+    () => localStorage.getItem("og-mode-id") || DEFAULT_MEETING_MODE_ID
+  );
+  const [modeError, setModeError] = useState<string | null>(null);
+  const [regenTriggered, setRegenTriggered] = useState(false);
+  const [regenReason, setRegenReason] = useState<"regenerate" | "mode-change">(
+    "regenerate"
+  );
+  const [notesRevealKey, setNotesRevealKey] = useState(0);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   const list = useQuery({
@@ -465,27 +179,58 @@ export function LibraryPage() {
   });
 
   const refreshNotes = useMutation({
-    mutationFn: (mid: string) =>
+    mutationFn: ({
+      mid,
+      modeId: nextModeId,
+    }: {
+      mid: string;
+      modeId?: string;
+    }) =>
       clientForBackend(meetingBackend).regenerateNotes(mid, {
         userNotes: detail.data?.userNotes ?? undefined,
+        modeId: nextModeId,
       }),
-    onMutate: () => {
+    onMutate: (vars) => {
       setRegenError(null);
+      setRegenTriggered(true);
+      setRegenReason(vars.modeId ? "mode-change" : "regenerate");
       void qc.setQueryData(
         ["meeting", meetingBackend, selectedId],
         (prev: typeof detail.data | undefined) =>
           prev ? { ...prev, status: "processing" as const } : prev
       );
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setRegenError(null);
+      setNotesRevealKey((k) => k + 1);
+      const snippet =
+        data.snippet ??
+        data.notes?.executiveSummary?.replace(/\n/g, " ").slice(0, 160) ??
+        undefined;
+      void qc.setQueryData(
+        ["meeting", meetingBackend, selectedId],
+        (prev: typeof detail.data | undefined) =>
+          prev
+            ? {
+                ...prev,
+                status: "ready" as const,
+                notes: data.notes ?? prev.notes,
+                snippet: snippet ?? prev.snippet,
+              }
+            : prev
+      );
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
       });
       void qc.invalidateQueries({ queryKey: ["meetings", "catalog"] });
+      if (data?.status === "ready" || data?.status === "failed") {
+        setRegenTriggered(false);
+      }
     },
-    onError: (err: Error) =>
-      setRegenError(err.message || "Could not regenerate notes"),
+    onError: (err: Error) => {
+      setRegenTriggered(false);
+      setRegenError(err.message || "Could not regenerate notes");
+    },
   });
 
   const saveMeeting = useMutation({
@@ -493,15 +238,20 @@ export function LibraryPage() {
       mid,
       title,
       userNotes,
+      modeId: nextModeId,
     }: {
       mid: string;
       title?: string;
       userNotes?: string;
+      modeId?: string;
     }) =>
-      clientForBackend(meetingBackend).updateMeeting(mid, { title, userNotes }),
+      clientForBackend(meetingBackend).updateMeeting(mid, {
+        title,
+        userNotes,
+        modeId: nextModeId,
+      }),
     onSuccess: () => {
       setEditingTitle(false);
-      setEditOpen(false);
       setDownloadOpen(false);
       void qc.invalidateQueries({
         queryKey: ["meeting", meetingBackend, selectedId],
@@ -524,9 +274,11 @@ export function LibraryPage() {
     meeting?.status,
     meeting?.transcript?.length ?? 0
   );
-  const isRegenerating =
-    refreshNotes.isPending ||
-    (meeting?.status === "processing" && Boolean(meeting?.transcript?.length));
+  const canRegenerateFromTranscript = (meeting?.transcript?.length ?? 0) > 0;
+  const isRegeneratingRaw = refreshNotes.isPending || regenTriggered;
+  const showRegenOverlay = useRegeneratingOverlay(isRegeneratingRaw);
+  const activeModeName =
+    FALLBACK_MEETING_MODES.find((m) => m.id === modeId)?.name ?? modeId;
   const botActive =
     meeting?.source === "bot" &&
     (meeting.status === "bot_joining" ||
@@ -535,15 +287,29 @@ export function LibraryPage() {
   const stepIdx = meeting ? botStepIndex(meeting.status) : 0;
 
   useEffect(() => {
-    setPlaying(false);
-    setCurrent(0);
-    setDuration(0);
     setRegenError(null);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
+    setEditingTitle(false);
+    setModeError(null);
+    setRegenTriggered(false);
   }, [selectedId]);
+
+  useEffect(() => {
+    if (meeting?.modeId) {
+      setModeId(meeting.modeId);
+      localStorage.setItem("og-mode-id", meeting.modeId);
+    }
+  }, [meeting?.id, meeting?.modeId]);
+
+  useEffect(() => {
+    if (
+      meeting?.status === "ready" &&
+      regenTriggered &&
+      !refreshNotes.isPending
+    ) {
+      setRegenTriggered(false);
+      setNotesRevealKey((k) => k + 1);
+    }
+  }, [meeting?.status, regenTriggered, refreshNotes.isPending]);
 
   useEffect(() => {
     const state = location.state as { jumpLineId?: string } | null;
@@ -571,22 +337,6 @@ export function LibraryPage() {
       });
     }
   }, [meeting?.transcript?.length, meeting?.status]);
-
-  async function togglePlay() {
-    const el = audioRef.current;
-    if (!el || !meeting?.audioUrl) return;
-    if (el.paused) {
-      try {
-        await el.play();
-        setPlaying(true);
-      } catch (err) {
-        console.error(err);
-      }
-    } else {
-      el.pause();
-      setPlaying(false);
-    }
-  }
 
   return (
     <PageMotion className="nw-card grid h-full min-h-0 overflow-hidden lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -650,9 +400,20 @@ export function LibraryPage() {
                 <p className="m-0 mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--nw-ink-3)]">
                   {m.snippet || m.status}
                 </p>
-                <span className="mt-1.5 inline-block text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
-                  {m.source}
-                </span>
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[0.58rem] font-bold uppercase tracking-wider text-[var(--nw-ink-4)]">
+                    {m.source}
+                  </span>
+                  {m.createdAt ? (
+                    <time
+                      dateTime={m.createdAt}
+                      className="shrink-0 text-[0.62rem] text-[var(--nw-ink-4)]"
+                      title={formatWhen(m.createdAt)}
+                    >
+                      {formatMeetingListWhen(m.createdAt)}
+                    </time>
+                  ) : null}
+                </div>
               </Link>
             ))
           )}
@@ -670,49 +431,47 @@ export function LibraryPage() {
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--nw-border)] px-5 py-4">
               <div className="min-w-0 flex-1">
                 {editingTitle ? (
-                  <form
-                    className="flex max-w-xl flex-wrap items-center gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
+                  <input
+                    autoFocus
+                    value={titleDraft}
+                    maxLength={200}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={() => {
+                      const current =
+                        meeting.title || displayMeetingTitle(meeting);
                       const next = titleDraft.trim();
-                      if (!next || next === meeting.title) {
+                      if (!next || next === current) {
                         setEditingTitle(false);
                         return;
                       }
                       rename.mutate({ mid: meeting.id, title: next });
                     }}
-                  >
-                    <input
-                      autoFocus
-                      value={titleDraft}
-                      maxLength={200}
-                      onChange={(e) => setTitleDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setEditingTitle(false);
-                      }}
-                      className="nw-page-input min-w-0 flex-1 rounded-xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2 text-lg font-semibold text-[var(--nw-ink)] outline-none"
-                      aria-label="Meeting title"
-                    />
-                    <Button
-                      size="sm"
-                      type="submit"
-                      disabled={rename.isPending || !titleDraft.trim()}
-                    >
-                      {rename.isPending ? "Saving…" : "Save"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      type="button"
-                      onClick={() => setEditingTitle(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </form>
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setEditingTitle(false);
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    disabled={rename.isPending}
+                    className="nw-page-input nw-page-title m-0 w-full max-w-xl rounded-lg border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-2 py-1 text-[var(--nw-ink)] outline-none focus:border-[var(--nw-accent)]"
+                    aria-label="Meeting title"
+                  />
                 ) : (
-                  <h2 className="nw-page-title nw-title-shimmer m-0">
+                  <button
+                    type="button"
+                    className="nw-page-title nw-title-shimmer m-0 -mx-2 max-w-xl cursor-text rounded-lg px-2 py-1 text-left transition hover:bg-[var(--nw-surface-2)]"
+                    onClick={() => {
+                      setTitleDraft(
+                        meeting.title || displayMeetingTitle(meeting)
+                      );
+                      setEditingTitle(true);
+                    }}
+                    title="Click to rename"
+                  >
                     {displayMeetingTitle(meeting)}
-                  </h2>
+                  </button>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <BackendTag backend={meeting.backend} />
@@ -733,6 +492,14 @@ export function LibraryPage() {
                       </span>
                     ))}
                 </div>
+                {meeting.createdAt ? (
+                  <time
+                    dateTime={meeting.createdAt}
+                    className="mt-2 block text-xs text-[var(--nw-ink-4)]"
+                  >
+                    {formatWhen(meeting.createdAt)}
+                  </time>
+                ) : null}
                 {meeting.meetingUrl ? (
                   <a
                     className="mt-2 inline-block text-xs font-semibold text-[var(--nw-accent-dark)] underline"
@@ -767,16 +534,20 @@ export function LibraryPage() {
                   <button
                     type="button"
                     className="nw-library-tool inline-flex h-9 w-9 items-center justify-center rounded-xl text-[var(--nw-accent-dark)]"
-                    disabled={refreshNotes.isPending}
+                    disabled={refreshNotes.isPending || showRegenOverlay}
                     title="Regenerate with AI"
                     onClick={() => {
                       setRegenError(null);
-                      refreshNotes.mutate(meeting.id);
+                      setRegenTriggered(true);
+                      setRegenReason("regenerate");
+                      refreshNotes.mutate({ mid: meeting.id });
                     }}
                   >
                     <Sparkles
                       className={`h-4 w-4 ${
-                        refreshNotes.isPending ? "animate-pulse" : ""
+                        refreshNotes.isPending || showRegenOverlay
+                          ? "animate-spin"
+                          : ""
                       }`}
                     />
                   </button>
@@ -867,18 +638,6 @@ export function LibraryPage() {
                 </div>
                 <button
                   type="button"
-                  className="nw-library-tool inline-flex h-9 w-9 items-center justify-center rounded-xl"
-                  title="Edit title & notes"
-                  onClick={() => {
-                    setEditTitle(meeting.title || displayMeetingTitle(meeting));
-                    setEditNotes(meeting.userNotes || "");
-                    setEditOpen(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
                   className="nw-library-tool danger inline-flex h-9 w-9 items-center justify-center rounded-xl"
                   title="Delete meeting"
                   onClick={() => setDeleteOpen(true)}
@@ -918,99 +677,6 @@ export function LibraryPage() {
                 </p>
               ) : null}
             </div>
-
-            {editOpen
-              ? createPortal(
-                  <div
-                    className="nw-modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4"
-                    role="presentation"
-                    onClick={() => setEditOpen(false)}
-                  >
-                    <div
-                      className="nw-modal-dialog w-full max-w-lg rounded-2xl p-5"
-                      role="dialog"
-                      aria-modal="true"
-                      aria-labelledby="edit-meeting-title"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-2">
-                        <h3
-                          id="edit-meeting-title"
-                          className="m-0 text-base font-semibold text-[var(--nw-ink)]"
-                        >
-                          Edit meeting
-                        </h3>
-                        <button
-                          type="button"
-                          className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-4)] hover:bg-[var(--nw-surface-2)]"
-                          onClick={() => setEditOpen(false)}
-                          aria-label="Close"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <form
-                        className="flex flex-col gap-3"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const title = editTitle.trim();
-                          if (!title) return;
-                          saveMeeting.mutate({
-                            mid: meeting.id,
-                            title,
-                            userNotes: editNotes,
-                          });
-                        }}
-                      >
-                        <label className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Title
-                          </span>
-                          <input
-                            value={editTitle}
-                            maxLength={200}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="w-full rounded-xl border border-[var(--nw-border)] px-3 py-2 text-sm outline-none focus:border-[var(--nw-accent)]"
-                          />
-                        </label>
-                        <div className="block text-sm">
-                          <span className="mb-1 block text-xs font-semibold text-[var(--nw-ink-3)]">
-                            Your notes (scratchpad)
-                          </span>
-                          <NotesEditor
-                            variant="field"
-                            minHeight={144}
-                            value={editNotes}
-                            onChange={setEditNotes}
-                            placeholder="Pricing pushback, follow-ups, context…"
-                            aria-label="Your notes scratchpad"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2 pt-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={
-                              saveMeeting.isPending || !editTitle.trim()
-                            }
-                          >
-                            {saveMeeting.isPending ? "Saving…" : "Save"}
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>,
-                  document.body
-                )
-              : null}
 
             {deleteOpen ? (
               <DeleteMeetingModal
@@ -1057,107 +723,102 @@ export function LibraryPage() {
               </div>
             ) : null}
 
-            <div className="mx-5 mt-3 flex items-center gap-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-surface-solid)] px-3 py-2.5 shadow-[0_1px_0_rgb(15_23_42_/_0.04)]">
-              <button
-                type="button"
-                className="nw-play-orb grid h-9 w-9 place-items-center rounded-full bg-[var(--nw-accent)] text-white disabled:opacity-40"
-                aria-label={playing ? "Pause" : "Play"}
-                disabled={!meeting.audioUrl}
-                onClick={() => void togglePlay()}
-              >
-                {playing ? (
-                  <Pause className="h-3.5 w-3.5" />
-                ) : (
-                  <Play className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(current)}
-              </span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--nw-surface-3)]">
-                <i
-                  className="nw-progress-fill block h-full rounded-full bg-[linear-gradient(90deg,var(--nw-accent),#0ea5e9)] not-italic"
-                  style={{
-                    width: `${
-                      duration ? Math.min(100, (current / duration) * 100) : 0
-                    }%`,
-                  }}
-                />
-              </div>
-              <span className="font-mono text-[0.7rem] text-[var(--nw-ink-3)]">
-                {formatTime(duration || meeting.durationSec || 0)}
-              </span>
-              {meeting.audioUrl ? (
-                <audio
-                  ref={audioRef}
-                  src={meeting.audioUrl}
-                  preload="metadata"
-                  onLoadedMetadata={(e) =>
-                    setDuration(e.currentTarget.duration || 0)
-                  }
-                  onTimeUpdate={(e) =>
-                    setCurrent(e.currentTarget.currentTime || 0)
-                  }
-                  onEnded={() => setPlaying(false)}
-                  onPause={() => setPlaying(false)}
-                  onPlay={() => setPlaying(true)}
-                />
-              ) : (
-                <span
-                  className="nw-muted text-xs"
-                  title="Record a new meeting to enable playback"
-                >
-                  No audio (record again)
-                </span>
-              )}
-            </div>
+            <MeetingAudioPlayer
+              key={meeting.id}
+              className="mx-5 mt-3"
+              src={meeting.audioUrl}
+              durationHintSec={meeting.durationSec}
+            />
 
             <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
-              {meeting.status === "processing" ? (
-                <div className="mb-4 space-y-2">
-                  <p className="m-0 text-xs font-semibold text-[var(--nw-accent-dark)]">
-                    Generating intelligent notes…
-                  </p>
-                  <div className="nw-skeleton w-3/4" />
-                  <div className="nw-skeleton w-full" />
-                  <div className="nw-skeleton w-1/2" />
-                </div>
-              ) : null}
-
               {/* Intelligence stack — primary product surface */}
               <div className="mb-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[var(--nw-accent-dark)]" />
-                  <h3 className="m-0 text-sm font-bold tracking-tight text-[var(--nw-ink)]">
-                    Meeting intelligence
-                  </h3>
+                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-[var(--nw-accent-dark)]" />
+                    <h3 className="m-0 text-sm font-bold tracking-tight text-[var(--nw-ink)]">
+                      Meeting intelligence
+                    </h3>
+                  </div>
+                </div>
+                <div
+                  className={`mb-4 rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.14)] bg-[var(--nw-glass-bg-strong)] p-3.5 transition-opacity duration-300 ${
+                    showRegenOverlay ? "opacity-80" : "opacity-100"
+                  }`}
+                >
+                  <MeetingModePicker
+                    value={modeId}
+                    pending={showRegenOverlay}
+                    onChange={(next) => {
+                      if (next === modeId) return;
+                      setModeId(next);
+                      localStorage.setItem("og-mode-id", next);
+                      setModeError(null);
+                      if (canRegenerateFromTranscript) {
+                        setRegenTriggered(true);
+                        setRegenReason("mode-change");
+                        refreshNotes.mutate({ mid: meeting.id, modeId: next });
+                        return;
+                      }
+                      saveMeeting.mutate(
+                        { mid: meeting.id, modeId: next },
+                        {
+                          onError: (err: Error) =>
+                            setModeError(
+                              err.message || "Could not update meeting mode"
+                            ),
+                        }
+                      );
+                    }}
+                  />
+                  {modeError ? (
+                    <p
+                      className="mt-2 m-0 text-[0.72rem] text-[var(--nw-danger)]"
+                      role="alert"
+                    >
+                      {modeError}
+                    </p>
+                  ) : null}
                 </div>
                 {meeting.notes || meeting.userNotes ? (
                   <>
-                    {isRegenerating ? (
-                      <RegeneratingNotes active />
-                    ) : (
-                      <NotesIntelligence
-                        notes={meeting.notes}
-                        userNotes={persistedUserNotes.draft}
-                        userNotesEditable
-                        onUserNotesChange={persistedUserNotes.handleChange}
-                        userNotesSaveHint={persistedUserNotes.saveHint}
-                        onJump={(lineId) => {
-                          setShowTranscript(true);
-                          if (!lineId) return;
-                          document
-                            .getElementById(`line-${lineId}`)
-                            ?.scrollIntoView({
-                              behavior: "smooth",
-                              block: "center",
-                            });
-                        }}
+                    {showRegenOverlay ? (
+                      <RegeneratingNotes
+                        active
+                        modeName={activeModeName}
+                        reason={regenReason}
                       />
+                    ) : (
+                      <div key={notesRevealKey} className="nw-notes-reveal">
+                        <MeetingNotesIntelligence
+                          notes={meeting.notes}
+                          userNotes={persistedUserNotes.draft}
+                          userNotesEditable
+                          onUserNotesChange={persistedUserNotes.handleChange}
+                          userNotesSaveHint={persistedUserNotes.saveHint}
+                          userNotesPlacement="last"
+                          onJump={(lineId) => {
+                            setShowTranscript(true);
+                            if (!lineId) return;
+                            document
+                              .getElementById(`line-${lineId}`)
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
+                          }}
+                        />
+                      </div>
                     )}
                   </>
-                ) : isRegenerating ? (
-                  <RegeneratingNotes active />
+                ) : showRegenOverlay ? (
+                  <RegeneratingNotes
+                    active
+                    modeName={activeModeName}
+                    reason={regenReason}
+                  />
+                ) : meeting.status === "processing" ? (
+                  <RegeneratingNotes active reason="regenerate" />
                 ) : meeting.status === "bot_joining" ||
                   meeting.status === "bot_live" ? (
                   <EmptyState
@@ -1165,12 +826,12 @@ export function LibraryPage() {
                     description="Summary and actions appear as the bot captures speech."
                     compact
                   />
-                ) : meeting.status !== "processing" ? (
+                ) : (
                   <EmptyState
                     title="No notes yet"
                     description={`Status: ${meeting.status}`}
                   />
-                ) : null}
+                )}
               </div>
 
               {/* Transcript — clearly separated secondary pane */}

@@ -1,212 +1,137 @@
 # Notewise
 
-**Local-first meeting intelligence** — capture without a bot, notes with receipts, relationship memory, and AI Q&A across your library.
+**AI meeting notes that stay on your machine.**
 
-MIT licensed · [Privacy policy](../PRIVACY.md)
+Notewise captures conversations without a bot joining the call, turns them into structured notes with transcript receipts, and builds memory across people and meetings — all powered by a local gateway on your Mac.
 
----
-
-## Start here
-
-| I want to… | Go to |
-|------------|-------|
-| **Use the app** (full guide) | **[docs/USAGE.md](docs/USAGE.md)** ← start here |
-| **Run it in 5 minutes** | [Quick start](#quick-start) below |
-| **Browse the product site** | `make website` → http://localhost:5174 |
-| **Build the macOS app** | [Desktop](#desktop) below |
+MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage guide](docs/USAGE.md)
 
 ---
 
-## Quick start
+## Why Notewise
 
-**Prerequisites:** macOS (recommended), Node 20+, Python 3.9+, pnpm, [PyAI API key](https://api.pyai.com)
+- **No meeting bot** — record from your mic and system audio; nothing joins Zoom or Meet.
+- **Notes you can trust** — claims link to transcript lines; unverified statements are dropped.
+- **Memory that compounds** — people, commitments, and context carry forward across calls.
+- **Local by default** — audio and data stay on disk; PyAI runs through your own gateway.
 
-From the repo root (`notewise/`):
+---
+
+## Screenshots
+
+### Home — quick notes and upcoming meets
+
+![Notewise home dashboard](docs/screenshots/home.png)
+
+### Upcoming — prep briefs before each call
+
+![Notewise upcoming meetings](docs/screenshots/upcoming.png)
+
+### Library — searchable meeting intelligence
+
+![Notewise library with notes and transcript](docs/screenshots/library.png)
+
+### People — relationship graph and network pulse
+
+![Notewise people and relationship AI](docs/screenshots/people.png)
+
+---
+
+## Get started
+
+**You need:** macOS (recommended), Node 20+, Python 3.9+, pnpm, and a [PyAI API key](https://api.pyai.com).
 
 ```bash
-make setup          # once — Python venv + pnpm install
-make dev            # one terminal — gateway + web UI
+make setup    # once — Python venv, dependencies, .env template
+make dev      # gateway + web app
 ```
 
-Or two terminals:
+Open **http://127.0.0.1:5173**, sign in, accept recording consent, and start a capture.
 
 ```bash
-make run            # Terminal A — AI gateway on http://127.0.0.1:3002
-make web            # Terminal B — web app on http://127.0.0.1:5173
+make doctor   # verify Python, Node, API key, and permissions
 ```
 
-Equivalent pnpm commands: `pnpm setup`, `pnpm dev`, `pnpm dev:gateway`, `pnpm dev:web`.
+**Try without recording:** Library → **Import 5 sample calls**.
 
-1. Open **http://127.0.0.1:5173** and sign in (Google or Guest).
-2. Accept recording consent → pick a **mode** → click the **mic**.
-3. Stop recording → read notes with timestamp receipts.
+---
 
-**Explore without recording:** Library → **Import 5 sample calls**.
+## What you can do
+
+|              |                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| **Capture**  | Live transcription, meeting modes (General, Sales, 1:1, Standup, Investor), optional people tags |
+| **Notes**    | Executive summary, takeaways, action items — each tied to the transcript                         |
+| **Library**  | Search every meeting on disk; regenerate notes in a different mode                               |
+| **People**   | Relationship graph, briefs, commitments, and objections over time                                |
+| **Calendar** | Google Calendar sync, prep briefs, and upcoming-call reminders                                   |
+| **Ask**      | Q&A across your library with citations (Meeting brain, voice shortcut)                           |
+
+---
+
+## Run locally
+
+| What           | URL                   | Command                             |
+| -------------- | --------------------- | ----------------------------------- |
+| Web app        | http://127.0.0.1:5173 | `make dev` or `make web`            |
+| AI gateway     | http://127.0.0.1:3002 | `make run` (included in `make dev`) |
+| Desktop (dev)  | native window         | `make desktop`                      |
+| Marketing site | http://127.0.0.1:5174 | `make website`                      |
+
+**Two terminals** (optional):
 
 ```bash
-make doctor         # Check Python, Node, API key, permissions
+make run    # Terminal A — gateway
+make web    # Terminal B — web UI
 ```
 
----
-
-## What it does
-
-| Feature | Description |
-|---------|-------------|
-| **Local capture** | Mic + system audio — no bot in your call |
-| **Notes with receipts** | Every claim links to a transcript line; unverified claims are dropped |
-| **Meeting modes** | Sales, investor, 1:1, standup — editable YAML packs |
-| **Library & search** | Full-text search across all meetings on disk |
-| **People AI** | Relationship graph, commitments, objections, briefs |
-| **Calendar prep** | Google Calendar sync, 10-min reminders, AI prep briefs |
-| **Meeting brain** | Ask questions across your library with citations |
-| **Live copilot** | In-call suggestions (similarity-gated, budget-aware) |
-| **Voice Q&A** | Hold Alt+Space — spoken question, spoken answer |
+Equivalent pnpm scripts: `pnpm setup`, `pnpm dev`, `pnpm dev:gateway`, `pnpm dev:web`.
 
 ---
 
-## URLs at a glance
+## Desktop app
 
-| Surface | Port | Command |
-|---------|------|---------|
-| Web app | 5173 | `make web` or `make dev` |
-| AI gateway | 3002 | `make run` (included in `make dev`) |
-| Desktop (dev) | native | `make desktop` |
-| Marketing site | 5174 | `make website` or `pnpm dev:website` |
-
----
-
-## Desktop
-
-```bash
-make setup
-make desktop        # dev — same repo gateway as web
-make build-dmg      # release installer
-# → apps/desktop/src-tauri/target/release/bundle/dmg/
-```
-
-**Dev vs DMG:** Desktop dev uses `services/pyai-gateway/.venv` (identical to web). The DMG bundles a portable gateway sidecar for end users — no Python setup required.
-
-See [apps/desktop/README.md](apps/desktop/README.md) and [docs/USAGE.md](docs/USAGE.md#macos-desktop-app).
-
----
-
-## Host the product site
-
-The marketing site (`apps/website`) is a static Vite SPA. Host it on **Vercel Hobby** and serve the macOS installer from **GitHub Releases**. Do not put the DMG on Vercel (file-size limits), and do **not** deploy pyai-gateway to the cloud — the DMG already bundles a local sidecar on `127.0.0.1:3002`.
-
-End users: open the site → download the DMG → paste their own PyAI key. No Python or hosted backend.
-
-### 1. Publish the DMG
+For daily use, run the native macOS app — same gateway, menu bar tray, and system-audio capture.
 
 ```bash
 make setup
-make build-dmg
-# → apps/desktop/src-tauri/target/release/bundle/dmg/Notewise_0.1.0_aarch64.dmg
+make desktop      # development
+make build-dmg    # release installer → apps/desktop/src-tauri/target/release/bundle/dmg/
 ```
 
-Create a GitHub Release (tag e.g. `v0.1.0`) and attach the DMG. Copy the asset URL. Do not commit the binary.
+Dev uses the repo gateway (`services/pyai-gateway/.venv`). The DMG bundles a portable sidecar so end users only need a PyAI key — no Python setup.
 
-Until the app is signed and notarized, macOS Gatekeeper may block the first open — **right-click → Open**.
-
-### 2. Deploy the site
-
-1. Import this repo in Vercel (Hobby). Keep the **root directory** as the repo root — [`vercel.json`](vercel.json) sets install, build, and output.
-2. Set these env vars (Production + Preview). They are public download URLs, not secrets:
-
-   | Variable | Purpose |
-   |----------|---------|
-   | `VITE_DMG_URL` | Apple Silicon (or universal) GitHub Release asset URL |
-   | `VITE_DMG_URL_INTEL` | Optional Intel DMG asset URL |
-   | `VITE_GITHUB_URL` | `https://github.com/prasoon-saaslabs/notewise` |
-
-3. Deploy. Routes like `/download` rewrite to `index.html`.
-
-**Preview locally before Vercel** (no Vercel account needed):
-
-```bash
-make website
-# → http://localhost:5174
-```
-
-Copy [`apps/website/.env.example`](apps/website/.env.example) to `apps/website/.env.local` if you want to test a real DMG URL. GitHub links default to [prasoon-saaslabs/notewise](https://github.com/prasoon-saaslabs/notewise). Without `VITE_DMG_URL`, `/download` shows “Release coming soon”.
-
-Do not deploy [`docker-compose.yml`](docker-compose.yml) (legacy Nest + Postgres + Redis). That stack is unused by the PyAI desktop path.
+→ [Desktop README](apps/desktop/README.md)
 
 ---
 
 ## Configuration
 
-| File | Purpose |
-|------|---------|
-| `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT |
-| `apps/web/.env` | Gateway proxy target |
-| `apps/website/.env.local` | Public DMG + GitHub URLs for the marketing site |
+Copy `.env.example` files and add your keys. Never commit secrets.
 
-Copy from `.env.example` files. Never commit secrets.
+| File                         | Purpose                                        |
+| ---------------------------- | ---------------------------------------------- |
+| `services/pyai-gateway/.env` | PyAI key, Google OAuth, JWT                    |
+| `apps/web/.env`              | Gateway proxy target                           |
+| `apps/website/.env.local`    | Public DMG + GitHub URLs (marketing site only) |
 
----
-
-## Docs
-
-- **[Complete usage guide](docs/USAGE.md)** — every page, feature, shortcut, and troubleshooting step
-- [PyAI gateway](services/pyai-gateway/README.md)
-- [Desktop app](apps/desktop/README.md)
-- Marketing docs (in-app): http://localhost:5174/docs
+Custom meeting modes live in `modes/*.yaml`. Upload PyAI packs with `make upload-packs` when you change them.
 
 ---
 
-## Screenshot
+## Documentation
 
-Notes with receipts — timestamp chips jump to the transcript; run-status shows cited vs blocked claims.
+| Doc                                                                | Contents                                                          |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **[docs/USAGE.md](docs/USAGE.md)**                                 | Complete guide — every screen, shortcut, and troubleshooting step |
+| [services/pyai-gateway/README.md](services/pyai-gateway/README.md) | Gateway API and pipeline                                          |
+| [apps/desktop/README.md](apps/desktop/README.md)                   | Tauri app, DMG build, first launch                                |
+| [apps/website/README.md](apps/website/README.md)                   | Marketing site and Vercel deploy                                  |
 
-![Notes with receipts](docs/screenshot-receipts.svg)
+Product docs (when the site is running): http://localhost:5174/docs
 
 ---
 
 ## License
 
 MIT — audit the code, fork it, ship it.
-
----
-
-## GitHub auth (this repo only — PAT)
-
-Use a **Personal Access Token** for `prasoon-saaslabs/notewise` without changing your global `gh` login.
-
-**1. Create a PAT** at [github.com/settings/tokens](https://github.com/settings/tokens)
-
-| Type | Settings |
-|------|----------|
-| **Fine-grained** (recommended) | Resource owner: `prasoon-saaslabs` · Repository: `notewise` · Contents: Read and write |
-| **Classic** | Scope: `repo` (on the `prasoon-saaslabs` account) |
-
-**2. Configure this repo:**
-
-```bash
-cd notewise
-./scripts/setup-github-auth.sh
-# paste PAT when prompted
-```
-
-Or one-shot without saving:
-
-```bash
-NOTEWISE_GITHUB_PAT=ghp_xxxx ./scripts/setup-github-auth.sh
-```
-
-Credentials are stored only in `.git/gh-credentials` (and optionally `.git/gh-pat`) — never committed.
-
-**3. Push:**
-
-```bash
-git push -u origin main
-```
-
-**gh CLI for this repo:**
-
-```bash
-./scripts/gh-repo.sh pr view
-```
-
-See `.github-pat.example` for env var reference.

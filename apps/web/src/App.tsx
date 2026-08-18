@@ -14,10 +14,11 @@ import { RecordPage } from "./features/record/RecordPage";
 import { UpcomingPage } from "./features/upcoming/UpcomingPage";
 import { MeetingPrepPage } from "./features/upcoming/MeetingPrepPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
-import { TrustPage } from "./features/trust/TrustPage";
 import { SimpleFrontPage } from "./features/simple/SimpleFrontPage";
 import { SimpleNotePage } from "./features/simple/SimpleNotePage";
 import { SimpleNoteResultPage } from "./features/simple/SimpleNoteResultPage";
+import { LegacySimpleNoteRedirect } from "./features/simple/LegacySimpleNoteRedirect";
+import { SIMPLE_NOTE_PATH } from "./features/simple/simpleCapture";
 import { VoiceHotkey } from "./components/VoiceHotkey";
 import { TrayBridge } from "./components/TrayBridge";
 import { AuthProvider } from "./auth/AuthContext";
@@ -52,10 +53,18 @@ export function App() {
                 <Route element={<AppShell />}>
                   <Route index element={<SimpleFrontPage />} />
                   <Route path="simple" element={<Navigate to="/" replace />} />
-                  <Route path="capture" element={<RecordPage />} />
-                  <Route path="simple/note" element={<SimpleNotePage />} />
                   <Route
                     path="simple/note/:meetingId"
+                    element={<LegacySimpleNoteRedirect />}
+                  />
+                  <Route
+                    path="simple/note"
+                    element={<Navigate to={SIMPLE_NOTE_PATH} replace />}
+                  />
+                  <Route path="capture" element={<RecordPage />} />
+                  <Route path="home/note" element={<SimpleNotePage />} />
+                  <Route
+                    path="home/note/:meetingId"
                     element={<SimpleNoteResultPage />}
                   />
                   <Route path="upcoming" element={<UpcomingPage />} />
@@ -69,7 +78,10 @@ export function App() {
                   <Route path="people" element={<PeoplePage />} />
                   <Route path="people/:id" element={<PeoplePage />} />
                   <Route path="profile" element={<ProfilePage />} />
-                  <Route path="trust" element={<TrustPage />} />
+                  <Route
+                    path="trust"
+                    element={<Navigate to="/settings#trust" replace />}
+                  />
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>
                 <Route path="/onboarding" element={<EnrollmentPage />} />

@@ -1,15 +1,23 @@
-id: "1-1"
-name: "1:1"
-pack_id: sales_outbound
-prompt: |
-  You are extracting notes from a manager-report 1:1.
+id: 1-1
+name: '1:1'
+pack_id: notewise_1_1
+prompt: 'You are extracting notes from a manager-report 1:1.
+
   Return JSON with:
+
   - decisions: list of {text, lineIds}
+
   - objections: list of {text, lineIds} (concerns, blockers)
+
   - actions: list of {text, owner, due, lineIds}
+
   - followUpEmail: a short recap the manager can send
+
   - summary: wellbeing, priorities, blockers, career
+
   Every claim MUST cite transcript lineIds that prove it.
+
+  '
 schema:
   decisions: true
   objections: true

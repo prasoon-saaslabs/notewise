@@ -8,9 +8,11 @@ from pydantic import BaseModel, Field
 
 from app.auth.deps import get_optional_user
 from app.config import settings
+from app.modes import get_mode, pack_id_for_mode
 from app.pipeline import finalize_session
 from app.pyai.hear_stream import proxy_hear_stream
 from app.store.file_store import store
+from app.store.margin import write_margin_folder
 from app.store.models import User
 
 log = logging.getLogger("routes.sessions")
@@ -20,10 +22,18 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 class CreateSessionBody(BaseModel):
     source: str = "local"
     title: str | None = None
+    name: str | None = None
+    userNotes: str | None = None
     channelMode: str | None = None
     checkInEndMs: int | None = Field(default=None, ge=0, le=60_000)
     modeId: str | None = None
     calendarEventId: str | None = None
+
+    def resolved_title(self) -> str | None:
+        for raw in (self.name, self.title):
+            if raw and raw.strip():
+                return raw.strip()[:200]
+        return None
 
 
 class LiveTurnIn(BaseModel):
@@ -45,15 +55,18 @@ async def create_session(
     user: User | None = Depends(get_optional_user),
 ):
     body = body or CreateSessionBody()
-    title = body.title
+    title = body.resolved_title()
     calendar_event_id = body.calendarEventId
     if calendar_event_id and user:
         ev = store.get_calendar_event(calendar_event_id)
         if ev and ev.userId == user.id:
             if not title:
                 title = ev.title
-            if ev.manualNotes and not body.title:
+            if ev.manualNotes and not body.resolved_title():
                 pass
+    user_notes = body.userNotes.strip()[:20_000] if body.userNotes else None
+    if user_notes == "":
+        user_notes = None
     session, meeting = store.create_session(
         title=title,
         channel_mode=body.channelMode or "mono",
@@ -61,11 +74,16 @@ async def create_session(
         mode_id=body.modeId,
         source=body.source or "local",
         calendar_event_id=calendar_event_id,
+        user_notes_draft=user_notes,
     )
     if calendar_event_id and user:
         ev = store.get_calendar_event(calendar_event_id)
         if ev and ev.entityIds:
             store.update_meeting(meeting.id, entityIds=ev.entityIds)
+    if user_notes:
+        refreshed = store.get_meeting(meeting.id)
+        if refreshed:
+            write_margin_folder(refreshed, user_notes=user_notes)
     return {"sessionId": session.id, "meetingId": meeting.id}
 
 
@@ -164,6 +182,30 @@ async def set_check_in(session_id: str, body: dict[str, Any]):
 
 class ScratchBody(BaseModel):
     userNotes: str = ""
+
+
+class SessionModeBody(BaseModel):
+    modeId: str = Field(min_length=1, max_length=64)
+
+
+@router.patch("/{session_id}/mode")
+async def set_session_mode(session_id: str, body: SessionModeBody):
+    """Update capture mode mid-session so finalize/regenerate use the right Recap pack."""
+    session = store.get_session(session_id)
+    if not session:
+        raise HTTPException(404, "Session not found")
+    mode = get_mode(body.modeId.strip())
+    store.update_session(session_id, modeId=mode["id"])
+    store.update_meeting(session.meetingId, modeId=mode["id"])
+    pack_id = pack_id_for_mode(mode["id"])
+    log.info(
+        "session mode updated session=%s meeting=%s mode=%s pack=%s",
+        session_id,
+        session.meetingId,
+        mode["id"],
+        pack_id,
+    )
+    return {"ok": True, "modeId": mode["id"], "packId": pack_id}
 
 
 @router.post("/{session_id}/notes")

@@ -55,7 +55,7 @@ class Settings:
         margin = os.getenv("MARGIN_DIR") or str(Path.home() / "Margin")
         self.margin_dir: Path = _expand(margin)
 
-        self.recap_pack_id: str = os.getenv("PYAI_RECAP_PACK_ID") or "sales_outbound"
+        self.recap_pack_id: str = os.getenv("PYAI_RECAP_PACK_ID") or "notewise_sales_discovery"
         self.recap_enabled: bool = (os.getenv("PYAI_RECAP_ENABLED") or "true").lower() in (
             "1",
             "true",

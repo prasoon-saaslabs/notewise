@@ -36,7 +36,7 @@ def build_brief(entity_id: str) -> dict[str, Any]:
         agenda.append("Revisit unresolved objections")
     if last and last.notes and last.notes.openQuestions:
         agenda.extend(last.notes.openQuestions[:3])
-    if not agenda:
+    elif meetings:
         agenda = ["Catch up on last conversation", "Confirm next steps"]
     return {
         "entity": entity.model_dump(),

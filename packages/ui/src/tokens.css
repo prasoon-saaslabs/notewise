@@ -79,6 +79,14 @@
   --nw-ease: cubic-bezier(0, 0, 0.2, 1);
   --nw-rail: 72px;
   --nw-paper-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  /* Google Sign-In — light surfaces (dark themes override in themes.css) */
+  --gsi-bg: var(--nw-surface-solid);
+  --gsi-border: var(--nw-border-strong);
+  --gsi-text: #1f1f1f;
+  --gsi-state: #303030;
+  --gsi-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  --gsi-shadow-hover: 0 4px 14px rgb(15 23 42 / 0.1);
+  --gsi-backdrop: none;
 }
 
 .nw-brand-mark {

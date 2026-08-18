@@ -21,15 +21,11 @@ import type { ProcessPhase } from "../../hooks/useRecorder";
 import { RecordIntelligencePanel } from "../../components/RecordIntelligencePanel";
 import { NotesEditor } from "../../components/notes/NotesEditor";
 import { usePersistedUserNotes } from "../../components/notes/usePersistedUserNotes";
-import { ClaimLine, RunStatusCard } from "../../components/Receipts";
+import { ClaimLine } from "../../components/Receipts";
 import { ChannelMeters } from "../../components/ChannelMeters";
 import { UpcomingMeetingsPanel } from "../../components/UpcomingMeetingsPanel";
 import { isDesktopShell } from "../../capture/desktopMiniWindow";
 import { openScreenRecordingSettings } from "../../lib/desktopPermissions";
-import {
-  isMixedSpeakersEnabled,
-  setMixedSpeakersEnabled,
-} from "../../lib/mixedCapture";
 function isMicOnlyNotice(error: string | null) {
   if (!error) return false;
   return /mic only|screen recording|meeting audio skipped/i.test(error);
@@ -75,12 +71,16 @@ function phaseIndex(phase: ProcessPhase) {
 export function RecordPage() {
   const pyai = isPyaiBackend();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const [notesRegenerating, setNotesRegenerating] = useState(false);
+  const [notesRevealKey, setNotesRevealKey] = useState(0);
+  const prevRegeneratingRef = useRef(false);
   const {
     recording,
     paused,
     busy,
     elapsed,
     meetingId,
+    sessionId,
     turns,
     notes,
     error,
@@ -106,8 +106,6 @@ export function RecordPage() {
   const sessionLive = recording || paused;
   const emptyTranscript = phase === "failed" && isEmptyTranscriptError(error);
   const blockingError = error && !isMicOnlyNotice(error) ? error : null;
-  const webCapture = !isDesktopShell();
-  const [mixedSpeakers, setMixedSpeakers] = useState(isMixedSpeakersEnabled);
   const persistedUserNotes = usePersistedUserNotes({
     meetingId,
     backend: pyai ? "pyai" : "nest",
@@ -126,8 +124,11 @@ export function RecordPage() {
     : setUserNotesDraft;
 
   useEffect(() => {
-    setMixedSpeakers(isMixedSpeakersEnabled());
-  }, []);
+    if (prevRegeneratingRef.current && !notesRegenerating) {
+      setNotesRevealKey((k) => k + 1);
+    }
+    prevRegeneratingRef.current = notesRegenerating;
+  }, [notesRegenerating]);
 
   useEffect(() => {
     if (!transcriptRef.current) return;
@@ -273,33 +274,6 @@ export function RecordPage() {
         </div>
       </header>
 
-      {webCapture && phase === "idle" && !sessionLive ? (
-        <div className="relative z-10 border-b border-[var(--nw-border)] bg-[var(--nw-accent-subtle)]/50 px-4 py-3 md:px-5">
-          <label className="flex cursor-pointer items-start gap-2.5 text-sm text-[var(--nw-ink-2)]">
-            <input
-              type="checkbox"
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--nw-border)] accent-[var(--nw-accent-dark)]"
-              checked={mixedSpeakers}
-              onChange={(e) => {
-                const on = e.target.checked;
-                setMixedSpeakers(on);
-                setMixedSpeakersEnabled(on);
-              }}
-            />
-            <span>
-              <span className="font-medium text-[var(--nw-ink)]">
-                Also capture the call playing on this laptop&apos;s speakers.
-              </span>
-              <span className="mt-1 block text-xs leading-relaxed text-[var(--nw-ink-3)]">
-                No screen share — your mic hears Meet through the speakers. Turn
-                off for headphones or solo dictation. Meet must play through
-                laptop speakers at a normal volume.
-              </span>
-            </span>
-          </label>
-        </div>
-      ) : null}
-
       {(processing || phase === "ready") && (
         <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-[var(--nw-border)] bg-[var(--nw-surface-2)]/60 px-4 py-2 md:px-5">
           {PHASES.map((step, i) => {
@@ -416,20 +390,25 @@ export function RecordPage() {
               <div className="flex flex-col gap-4">
                 <RecordIntelligencePanel
                   sessionLive={sessionLive}
+                  phase={phase}
+                  hasNotes={Boolean(notes)}
                   meetingId={meetingId}
+                  sessionId={sessionId}
+                  userNotes={scratchpadValue}
+                  onNotesUpdated={applyMeetingTranscript}
+                  onRegeneratingChange={setNotesRegenerating}
                 />
 
-                {notes ? (
-                  <div className="nw-capture-intel flex flex-col gap-3">
+                {notes && notesRegenerating ? null : notes ? (
+                  <div
+                    key={notesRevealKey}
+                    className="nw-capture-intel nw-notes-reveal flex flex-col gap-3"
+                  >
                     <div className="rounded-2xl border border-[rgb(var(--nw-accent-rgb)_/_0.16)] bg-gradient-to-br from-[rgb(var(--nw-accent-rgb)_/_0.08)] via-[var(--nw-surface-solid)] to-[var(--nw-surface-solid)] p-3.5 shadow-[0_1px_0_var(--nw-glass-shadow)]">
                       <div className="mb-2 flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-accent-dark)]">
                         <Sparkles className="h-3.5 w-3.5" />
                         Summary
                       </div>
-                      <RunStatusCard
-                        status={notes.runStatus}
-                        dropped={notes.droppedCount}
-                      />
                       {notes.title ? (
                         <p className="mb-1.5 mt-0 text-[0.95rem] font-semibold tracking-tight text-[var(--nw-ink)]">
                           {notes.title}
@@ -564,14 +543,8 @@ export function RecordPage() {
               Live transcript
             </h3>
             <div className="ml-auto flex gap-1">
-              {mixedSpeakers && webCapture ? (
-                <SpeakerChip label="Mixed" kind="other" />
-              ) : (
-                <>
-                  <SpeakerChip label="You" kind="you" />
-                  <SpeakerChip label="Other" kind="other" />
-                </>
-              )}
+              <SpeakerChip label="You" kind="you" />
+              <SpeakerChip label="Others" kind="other" />
             </div>
           </div>
 
@@ -669,7 +642,7 @@ export function RecordPage() {
               )}
             </div>
             {showScratchpad ? (
-              <div className="flex min-h-0 flex-col border-t border-[var(--nw-border)] px-4 pb-4 pt-3 md:px-5">
+              <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--nw-border)] px-4 pb-4 pt-3 md:px-5">
                 <div className="mb-1.5 flex shrink-0 items-baseline justify-between gap-2">
                   <span className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--nw-ink-4)]">
                     {notes ? "Your notes" : "Your scratchpad"}
@@ -677,10 +650,6 @@ export function RecordPage() {
                   {meetingId && persistedUserNotes.saveHint === "saving" ? (
                     <span className="text-[0.65rem] text-[var(--nw-ink-4)]">
                       Saving…
-                    </span>
-                  ) : meetingId && persistedUserNotes.saveHint === "saved" ? (
-                    <span className="text-[0.65rem] text-[var(--nw-ink-4)]">
-                      Saved
                     </span>
                   ) : meetingId && persistedUserNotes.saveHint === "error" ? (
                     <span className="text-[0.65rem] text-[var(--nw-danger)]">

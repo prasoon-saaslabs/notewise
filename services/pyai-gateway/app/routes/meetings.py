@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from app.audio_playback import delete_playback
+from app.modes import get_mode
 from app.meeting_filters import is_test_meeting
 from app.pyai.speakers import apply_manual_bind
 from app.store.file_store import store
@@ -23,6 +24,7 @@ class BindSpeakerBody(BaseModel):
 class UpdateMeetingBody(BaseModel):
     title: str | None = None
     userNotes: str | None = None
+    modeId: str | None = None
 
 
 def _summary(m) -> dict:
@@ -98,6 +100,9 @@ async def update_meeting(meeting_id: str, body: UpdateMeetingBody):
             fields["notes"] = notes
     if body.userNotes is not None:
         fields["userNotesDraft"] = body.userNotes.strip()[:20_000]
+    if body.modeId is not None:
+        mode = get_mode(body.modeId.strip() or None)
+        fields["modeId"] = mode["id"]
     if not fields:
         return _detail(m)
     updated = store.update_meeting(meeting_id, **fields)

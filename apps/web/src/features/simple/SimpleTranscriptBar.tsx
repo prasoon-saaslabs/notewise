@@ -11,6 +11,21 @@ type Turn = {
   text: string;
 };
 
+const PREVIEW_TAIL_WORDS = 20;
+
+function tailWords(text: string, count = PREVIEW_TAIL_WORDS) {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= count) return words.join(" ");
+  return words.slice(-count).join(" ");
+}
+
+function livePreviewLine(turns: Turn[], interim: string) {
+  const partial = interim.trim();
+  if (partial) return tailWords(partial);
+  const last = turns.at(-1);
+  return last?.text.trim() ? tailWords(last.text) : "";
+}
+
 type Props = {
   recording: boolean;
   paused: boolean;
@@ -25,6 +40,7 @@ type Props = {
   autoRecording?: boolean;
   transcriptOpen?: boolean;
   onTranscriptOpenChange?: (open: boolean) => void;
+  panelLayout?: boolean;
 };
 
 export function SimpleTranscriptBar({
@@ -41,6 +57,7 @@ export function SimpleTranscriptBar({
   autoRecording = false,
   transcriptOpen: transcriptOpenProp,
   onTranscriptOpenChange,
+  panelLayout = false,
 }: Props) {
   const live = recording || paused;
   const processing =
@@ -67,20 +84,51 @@ export function SimpleTranscriptBar({
   }
 
   if (live) {
+    const previewLine = livePreviewLine(turns, interim);
+    const showPreview = !panelLayout || !transcriptOpen;
+
     return (
       <div className="flex w-full items-center gap-2">
         <div
           ref={transcriptAnchorRef}
-          className="nw-simple-transcript-pill relative inline-flex items-center gap-1 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-2)] p-1"
+          className={`nw-simple-transcript-pill relative flex items-center gap-1 rounded-[var(--nw-radius-pill)] border border-[var(--nw-border)] bg-[var(--nw-surface-2)] p-1 ${
+            transcriptOpen && !panelLayout ? "inline-flex" : "w-full min-w-0"
+          }`}
         >
-          <span className="grid h-8 w-8 place-items-center text-[var(--nw-success)]">
-            <Waveform active={recording && !paused} bars={3} />
-          </span>
+          <div className="nw-simple-transcript-wave flex h-8 shrink-0 items-center overflow-hidden px-1">
+            <Waveform active={recording && !paused} bars={14} />
+          </div>
+          {showPreview ? (
+            <div
+              className="min-w-0 flex-1 overflow-hidden px-1"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {previewLine ? (
+                <p
+                  dir="rtl"
+                  className={`m-0 truncate text-left text-xs leading-8 ${
+                    interim.trim()
+                      ? "italic text-[var(--nw-ink-3)]"
+                      : "text-[var(--nw-ink-2)]"
+                  }`}
+                >
+                  <span dir="ltr">{previewLine}</span>
+                </p>
+              ) : (
+                <p className="m-0 truncate text-right text-xs leading-8 text-[var(--nw-ink-4)]">
+                  {paused ? "Paused" : "Listening…"}
+                </p>
+              )}
+            </div>
+          ) : (
+            <span className="min-w-0 flex-1" aria-hidden />
+          )}
           <button
             type="button"
-            className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-glass-bg)] hover:text-[var(--nw-ink)]"
             aria-expanded={transcriptOpen}
-            aria-haspopup="dialog"
+            aria-haspopup={panelLayout ? undefined : "dialog"}
             aria-label={transcriptOpen ? "Hide transcript" : "Show transcript"}
             onClick={() => setTranscriptOpen(!transcriptOpen)}
           >
@@ -92,22 +140,24 @@ export function SimpleTranscriptBar({
           </button>
           <button
             type="button"
-            className="grid h-8 w-8 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-danger-soft)] hover:text-[var(--nw-danger)]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[var(--nw-ink-3)] transition hover:bg-[var(--nw-danger-soft)] hover:text-[var(--nw-danger)]"
             aria-label="Stop and generate notes"
             disabled={busy}
             onClick={onStop}
           >
             <Square className="h-3.5 w-3.5" fill="currentColor" />
           </button>
-          <SimpleTranscriptPopup
-            open={transcriptOpen}
-            onClose={() => setTranscriptOpen(false)}
-            turns={turns}
-            interim={interim}
-            recording={recording}
-            paused={paused}
-            containerRef={transcriptAnchorRef}
-          />
+          {!panelLayout ? (
+            <SimpleTranscriptPopup
+              open={transcriptOpen}
+              onClose={() => setTranscriptOpen(false)}
+              turns={turns}
+              interim={interim}
+              recording={recording}
+              paused={paused}
+              containerRef={transcriptAnchorRef}
+            />
+          ) : null}
         </div>
 
         {paused && onResume ? (

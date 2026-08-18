@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from datetime import datetime, timezone
+from uuid import uuid4
+
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.config import settings
@@ -9,6 +12,7 @@ from app.memory.retrieve import retrieve
 from app.pyai.ask_llm import synthesize_with_ollama
 from app.pyai.ask_recap import ask_with_recap
 from app.store.file_store import store
+from app.store.models import Entity, EntityKind
 
 router = APIRouter(tags=["memory"])
 
@@ -16,6 +20,12 @@ router = APIRouter(tags=["memory"])
 class AskBody(BaseModel):
     question: str = Field(min_length=2, max_length=2000)
     entityId: str | None = None
+
+
+class CreateEntityBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    kind: EntityKind = "person"
+    company: str | None = Field(default=None, max_length=200)
 
 
 @router.get("/modes")
@@ -49,8 +59,19 @@ async def search(q: str = "", limit: int = 40):
 async def ask(body: AskBody):
     hits = retrieve(body.question, top_k=8)
     if body.entityId:
-        mids = set(store.entity_meeting_ids(body.entityId))
-        hits = [h for h in hits if h["meetingId"] in mids] or hits
+        entity = store.get_entity(body.entityId)
+        if not entity:
+            raise HTTPException(404, "Entity not found")
+        mids = set(store.entity_meeting_ids(body.entityId) or entity.meetingIds or [])
+        if not mids:
+            return {
+                "question": body.question,
+                "answer": [],
+                "hits": [],
+                "source": "no_evidence",
+                "sourceDetail": "No meetings linked to this contact yet.",
+            }
+        hits = [h for h in hits if h["meetingId"] in mids]
 
     source = "no_evidence"
     source_detail: str | None = None
@@ -109,6 +130,45 @@ async def ask(body: AskBody):
 @router.get("/entities")
 async def list_entities():
     return [e.model_dump() for e in store.list_entities()]
+
+
+@router.post("/entities", status_code=201)
+async def create_entity(body: CreateEntityBody):
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(400, "Name is required")
+    company = body.company.strip() if body.company else None
+    if company == "":
+        company = None
+
+    existing = store.find_entity(
+        name=name,
+        company=company if body.kind == "person" else None,
+    )
+    if existing:
+        raise HTTPException(409, "A contact with this name already exists")
+
+    now = datetime.now(timezone.utc).isoformat()
+    entity = Entity(
+        id=str(uuid4()),
+        kind=body.kind,
+        name=name,
+        company=company if body.kind == "person" else None,
+        createdAt=now,
+        updatedAt=now,
+        meetingIds=[],
+        topics=[],
+        openItemCount=0,
+    )
+    store.upsert_entity(entity)
+    return entity.model_dump()
+
+
+@router.delete("/entities/{entity_id}", status_code=204)
+async def delete_entity(entity_id: str):
+    if not store.delete_entity(entity_id):
+        raise HTTPException(404, "Entity not found")
+    return Response(status_code=204)
 
 
 @router.get("/entities/{entity_id}")

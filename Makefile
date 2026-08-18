@@ -1,4 +1,4 @@
-.PHONY: setup doctor run gateway web website dev desktop stage-gateway qa-gateway build-dmg samples
+.PHONY: setup doctor run gateway web website dev desktop stage-gateway qa-gateway build-dmg samples upload-packs upload-packs-dry
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 GW := services/pyai-gateway
@@ -50,3 +50,9 @@ samples:
 build-dmg:
 	pnpm build:desktop:dmg
 	@bash scripts/verify-staged-gateway.sh
+
+upload-packs-dry:
+	@cd services/pyai-gateway && . .venv/bin/activate && python ../../scripts/upload-pyai-packs.py --dry-run
+
+upload-packs:
+	@cd services/pyai-gateway && . .venv/bin/activate && python ../../scripts/upload-pyai-packs.py --sync-yaml --recap-config

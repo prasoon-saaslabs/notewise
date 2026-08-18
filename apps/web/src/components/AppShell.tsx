@@ -6,10 +6,6 @@ import {
   ChevronRight,
   LayoutGrid,
   Library,
-  Mic,
-  Settings2,
-  Shield,
-  UserRound,
   Users,
 } from "lucide-react";
 import { LogoMark } from "@notewise/ui";
@@ -20,12 +16,11 @@ import { UserMenu } from "./UserMenu";
 const links = [
   {
     to: "/",
-    label: "Simple",
+    label: "Home",
     hint: "Quick notes",
     end: true,
     icon: LayoutGrid,
   },
-  { to: "/capture", label: "Capture", hint: "Live STT", end: true, icon: Mic },
   {
     to: "/upcoming",
     label: "Upcoming",
@@ -46,27 +41,6 @@ const links = [
     hint: "Relationship AI",
     end: false,
     icon: Users,
-  },
-  {
-    to: "/profile",
-    label: "Profile",
-    hint: "Account & AI",
-    end: false,
-    icon: UserRound,
-  },
-  {
-    to: "/trust",
-    label: "Trust",
-    hint: "Gates & spend",
-    end: false,
-    icon: Shield,
-  },
-  {
-    to: "/settings",
-    label: "Settings",
-    hint: "Stack & voice",
-    end: false,
-    icon: Settings2,
   },
 ] as const;
 
@@ -138,7 +112,7 @@ export function AppShell() {
                     Notewise
                   </p>
                   <p className="m-0 truncate text-[0.65rem] text-[var(--nw-ink-4)]">
-                    AI Meeting Intelligence
+                    {/* AI Meeting Intelligence */}
                   </p>
                 </div>
               </div>

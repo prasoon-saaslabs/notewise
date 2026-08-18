@@ -1,0 +1,15 @@
+{
+  "notewise_mode_id": "sales-discovery",
+  "notewise_mode_name": "Sales discovery",
+  "prompt": "You are extracting notes from a sales discovery call.\nReturn JSON with:\n- decisions: list of {text, lineIds}\n- objections: list of {text, lineIds} (budget, authority, need, timeline, competition)\n- actions: list of {text, owner, due, lineIds}\n- followUpEmail: a short draft\n- summary: 2-4 sentences\nEvery claim MUST cite transcript lineIds that prove it. Do not invent facts.",
+  "schema": {
+    "decisions": true,
+    "objections": true,
+    "actions": true,
+    "followUpEmail": true,
+    "budget": true,
+    "authority": true,
+    "need": true,
+    "timeline": true
+  }
+}

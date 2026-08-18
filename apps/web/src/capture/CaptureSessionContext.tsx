@@ -41,6 +41,7 @@ export type CaptureSessionValue = {
   busy: boolean;
   elapsed: number;
   meetingId: string | null;
+  sessionId: string | null;
   turns: CaptureTurn[];
   notes: NotesPayload | null;
   error: string | null;
@@ -191,6 +192,7 @@ function OwnerCaptureProvider({ children }: { children: ReactNode }) {
     session.busy,
     session.elapsed,
     session.meetingId,
+    session.sessionId,
     session.turns,
     session.notes,
     session.error,
@@ -208,6 +210,7 @@ function OwnerCaptureProvider({ children }: { children: ReactNode }) {
       busy: session.busy,
       elapsed: session.elapsed,
       meetingId: session.meetingId,
+      sessionId: session.sessionId,
       turns: session.turns,
       notes: session.notes,
       error: session.error,
@@ -307,6 +310,7 @@ function RemoteCaptureProvider({ children }: { children: ReactNode }) {
       busy: s.busy,
       elapsed: s.elapsed,
       meetingId: s.meetingId,
+      sessionId: null,
       turns: s.turns,
       notes: s.notes,
       error: s.error,
