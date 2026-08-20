@@ -4,7 +4,7 @@
 
 Notewise captures conversations without a bot joining the call, turns them into structured notes with transcript receipts, and builds memory across people and meetings — all powered by a local gateway on your Mac.
 
-MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage guide](docs/USAGE.md)
+🌐 **[Visit Website](https://notewise-website.vercel.app/)** · MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage guide](docs/USAGE.md)
 
 ---
 
@@ -44,6 +44,7 @@ MIT licensed · [Privacy & trust](docs/USAGE.md#trust--privacy) · [Full usage g
 Run Notewise in your browser with the local AI gateway.
 
 **Requirements:**
+
 - macOS (recommended)
 - Node 20+
 - Python 3.9+
@@ -63,6 +64,7 @@ make dev
 Open **http://127.0.0.1:5173**, sign in, accept recording consent, and start a capture.
 
 **Verify setup:**
+
 ```bash
 make doctor   # Check Python, Node, API key, and permissions
 ```
@@ -70,6 +72,7 @@ make doctor   # Check Python, Node, API key, and permissions
 **Try without recording:** Library → **Import 5 sample calls**
 
 **Alternative commands:**
+
 ```bash
 # Two terminals (optional)
 make run    # Terminal A — AI gateway (http://127.0.0.1:3002)
@@ -153,6 +156,7 @@ Gateway will run at http://127.0.0.1:3002
 ---
 
 **Development mode** (no DMG needed):
+
 ```bash
 make desktop  # Runs app + gateway together
 ```
@@ -179,9 +183,11 @@ make desktop  # Runs app + gateway together
 `make setup` creates `.env` files from templates. Add your API keys before running.
 
 **Required:**
+
 - `services/pyai-gateway/.env` — PyAI API key, Google OAuth credentials, JWT secret
 
 **Optional:**
+
 - `apps/web/.env` — Gateway proxy target (defaults work for local dev)
 - `apps/website/.env.local` — DMG/GitHub URLs (marketing site only)
 
@@ -200,7 +206,10 @@ make desktop  # Runs app + gateway together
 | [apps/desktop/README.md](apps/desktop/README.md)                   | Tauri app, DMG build, installation                                |
 | [apps/website/README.md](apps/website/README.md)                   | Marketing site and Vercel deploy                                  |
 
-**Marketing site:** Run `make website` then visit http://localhost:5174
+**Marketing site:**
+
+- Live: https://notewise-website.vercel.app/
+- Local: Run `make website` then visit http://localhost:5174
 
 ---
 
